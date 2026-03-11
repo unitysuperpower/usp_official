@@ -1,4 +1,4 @@
-# TechSolution - Complete Tech Services Website
+# USP Technology Company - Complete Tech Services Website
 
 A fully dynamic, responsive tech solution website built with Laravel and Tailwind CSS featuring service management, contact system, and live chat.
 
