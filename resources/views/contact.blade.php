@@ -45,7 +45,7 @@
                             </div>
                             <div>
                                 <h3 class="font-semibold text-gray-900 mb-1">Email</h3>
-                                <a href="mailto:info@example.com" class="text-indigo-600 hover:text-indigo-800">info@example.com</a>
+                                <a href="mailto:info@example.com" class="text-indigo-600 hover:text-indigo-800">info@usp.com.pk</a>
                             </div>
                         </div>
 
@@ -58,7 +58,7 @@
                             </div>
                             <div>
                                 <h3 class="font-semibold text-gray-900 mb-1">Phone</h3>
-                                <a href="tel:+1234567890" class="text-indigo-600 hover:text-indigo-800">+1 (234) 567-890</a>
+                                <a href="tel:+12029607524" class="text-indigo-600 hover:text-indigo-800">+1 (202) 960-7524</a>
                             </div>
                         </div>
 
@@ -72,7 +72,7 @@
                             </div>
                             <div>
                                 <h3 class="font-semibold text-gray-900 mb-1">Address</h3>
-                                <p class="text-gray-600">123 Business Street<br>City, State 12345</p>
+                                <p class="text-gray-600">Capistro 4<br>Brampton, On L7A 3J3</p>
                             </div>
                         </div>
                     </div>
