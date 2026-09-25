@@ -57,8 +57,8 @@ class BlogController extends Controller
         }
 
         // Convert tags to array
-        if ($request->filled('tags')) {
-            $validated['tags'] = array_filter(array_map('trim', explode(',', $request->tags)));
+        if ($request->has('tags')) {
+            $validated['tags'] = array_filter(array_map('trim', explode(',', (string) $request->tags)));
         }
 
         // Handle image upload with optimization
@@ -107,8 +107,8 @@ class BlogController extends Controller
         }
 
         // Convert tags to array
-        if ($request->filled('tags')) {
-            $validated['tags'] = array_filter(array_map('trim', explode(',', $request->tags)));
+        if ($request->has('tags')) {
+            $validated['tags'] = array_filter(array_map('trim', explode(',', (string) $request->tags)));
         }
 
         // Handle image upload with optimization

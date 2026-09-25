@@ -134,3 +134,13 @@ Route::middleware(['auth'])->group(function () {
         )
         ->name('two-factor.show');
 });
+
+// Floating chat and browser notification subscriptions.
+Route::middleware(['auth'])->group(function () {
+    Route::get('/chat/widget', [\App\Http\Controllers\ChatWidgetController::class, 'index']);
+    Route::post('/chat/widget/start', [\App\Http\Controllers\ChatWidgetController::class, 'start'])->middleware('throttle:20,1');
+    Route::post('/chat/widget/read', [\App\Http\Controllers\ChatWidgetController::class, 'read']);
+    Route::get('/notifications/push', [\App\Http\Controllers\PushSubscriptionController::class, 'config']);
+    Route::post('/notifications/push', [\App\Http\Controllers\PushSubscriptionController::class, 'store'])->middleware('throttle:20,1');
+    Route::delete('/notifications/push', [\App\Http\Controllers\PushSubscriptionController::class, 'destroy']);
+});

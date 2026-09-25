@@ -51,8 +51,8 @@ class ServiceController extends Controller
         $validated['is_active'] = $request->has('is_active') ? 1 : 0;
 
         // Convert features text to array
-        if ($request->filled('features_text')) {
-            $validated['features'] = array_filter(array_map('trim', explode("\n", $request->features_text)));
+        if ($request->has('features_text')) {
+            $validated['features'] = array_filter(array_map('trim', explode("\n", (string) $request->features_text)));
         }
         unset($validated['features_text']);
 
@@ -101,8 +101,8 @@ class ServiceController extends Controller
         $validated['is_active'] = $request->has('is_active') ? 1 : 0;
 
         // Convert features text to array
-        if ($request->filled('features_text')) {
-            $validated['features'] = array_filter(array_map('trim', explode("\n", $request->features_text)));
+        if ($request->has('features_text')) {
+            $validated['features'] = array_filter(array_map('trim', explode("\n", (string) $request->features_text)));
         }
         unset($validated['features_text']);
 

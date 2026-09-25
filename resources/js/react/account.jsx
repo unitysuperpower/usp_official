@@ -279,11 +279,13 @@ export function Profile() {
 }
 export function Appearance() {
     const [theme, setTheme] = useState(
-        localStorage.getItem("usp-theme") || "light",
+        document.documentElement.dataset.theme || "light",
     );
     function update(value) {
         setTheme(value);
-        localStorage.setItem("usp-theme", value);
+        try {
+            localStorage.setItem("usp-theme", value);
+        } catch {}
         document.documentElement.dataset.theme = value;
     }
     return (

@@ -87,3 +87,31 @@ test('opening React security settings never mutates two factor credentials', fun
     $this->actingAs($user)->withSession(['auth.password_confirmed_at' => time()])->get('/settings/two-factor')->assertOk();
     expect($user->refresh()->two_factor_secret)->toBe($secret);
 });
+
+test('React chat summaries use snake case relation names', function () {
+    $user = User::factory()->create();
+    $conversation = \App\Models\ChatConversation::create(['user_id' => $user->id, 'subject' => 'Support', 'status' => 'active']);
+    \App\Models\ChatMessage::create(['conversation_id' => $conversation->id, 'user_id' => $user->id, 'message' => 'A customer question', 'is_admin' => false]);
+    $this->actingAs(User::factory()->create(['is_admin' => true]))->get('/admin/chat')
+        ->assertOk()
+        ->assertViewHas('props', fn ($props) => $props['conversations']['data'][0]['latest_message']['message'] === 'A customer question');
+});
+
+test('editing services can clear the feature list', function () {
+    $category = ServiceCategory::create(['name' => 'Web', 'slug' => 'web']);
+    $service = Service::create(['title' => 'Website', 'slug' => 'website', 'category_id' => $category->id, 'description' => 'Website build', 'price' => 100, 'price_unit' => 'project', 'features' => ['Original feature']]);
+    $this->actingAs(User::factory()->create(['is_admin' => true]))->put('/admin/services/'.$service->id, [
+        'title' => 'Website', 'category_id' => $category->id, 'description' => 'Website build', 'price' => 100, 'price_unit' => 'project', 'features_text' => '',
+    ])->assertSessionHasNoErrors();
+    expect($service->refresh()->features)->toBe([]);
+});
+
+test('editing articles can clear their tags', function () {
+    $author = User::factory()->create(['is_admin' => true]);
+    $category = BlogCategory::create(['name' => 'News', 'slug' => 'news']);
+    $blog = Blog::create(['title' => 'Article', 'slug' => 'article', 'category_id' => $category->id, 'user_id' => $author->id, 'content' => 'Article content', 'tags' => ['Original tag']]);
+    $this->actingAs($author)->put('/admin/blogs/'.$blog->id, [
+        'title' => 'Article', 'category_id' => $category->id, 'content' => 'Article content', 'tags' => '',
+    ])->assertSessionHasNoErrors();
+    expect($blog->refresh()->tags)->toBe([]);
+});

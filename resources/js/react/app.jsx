@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
+import UserDropdown from "./user-dropdown";
+import FloatingChat from "./floating-chat";
 import { context, Form, Empty } from "./ui";
 import { Home, Listing, Detail, Contact, Dashboard } from "./public";
 import {
@@ -43,6 +45,17 @@ const adminLinks = [
 ];
 function Layout({ children }) {
     const [open, setOpen] = useState(false);
+    const [accountOpen, setAccountOpen] = useState(false);
+    const accountDropdown = context.user && (
+        <UserDropdown
+            open={accountOpen}
+            onToggle={() => {
+                setAccountOpen(!accountOpen);
+                setOpen(false);
+            }}
+            onClose={() => setAccountOpen(false)}
+        />
+    );
     return (
         <div className={admin ? "admin-shell" : "site-shell"}>
             <a className="skip-link" href="#main">
@@ -88,6 +101,7 @@ function Layout({ children }) {
                     />
                 </aside>
             ) : null}
+            <FloatingChat />
             <div className="main-shell">
                 <header className="topbar">
                     {admin ? (
@@ -101,9 +115,7 @@ function Layout({ children }) {
                                         .replaceAll("-", " ")}
                                 </span>
                             </span>
-                            <a className="text-link" href="/admin/profile">
-                                My account ↗
-                            </a>
+                            {accountDropdown}
                         </>
                     ) : (
                         <>
@@ -144,12 +156,16 @@ function Layout({ children }) {
                                         Dashboard
                                     </a>
                                 )}
+                                <a
+                                    className="mobile-account"
+                                    href={context.user ? "/profile" : "/login"}
+                                >
+                                    {context.user ? "My account" : "Sign in"}
+                                </a>
                             </nav>
                             <div className="header-actions">
                                 {context.user ? (
-                                    <a href="/profile" className="sign-in">
-                                        My account
-                                    </a>
+                                    accountDropdown
                                 ) : (
                                     <a href="/login" className="sign-in">
                                         Sign in
@@ -167,7 +183,10 @@ function Layout({ children }) {
                             open ? "Close navigation" : "Open navigation"
                         }
                         aria-expanded={open}
-                        onClick={() => setOpen(!open)}
+                        onClick={() => {
+                            setOpen(!open);
+                            setAccountOpen(false);
+                        }}
                     >
                         {open ? "✕" : "☰"}
                     </button>

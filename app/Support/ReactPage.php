@@ -23,7 +23,12 @@ class ReactPage
             return $value->only(['id', 'name']);
         }
         if ($value instanceof Model) {
-            return array_merge($value->attributesToArray(), self::serialize($value->getRelations()));
+            $relations = [];
+            foreach ($value->getRelations() as $key => $relation) {
+                $relations[$value::$snakeAttributes ? \Illuminate\Support\Str::snake($key) : $key] = self::serialize($relation);
+            }
+
+            return array_merge($value->attributesToArray(), $relations);
         }
         if ($value instanceof \Illuminate\Pagination\LengthAwarePaginator) {
             return array_merge($value->toArray(), ['data' => self::serialize($value->items())]);
