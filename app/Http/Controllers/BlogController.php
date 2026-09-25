@@ -37,7 +37,7 @@ class BlogController extends Controller
             ->take(3)
             ->get();
 
-        return view('blogs.index', compact('blogs', 'categories', 'featuredBlogs'));
+        return \App\Support\ReactPage::render('blogs.index', compact('blogs', 'categories', 'featuredBlogs'));
     }
 
     public function show(string $slug)
@@ -80,7 +80,7 @@ class BlogController extends Controller
 
         $userLiked = Auth::check() ? $blog->isLikedBy(Auth::id()) : false;
 
-        return view('blogs.show', compact('blog', 'relatedBlogs', 'userLiked'));
+        return \App\Support\ReactPage::render('blogs.show', compact('blog', 'relatedBlogs', 'userLiked'));
     }
 
     public function category(string $slug)
@@ -103,7 +103,7 @@ class BlogController extends Controller
             ->take(3)
             ->get();
 
-        return view('blogs.category', compact('category', 'categories', 'blogs', 'featuredBlogs'));
+        return \App\Support\ReactPage::render('blogs.category', compact('category', 'categories', 'blogs', 'featuredBlogs'));
     }
 
     public function like(Request $request, Blog $blog)

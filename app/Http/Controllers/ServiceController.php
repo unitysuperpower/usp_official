@@ -32,10 +32,10 @@ class ServiceController extends Controller
             });
         }
 
-        $services = $query->paginate(12);
+        $services = $query->paginate(12)->withQueryString();
         $categories = ServiceCategory::where('is_active', true)->get();
 
-        return view('services.index', compact('services', 'categories'));
+        return \App\Support\ReactPage::render('services.index', compact('services', 'categories'));
     }
 
     public function category($slug)
@@ -50,7 +50,7 @@ class ServiceController extends Controller
 
         $allCategories = ServiceCategory::where('is_active', true)->get();
 
-        return view('services.category', compact('category', 'services', 'allCategories'));
+        return \App\Support\ReactPage::render('services.category', compact('category', 'services', 'allCategories'));
     }
 
     public function show($slug)
@@ -82,6 +82,6 @@ class ServiceController extends Controller
             ->take(3)
             ->get();
 
-        return view('services.show', compact('service', 'relatedServices'));
+        return \App\Support\ReactPage::render('services.show', compact('service', 'relatedServices'));
     }
 }

@@ -15,13 +15,13 @@ class ServiceController extends Controller
     public function index()
     {
         $services = Service::with('category')->latest()->get();
-        return view('admin.services.index', compact('services'));
+        return \App\Support\ReactPage::render('admin.services.index', compact('services'));
     }
 
     public function create()
     {
         $categories = ServiceCategory::where('is_active', true)->get();
-        return view('admin.services.create', compact('categories'));
+        return \App\Support\ReactPage::render('admin.services.create', compact('categories'));
     }
 
     public function store(Request $request)
@@ -71,7 +71,7 @@ class ServiceController extends Controller
     public function edit(Service $service)
     {
         $categories = ServiceCategory::where('is_active', true)->get();
-        return view('admin.services.edit', compact('service', 'categories'));
+        return \App\Support\ReactPage::render('admin.services.edit', compact('service', 'categories'));
     }
 
     public function update(Request $request, Service $service)

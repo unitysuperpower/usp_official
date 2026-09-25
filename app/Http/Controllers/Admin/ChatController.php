@@ -22,7 +22,7 @@ class ChatController extends Controller
         $totalUnread = ChatMessage::fromUser()->unread()->count();
         $activeConversations = ChatConversation::active()->count();
 
-        return view('admin.chat.index', compact('conversations', 'totalUnread', 'activeConversations'));
+        return \App\Support\ReactPage::render('admin.chat.index', compact('conversations', 'totalUnread', 'activeConversations'));
     }
 
     public function show($id)
@@ -36,7 +36,7 @@ class ChatController extends Controller
             ->where('is_read', false)
             ->update(['is_read' => true, 'read_at' => now()]);
 
-        return view('admin.chat.show', compact('conversation'));
+        return \App\Support\ReactPage::render('admin.chat.show', compact('conversation'));
     }
 
     public function sendMessage(Request $request)

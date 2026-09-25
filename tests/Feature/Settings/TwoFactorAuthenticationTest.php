@@ -22,8 +22,9 @@ test('two factor settings page can be rendered', function () {
         ->withSession(['auth.password_confirmed_at' => time()])
         ->get(route('two-factor.show'))
         ->assertOk()
-        ->assertSee('Two Factor Authentication')
-        ->assertSee('Disabled');
+        ->assertViewIs('react')
+        ->assertViewHas('page', 'settings.two-factor')
+        ->assertViewHas('props', fn ($props) => $props['enabled'] === false);
 });
 
 test('two factor settings page requires password confirmation when enabled', function () {

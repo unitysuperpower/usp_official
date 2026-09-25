@@ -12,12 +12,12 @@ class ServiceCategoryController extends Controller
     public function index()
     {
         $categories = ServiceCategory::withCount('services')->latest()->get();
-        return view('admin.categories.index', compact('categories'));
+        return \App\Support\ReactPage::render('admin.categories.index', compact('categories'));
     }
 
     public function create()
     {
-        return view('admin.categories.create');
+        return \App\Support\ReactPage::render('admin.categories.create');
     }
 
     public function store(Request $request)
@@ -46,7 +46,7 @@ class ServiceCategoryController extends Controller
 
     public function edit(ServiceCategory $category)
     {
-        return view('admin.categories.edit', compact('category'));
+        return \App\Support\ReactPage::render('admin.categories.edit', compact('category'));
     }
 
     public function update(Request $request, ServiceCategory $category)

@@ -45,13 +45,13 @@ class FortifyServiceProvider extends ServiceProvider
      */
     private function configureViews(): void
     {
-        Fortify::loginView(fn () => view('livewire.auth.login'));
-        Fortify::verifyEmailView(fn () => view('livewire.auth.verify-email'));
-        Fortify::twoFactorChallengeView(fn () => view('livewire.auth.two-factor-challenge'));
-        Fortify::confirmPasswordView(fn () => view('livewire.auth.confirm-password'));
-        Fortify::registerView(fn () => view('livewire.auth.register'));
-        Fortify::resetPasswordView(fn () => view('livewire.auth.reset-password'));
-        Fortify::requestPasswordResetLinkView(fn () => view('livewire.auth.forgot-password'));
+        Fortify::loginView(fn () => \App\Support\ReactPage::render('auth.login'));
+        Fortify::verifyEmailView(fn () => \App\Support\ReactPage::render('auth.verify-email'));
+        Fortify::twoFactorChallengeView(fn () => \App\Support\ReactPage::render('auth.two-factor-challenge'));
+        Fortify::confirmPasswordView(fn () => \App\Support\ReactPage::render('auth.confirm-password'));
+        Fortify::registerView(fn () => \App\Support\ReactPage::render('auth.register'));
+        Fortify::resetPasswordView(fn () => \App\Support\ReactPage::render('auth.reset-password', ['token' => request()->route('token'), 'email' => request('email')]));
+        Fortify::requestPasswordResetLinkView(fn () => \App\Support\ReactPage::render('auth.forgot-password'));
     }
 
     /**

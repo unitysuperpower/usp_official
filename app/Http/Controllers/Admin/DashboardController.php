@@ -26,6 +26,6 @@ class DashboardController extends Controller
             ->take(10)
             ->get();
 
-        return view('admin.dashboard', compact('stats', 'recentRequests'));
+        return \App\Support\ReactPage::render('admin.dashboard', compact('stats', 'recentRequests'));
     }
 }

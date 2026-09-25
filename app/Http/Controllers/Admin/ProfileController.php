@@ -11,7 +11,7 @@ class ProfileController extends Controller
 {
     public function edit()
     {
-        return view('admin.profile.edit');
+        return \App\Support\ReactPage::render('admin.profile.edit');
     }
 
     public function update(Request $request)
@@ -21,7 +21,12 @@ class ProfileController extends Controller
             'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore(auth()->id())],
         ]);
 
-        auth()->user()->update($validated);
+        $user = auth()->user();
+        $user->fill($validated);
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+        $user->save();
 
         return back()->with('success', 'Profile updated successfully!');
     }

@@ -11,10 +11,6 @@ use App\Http\Controllers\BlogController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ServiceController;
-use App\Livewire\Settings\Appearance;
-use App\Livewire\Settings\Password;
-use App\Livewire\Settings\Profile;
-use App\Livewire\Settings\TwoFactor;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
@@ -37,7 +33,7 @@ Route::get('/robots.txt', function () {
 // User Chat Routes
 Route::middleware(['auth'])->group(function () {
     Route::get('/chat', [\App\Http\Controllers\ChatController::class, 'index'])->name('user.chat');
-    Route::get('/chat/test', function() { return view('chat.test'); })->name('chat.test');
+    Route::redirect('/chat/test', '/chat')->name('chat.test');
     Route::post('/chat/send', [\App\Http\Controllers\ChatController::class, 'sendMessage'])->name('chat.send');
     Route::get('/chat/{conversationId}/messages', [\App\Http\Controllers\ChatController::class, 'getMessages'])->name('chat.messages');
 });
@@ -61,7 +57,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::resource('services', AdminServiceController::class)->except(['show']);
     Route::get('/requests', [AdminServiceRequestController::class, 'index'])->name('requests.index');
     Route::get('/requests/{request}', [AdminServiceRequestController::class, 'show'])->name('requests.show');
-    Route::patch('/requests/{request}/status', [AdminServiceRequestController::class, 'updateStatus'])->name('requests.updateStatus');
+    Route::patch('/requests/{serviceRequest}/status', [AdminServiceRequestController::class, 'updateStatus'])->name('requests.updateStatus');
     
     // Blog Management
     Route::resource('blog-categories', BlogCategoryController::class)->except(['show']);
@@ -95,24 +91,39 @@ Route::get('dashboard', function () {
     if (auth()->user()->is_admin) {
         return redirect()->route('admin.dashboard');
     }
-    return view('dashboard');
+    return \App\Support\ReactPage::render('dashboard', [
+        'requests' => auth()->user()->serviceRequests()->select(['id', 'user_id', 'service_id', 'status', 'message', 'created_at'])->with('service.category')->latest()->paginate(15),
+        'stats' => [
+            'total_requests' => auth()->user()->serviceRequests()->count(),
+            'pending_requests' => auth()->user()->serviceRequests()->where('status', 'pending')->count(),
+            'completed_requests' => auth()->user()->serviceRequests()->where('status', 'completed')->count(),
+        ],
+    ]);
 })
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
 Route::middleware(['auth'])->group(function () {
+    Route::delete('profile', [\App\Http\Controllers\User\ProfileController::class, 'destroy'])->name('user.profile.destroy');
+
     // User Profile
     Route::get('profile', [\App\Http\Controllers\User\ProfileController::class, 'edit'])->name('user.profile.edit');
     Route::patch('profile', [\App\Http\Controllers\User\ProfileController::class, 'update'])->name('user.profile.update');
     Route::patch('profile/password', [\App\Http\Controllers\User\ProfileController::class, 'updatePassword'])->name('user.profile.password');
     
-    // Old settings routes (Livewire - keep for compatibility)
+    // Keep existing settings URLs available after the React migration.
     Route::redirect('settings', 'profile');
-    Route::get('settings/profile', Profile::class)->name('settings.profile');
-    Route::get('settings/password', Password::class)->name('user-password.edit');
-    Route::get('settings/appearance', Appearance::class)->name('appearance.edit');
+    Route::get('settings/profile', fn () => \App\Support\ReactPage::render('user.profile.edit'))->name('settings.profile');
+    Route::redirect('settings/password', '/profile')->name('user-password.edit');
+    Route::get('settings/appearance', fn () => \App\Support\ReactPage::render('settings.appearance'))->name('appearance.edit');
 
-    Route::get('settings/two-factor', TwoFactor::class)
+    Route::get('settings/two-factor', function () {
+        abort_unless(Features::enabled(Features::twoFactorAuthentication()), 403);
+        return \App\Support\ReactPage::render('settings.two-factor', [
+            'enabled' => auth()->user()->hasEnabledTwoFactorAuthentication(),
+            'requiresConfirmation' => Features::optionEnabled(Features::twoFactorAuthentication(), 'confirm'),
+        ]);
+    })
         ->middleware(
             when(
                 Features::canManageTwoFactorAuthentication()

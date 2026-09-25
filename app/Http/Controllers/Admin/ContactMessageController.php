@@ -30,18 +30,18 @@ class ContactMessageController extends Controller
             });
         }
 
-        $messages = $query->paginate(20);
+        $messages = $query->paginate(20)->withQueryString();
         $pendingCount = ContactMessage::pending()->count();
         $unreadCount = ContactMessage::unread()->count();
         $repliedCount = ContactMessage::where('status', 'replied')->count();
 
-        return view('admin.contact-messages.index', compact('messages', 'pendingCount', 'unreadCount', 'repliedCount'));
+        return \App\Support\ReactPage::render('admin.contact-messages.index', compact('messages', 'pendingCount', 'unreadCount', 'repliedCount'));
     }
 
     public function show(ContactMessage $message)
     {
         $message->markAsRead();
-        return view('admin.contact-messages.show', compact('message'));
+        return \App\Support\ReactPage::render('admin.contact-messages.show', compact('message'));
     }
 
     public function update(Request $request, ContactMessage $message)

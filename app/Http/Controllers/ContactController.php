@@ -12,7 +12,7 @@ class ContactController extends Controller
 {
     public function index()
     {
-        return view('contact');
+        return \App\Support\ReactPage::render('contact');
     }
 
     public function store(Request $request)

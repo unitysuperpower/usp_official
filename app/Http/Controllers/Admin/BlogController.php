@@ -19,13 +19,13 @@ class BlogController extends Controller
             ->withCount(['likes', 'comments'])
             ->latest()
             ->get();
-        return view('admin.blogs.index', compact('blogs'));
+        return \App\Support\ReactPage::render('admin.blogs.index', compact('blogs'));
     }
 
     public function create()
     {
         $categories = BlogCategory::where('is_active', true)->get();
-        return view('admin.blogs.create', compact('categories'));
+        return \App\Support\ReactPage::render('admin.blogs.create', compact('categories'));
     }
 
     public function store(Request $request)
@@ -76,7 +76,7 @@ class BlogController extends Controller
     public function edit(Blog $blog)
     {
         $categories = BlogCategory::where('is_active', true)->get();
-        return view('admin.blogs.edit', compact('blog', 'categories'));
+        return \App\Support\ReactPage::render('admin.blogs.edit', compact('blog', 'categories'));
     }
 
     public function update(Request $request, Blog $blog)

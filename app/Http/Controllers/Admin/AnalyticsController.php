@@ -14,7 +14,7 @@ class AnalyticsController extends Controller
 {
     public function index(Request $request)
     {
-        $period = $request->get('period', '30'); // Default 30 days
+        $period = (int) ($request->validate(['period' => 'nullable|integer|min:1|max:365'])['period'] ?? 30); // Default 30 days
         $startDate = Carbon::now()->subDays($period);
 
         // Total views
@@ -85,7 +85,7 @@ class AnalyticsController extends Controller
             ->limit(10)
             ->get();
 
-        return view('admin.analytics.index', compact(
+        return \App\Support\ReactPage::render('admin.analytics.index', compact(
             'totalViews',
             'viewsChange',
             'uniqueVisitors',
@@ -105,9 +105,7 @@ class AnalyticsController extends Controller
     {
         // SEO-specific analytics
         $totalPages = PageView::distinct('url')->count('url');
-        $avgPageViews = PageView::select('url', DB::raw('count(*) as views'))
-            ->groupBy('url')
-            ->avg('views');
+        $avgPageViews = $totalPages > 0 ? PageView::count() / $totalPages : 0;
 
         // Most viewed content
         $mostViewedBlogs = Blog::where('is_published', true)
@@ -137,7 +135,7 @@ class AnalyticsController extends Controller
         // Average time on site (simplified)
         $avgPagesPerSession = $totalSessions > 0 ? PageView::count() / $totalSessions : 0;
 
-        return view('admin.analytics.seo', compact(
+        return \App\Support\ReactPage::render('admin.analytics.seo', compact(
             'totalPages',
             'avgPageViews',
             'mostViewedBlogs',

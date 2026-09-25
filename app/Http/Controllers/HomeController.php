@@ -16,19 +16,19 @@ class HomeController extends Controller
     public function index()
     {
         SEOMeta::setTitle('Home');
-        SEOMeta::setDescription('Professional service provider delivering innovative solutions for your business needs. Quality services with expert consultation and support.');
+        SEOMeta::setDescription('USP Tech Solution brings design and technology together to build digital experiences that move your business forward.');
         SEOMeta::setKeywords(['services', 'business solutions', 'professional services', 'consultation', 'technology']);
         SEOMeta::setCanonical(url()->current());
 
-        OpenGraph::setTitle('Professional Services & Solutions');
+        OpenGraph::setTitle('USP Tech Solution');
         OpenGraph::setDescription('Discover our wide range of professional services designed to help your business grow.');
         OpenGraph::setUrl(url()->current());
         OpenGraph::addProperty('type', 'website');
 
-        TwitterCard::setTitle('Professional Services & Solutions');
+        TwitterCard::setTitle('USP Tech Solution');
         TwitterCard::setSite('@TechSolution');
 
-        JsonLd::setTitle('Professional Services & Solutions');
+        JsonLd::setTitle('USP Tech Solution');
         JsonLd::setDescription('Professional service provider delivering innovative solutions.');
         JsonLd::setType('WebSite');
 
@@ -48,6 +48,6 @@ class HomeController extends Controller
             ->take(8)
             ->get();
 
-        return view('home', compact('featuredServices', 'categories', 'latestBlogs'));
+        return \App\Support\ReactPage::render('home', compact('featuredServices', 'categories', 'latestBlogs'));
     }
 }

@@ -25,7 +25,7 @@ class ChatController extends Controller
             ]);
         }
 
-        return view('chat.index', compact('conversation'));
+        return \App\Support\ReactPage::render('chat.index', compact('conversation'));
     }
 
     public function sendMessage(Request $request)

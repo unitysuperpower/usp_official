@@ -12,12 +12,12 @@ class BlogCategoryController extends Controller
     public function index()
     {
         $categories = BlogCategory::withCount('blogs')->latest()->get();
-        return view('admin.blog-categories.index', compact('categories'));
+        return \App\Support\ReactPage::render('admin.blog-categories.index', compact('categories'));
     }
 
     public function create()
     {
-        return view('admin.blog-categories.create');
+        return \App\Support\ReactPage::render('admin.blog-categories.create');
     }
 
     public function store(Request $request)
@@ -41,7 +41,7 @@ class BlogCategoryController extends Controller
 
     public function edit(BlogCategory $blogCategory)
     {
-        return view('admin.blog-categories.edit', compact('blogCategory'));
+        return \App\Support\ReactPage::render('admin.blog-categories.edit', compact('blogCategory'));
     }
 
     public function update(Request $request, BlogCategory $blogCategory)

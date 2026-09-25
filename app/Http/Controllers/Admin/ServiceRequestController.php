@@ -11,13 +11,13 @@ class ServiceRequestController extends Controller
     public function index()
     {
         $requests = ServiceRequest::with(['service', 'user'])->latest()->paginate(20);
-        return view('admin.requests.index', compact('requests'));
+        return \App\Support\ReactPage::render('admin.requests.index', compact('requests'));
     }
 
     public function show(ServiceRequest $request)
     {
         $request->load(['service', 'user']);
-        return view('admin.requests.show', compact('request'));
+        return \App\Support\ReactPage::render('admin.requests.show', compact('request'));
     }
 
     public function updateStatus(Request $request, ServiceRequest $serviceRequest)

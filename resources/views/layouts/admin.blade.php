@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>Admin Panel - {{ config('app.name', 'TechSolution') }}</title>
+    <title>Admin Panel - {{ config('app.name', 'USP Tech Solutions') }}</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -23,7 +23,7 @@
                         </svg>
                     </div>
                     <div>
-                        <h2 class="text-xl font-bold text-white tracking-tight">TechSolution</h2>
+                        <h2 class="text-xl font-bold text-white tracking-tight">USP Tech Solutions</h2>
                         <p class="text-xs text-indigo-200 font-medium">Admin Dashboard</p>
                     </div>
                 </div>
