@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\ContactReplyMail;
 use App\Models\ContactMessage;
+use App\Support\ReactPage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\ContactReplyMail;
 
 class ContactMessageController extends Controller
 {
@@ -35,13 +36,14 @@ class ContactMessageController extends Controller
         $unreadCount = ContactMessage::unread()->count();
         $repliedCount = ContactMessage::where('status', 'replied')->count();
 
-        return \App\Support\ReactPage::render('admin.contact-messages.index', compact('messages', 'pendingCount', 'unreadCount', 'repliedCount'));
+        return ReactPage::render('admin.contact-messages.index', compact('messages', 'pendingCount', 'unreadCount', 'repliedCount'));
     }
 
     public function show(ContactMessage $message)
     {
         $message->markAsRead();
-        return \App\Support\ReactPage::render('admin.contact-messages.show', compact('message'));
+
+        return ReactPage::render('admin.contact-messages.show', compact('message'));
     }
 
     public function update(Request $request, ContactMessage $message)
@@ -63,6 +65,7 @@ class ContactMessageController extends Controller
     public function destroy(ContactMessage $message)
     {
         $message->delete();
+
         return redirect()->route('admin.contact-messages.index')->with('success', 'Contact message deleted successfully.');
     }
 
@@ -74,23 +77,18 @@ class ContactMessageController extends Controller
             'mark_as_replied' => 'nullable|boolean',
         ]);
 
-        // Here you would typically send an email using Mail facade
-        // For now, we'll just update the status and add admin notes
-        
-        // Prepare email content (you can integrate with Mail facade later)
         $replyContent = $validated['reply_message'];
-        
+        Mail::to($message->email)->send(new ContactReplyMail($message, $validated['subject'], $replyContent));
+
         // Update message status if checkbox is checked
-        if ($request->has('mark_as_replied')) {
+        if ($request->boolean('mark_as_replied')) {
             $message->update([
                 'status' => 'replied',
                 'replied_by' => auth()->id(),
-                'admin_notes' => ($message->admin_notes ? $message->admin_notes . "\n\n" : '') 
-                    . "Reply sent on " . now()->format('Y-m-d H:i:s') . ":\n" . $replyContent
+                'admin_notes' => ($message->admin_notes ? $message->admin_notes."\n\n" : '')
+                    .'Reply sent on '.now()->format('Y-m-d H:i:s').":\n".$replyContent,
             ]);
         }
-
-        Mail::to($message->email)->send(new ContactReplyMail($message, $validated['subject'], $replyContent));
 
         return back()->with('reply_success', 'Reply sent successfully!');
     }

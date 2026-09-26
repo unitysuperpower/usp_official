@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Events\NewChatMessage;
 use App\Models\ChatConversation;
 use App\Models\ChatMessage;
+use App\Support\ReactPage;
 use Illuminate\Http\Request;
 
 class ChatController extends Controller
@@ -17,7 +18,7 @@ class ChatController extends Controller
             ->active()
             ->first();
 
-        if (!$conversation) {
+        if (! $conversation) {
             $conversation = ChatConversation::create([
                 'user_id' => $user->id,
                 'status' => 'active',
@@ -25,7 +26,7 @@ class ChatController extends Controller
             ]);
         }
 
-        return \App\Support\ReactPage::render('chat.index', compact('conversation'));
+        return ReactPage::render('chat.index', compact('conversation'));
     }
 
     public function sendMessage(Request $request)
@@ -36,7 +37,7 @@ class ChatController extends Controller
         ]);
 
         $conversation = ChatConversation::findOrFail($validated['conversation_id']);
-        
+
         // Check if user owns this conversation
         if ($conversation->user_id !== auth()->id()) {
             return response()->json(['error' => 'Unauthorized'], 403);
@@ -56,20 +57,20 @@ class ChatController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => $message->load('user'),
+            'message' => $message->load('user:id,name'),
         ]);
     }
 
     public function getMessages(Request $request, $conversationId)
     {
         $conversation = ChatConversation::findOrFail($conversationId);
-        
+
         if ($conversation->user_id !== auth()->id()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
         $messages = ChatMessage::where('conversation_id', $conversationId)
-            ->with('user')
+            ->with('user:id,name')
             ->orderBy('created_at', 'asc')
             ->get();
 
@@ -81,7 +82,7 @@ class ChatController extends Controller
 
         return response()->json([
             'messages' => $messages,
-            'conversation' => $conversation->load('assignedTo'),
+            'conversation' => $conversation->load('assignedTo:id,name'),
         ]);
     }
 }

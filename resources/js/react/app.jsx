@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { Projects, ProjectDetail, Leads } from "./projects";
+import Sidebar, { workspaceTitle } from "./sidebar";
 import UserDropdown from "./user-dropdown";
 import FloatingChat from "./floating-chat";
 import { context, Form, Empty } from "./ui";
@@ -8,7 +10,6 @@ import {
     AdminDashboard,
     ResourceList,
     ResourceEditor,
-    Requests,
     Contacts,
     Analytics,
 } from "./admin";
@@ -31,21 +32,25 @@ function Logo() {
         </a>
     );
 }
-const adminLinks = [
-    ["dashboard", "Overview", "◈"],
-    ["services", "Services", "⌘"],
-    ["categories", "Service categories", "▦"],
-    ["requests", "Service requests", "↗"],
-    ["blogs", "Journal", "▤"],
-    ["blog-categories", "Blog categories", "▦"],
-    ["contact-messages", "Contact inbox", "✉"],
-    ["chat", "Conversations", "◌"],
-    ["analytics", "Analytics", "▥"],
-    ["profile", "My profile", "○"],
-];
 function Layout({ children }) {
     const [open, setOpen] = useState(false);
     const [accountOpen, setAccountOpen] = useState(false);
+    const [collapsed, setCollapsed] = useState(() => {
+        try {
+            return localStorage.getItem("usp-sidebar-collapsed") === "true";
+        } catch {
+            return false;
+        }
+    });
+    const closeSidebar = useCallback(() => setOpen(false), []);
+    const toggleCollapsed = () => {
+        setCollapsed((value) => {
+            try {
+                localStorage.setItem("usp-sidebar-collapsed", String(!value));
+            } catch {}
+            return !value;
+        });
+    };
     const accountDropdown = context.user && (
         <UserDropdown
             open={accountOpen}
@@ -57,63 +62,32 @@ function Layout({ children }) {
         />
     );
     return (
-        <div className={admin ? "admin-shell" : "site-shell"}>
+        <div
+            className={
+                admin
+                    ? `admin-shell ${collapsed ? "sidebar-compact" : ""}`
+                    : "site-shell"
+            }
+        >
             <a className="skip-link" href="#main">
                 Skip to content
             </a>
-            {admin ? (
-                <aside className={`sidebar ${open ? "is-open" : ""}`}>
-                    <Logo />
-                    <span className="nav-caption">WORKSPACE</span>
-                    <nav aria-label="Admin navigation">
-                        {adminLinks.map(([path, title, icon]) => (
-                            <a
-                                key={path}
-                                href={`/admin/${path}`}
-                                className={
-                                    context.page.startsWith(`admin.${path}.`) ||
-                                    context.page === `admin.${path}`
-                                        ? "active"
-                                        : ""
-                                }
-                            >
-                                <span aria-hidden="true">{icon}</span>
-                                {title}
-                            </a>
-                        ))}
-                    </nav>
-                    <a className="site-link" href="/">
-                        View website ↗
-                    </a>
-                    <div className="sidebar-user">
-                        <span className="avatar">
-                            {context.user.name.slice(0, 1)}
-                        </span>
-                        <div>
-                            <strong>{context.user.name}</strong>
-                            <small>Administrator</small>
-                        </div>
-                    </div>
-                    <Form
-                        action="/logout"
-                        submit="Sign out"
-                        className="inline-form"
-                    />
-                </aside>
-            ) : null}
-            <FloatingChat />
+            {admin && (
+                <Sidebar
+                    open={open}
+                    onClose={closeSidebar}
+                    collapsed={collapsed}
+                    onCollapse={toggleCollapsed}
+                    logo={<Logo />}
+                />
+            )}
             <div className="main-shell">
+                <FloatingChat />
                 <header className="topbar">
                     {admin ? (
                         <>
                             <span className="workspace-label">
-                                USP workspace{" "}
-                                <span>
-                                    /{" "}
-                                    {context.page
-                                        .split(".")[1]
-                                        .replaceAll("-", " ")}
-                                </span>
+                                USP workspace <span>/ {workspaceTitle}</span>
                             </span>
                             {accountDropdown}
                         </>
@@ -182,6 +156,9 @@ function Layout({ children }) {
                         aria-label={
                             open ? "Close navigation" : "Open navigation"
                         }
+                        aria-controls={
+                            admin ? "admin-navigation" : "public-nav"
+                        }
                         aria-expanded={open}
                         onClick={() => {
                             setOpen(!open);
@@ -212,6 +189,30 @@ function Layout({ children }) {
                                 )}
                             </ul>
                         </div>
+                    )}
+                    {context.breadcrumbs?.length > 1 && (
+                        <nav className="breadcrumbs" aria-label="Breadcrumbs">
+                            <ol>
+                                {context.breadcrumbs.map((crumb, index) => (
+                                    <li key={crumb.url}>
+                                        {index ===
+                                        context.breadcrumbs.length - 1 ? (
+                                            <span aria-current="page">
+                                                {crumb.name}
+                                            </span>
+                                        ) : (
+                                            <a
+                                                href={
+                                                    new URL(crumb.url).pathname
+                                                }
+                                            >
+                                                {crumb.name}
+                                            </a>
+                                        )}
+                                    </li>
+                                ))}
+                            </ol>
+                        </nav>
                     )}
                     {children}
                 </main>
@@ -293,7 +294,11 @@ function Page() {
         return <Chat {...p} />;
     if (page === "admin.chat.index") return <ChatList {...p} />;
     if (page === "admin.dashboard") return <AdminDashboard {...p} />;
-    if (page.startsWith("admin.requests.")) return <Requests {...p} />;
+    if (page.startsWith("admin.requests.")) return <Leads {...p} />;
+    if (page === "admin.projects.index" || page === "projects.index")
+        return <Projects {...p} />;
+    if (page === "admin.projects.show" || page === "projects.show")
+        return <ProjectDetail {...p} />;
     if (page.startsWith("admin.contact-messages.")) return <Contacts {...p} />;
     if (page.startsWith("admin.analytics.")) return <Analytics {...p} />;
     const [, kind, action] = page.split(".");

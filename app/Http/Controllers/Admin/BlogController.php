@@ -6,10 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Blog;
 use App\Models\BlogCategory;
 use App\Services\ImageOptimizationService;
+use App\Support\ReactPage;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class BlogController extends Controller
 {
@@ -19,13 +19,15 @@ class BlogController extends Controller
             ->withCount(['likes', 'comments'])
             ->latest()
             ->get();
-        return \App\Support\ReactPage::render('admin.blogs.index', compact('blogs'));
+
+        return ReactPage::render('admin.blogs.index', compact('blogs'));
     }
 
     public function create()
     {
         $categories = BlogCategory::where('is_active', true)->get();
-        return \App\Support\ReactPage::render('admin.blogs.create', compact('categories'));
+
+        return ReactPage::render('admin.blogs.create', compact('categories'));
     }
 
     public function store(Request $request)
@@ -46,11 +48,11 @@ class BlogController extends Controller
         $validated['slug'] = Str::slug($validated['title']);
         $originalSlug = $validated['slug'];
         while (Blog::where('slug', $validated['slug'])->exists()) {
-            $validated['slug'] = $originalSlug . '-' . uniqid();
+            $validated['slug'] = $originalSlug.'-'.uniqid();
         }
         $validated['user_id'] = Auth::id();
-        $validated['is_featured'] = $request->has('is_featured') ? 1 : 0;
-        $validated['is_published'] = $request->has('is_published') ? 1 : 0;
+        $validated['is_featured'] = $request->boolean('is_featured');
+        $validated['is_published'] = $request->boolean('is_published');
 
         if ($validated['is_published']) {
             $validated['published_at'] = now();
@@ -63,7 +65,7 @@ class BlogController extends Controller
 
         // Handle image upload with optimization
         if ($request->hasFile('featured_image')) {
-            $imageService = new ImageOptimizationService();
+            $imageService = new ImageOptimizationService;
             $validated['featured_image'] = $imageService->processImage($request->file('featured_image'), 'blogs');
         }
 
@@ -76,7 +78,8 @@ class BlogController extends Controller
     public function edit(Blog $blog)
     {
         $categories = BlogCategory::where('is_active', true)->get();
-        return \App\Support\ReactPage::render('admin.blogs.edit', compact('blog', 'categories'));
+
+        return ReactPage::render('admin.blogs.edit', compact('blog', 'categories'));
     }
 
     public function update(Request $request, Blog $blog)
@@ -97,12 +100,12 @@ class BlogController extends Controller
         $validated['slug'] = Str::slug($validated['title']);
         $originalSlug = $validated['slug'];
         while (Blog::where('slug', $validated['slug'])->where('id', '!=', $blog->id)->exists()) {
-            $validated['slug'] = $originalSlug . '-' . uniqid();
+            $validated['slug'] = $originalSlug.'-'.uniqid();
         }
-        $validated['is_featured'] = $request->has('is_featured') ? 1 : 0;
-        $validated['is_published'] = $request->has('is_published') ? 1 : 0;
+        $validated['is_featured'] = $request->boolean('is_featured');
+        $validated['is_published'] = $request->boolean('is_published');
 
-        if ($validated['is_published'] && !$blog->published_at) {
+        if ($validated['is_published'] && ! $blog->published_at) {
             $validated['published_at'] = now();
         }
 
@@ -113,7 +116,7 @@ class BlogController extends Controller
 
         // Handle image upload with optimization
         if ($request->hasFile('featured_image')) {
-            $imageService = new ImageOptimizationService();
+            $imageService = new ImageOptimizationService;
             if ($blog->featured_image) {
                 $imageService->deleteImage($blog->featured_image);
             }
@@ -129,10 +132,10 @@ class BlogController extends Controller
     public function destroy(Blog $blog)
     {
         if ($blog->featured_image) {
-            $imageService = new ImageOptimizationService();
+            $imageService = new ImageOptimizationService;
             $imageService->deleteImage($blog->featured_image);
         }
-        
+
         $blog->delete();
 
         return redirect()->route('admin.blogs.index')

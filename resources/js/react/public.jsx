@@ -165,6 +165,7 @@ export function Home({ featuredServices, latestBlogs }) {
             </div>
             <section className="section">
                 <Heading
+                    as="h2"
                     eyebrow="WHAT WE DO"
                     title="Good technology. Great possibilities."
                     description="The expertise to take your next idea further."
@@ -221,6 +222,7 @@ export function Home({ featuredServices, latestBlogs }) {
             </section>
             <section className="section">
                 <Heading
+                    as="h2"
                     eyebrow="OUR JOURNAL"
                     title="A little perspective goes a long way."
                 >
@@ -307,15 +309,16 @@ export function Listing({ blog = false, ...props }) {
     );
 }
 export function Contact({ service }) {
+    const Title = service ? "h2" : "h1";
     return (
         <section className="section contact-layout">
             <div>
                 <span className="eyebrow">LET’S TALK</span>
-                <h1>
+                <Title className="contact-heading">
                     {service
                         ? "Your next step starts here."
                         : "Great things start with a conversation."}
-                </h1>
+                </Title>
                 <p>
                     Tell us about your goals, your challenges, or that idea you
                     can’t stop thinking about.
@@ -414,9 +417,6 @@ export function Detail({
     return (
         <>
             <article className="section detail">
-                <a className="text-link" href={blog ? "/blogs" : "/services"}>
-                    ← All {blog ? "insights" : "services"}
-                </a>
                 <Heading
                     eyebrow={item.category?.name}
                     title={item.title}
@@ -565,9 +565,11 @@ export function Dashboard({ requests, stats }) {
                     <h3>Let’s keep talking ↗</h3>
                     <p>Open your support conversation.</p>
                 </a>
-                <a href="/profile">
-                    <h3>Make yourself at home ↗</h3>
-                    <p>Manage your account and password.</p>
+                <a href="/projects">
+                    <h3>Your project workspace ↗</h3>
+                    <p>
+                        Track milestones, review deliverables, and share files.
+                    </p>
                 </a>
             </div>
         </section>

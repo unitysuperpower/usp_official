@@ -2,17 +2,22 @@
 
 namespace App\Services;
 
-use Intervention\Image\ImageManager;
-use Intervention\Image\Drivers\Gd\Driver;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\ImageManager;
 
 class ImageOptimizationService
 {
     private const MAX_WIDTH = 1200;
+
     private const MAX_HEIGHT = 800;
+
     private const THUMB_WIDTH = 300;
+
     private const THUMB_HEIGHT = 200;
+
     private const QUALITY = 80; // Compression quality (1-100)
 
     private ImageManager $imageManager;
@@ -20,23 +25,20 @@ class ImageOptimizationService
     public function __construct()
     {
         // Initialize ImageManager with GD driver
-        $this->imageManager = new ImageManager(new Driver());
+        $this->imageManager = new ImageManager(new Driver);
     }
 
     /**
      * Process and optimize an uploaded image
      * Compresses, resizes, and generates thumbnails
      *
-     * @param UploadedFile $file
-     * @param string $directory
-     * @param bool $generateThumbnail
      * @return string Path to the optimized image
      */
     public function processImage(UploadedFile $file, string $directory = 'uploads', bool $generateThumbnail = true): string
     {
         try {
             $filename = $this->generateFilename($file);
-            $path = $directory . '/' . $filename;
+            $path = $directory.'/'.$filename;
 
             // Read and resize the main image
             $image = $this->imageManager->read($file->getPathname());
@@ -60,7 +62,8 @@ class ImageOptimizationService
 
             return $path;
         } catch (\Exception $e) {
-            \Log::error('Image processing failed: ' . $e->getMessage());
+            \Log::error('Image processing failed: '.$e->getMessage());
+
             // Fallback: store original image if processing fails
             return $file->store($directory, 'public');
         }
@@ -69,16 +72,13 @@ class ImageOptimizationService
     /**
      * Generate a thumbnail for the image
      *
-     * @param UploadedFile $file
-     * @param string $directory
-     * @param string $filename
      * @return string Path to thumbnail
      */
     private function generateThumbnail(UploadedFile $file, string $directory, string $filename): string
     {
         try {
             $thumbFilename = str_replace('.webp', '_thumb.webp', $filename);
-            $thumbPath = $directory . '/thumbnails/' . $thumbFilename;
+            $thumbPath = $directory.'/thumbnails/'.$thumbFilename;
 
             $image = $this->imageManager->read($file->getPathname());
             $image->scaleDown(
@@ -91,30 +91,26 @@ class ImageOptimizationService
 
             return $thumbPath;
         } catch (\Exception $e) {
-            \Log::error('Thumbnail generation failed: ' . $e->getMessage());
+            \Log::error('Thumbnail generation failed: '.$e->getMessage());
+
             return '';
         }
     }
 
     /**
      * Generate a unique filename with timestamp
-     *
-     * @param UploadedFile $file
-     * @return string
      */
     private function generateFilename(UploadedFile $file): string
     {
         $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
         $sanitized = preg_replace('/[^a-zA-Z0-9-_]/', '-', $originalName);
-        $timestamp = now()->format('YmdHis');
-        return strtolower($sanitized . '-' . $timestamp . '.webp');
+        $timestamp = (string) Str::uuid();
+
+        return strtolower($sanitized.'-'.$timestamp.'.webp');
     }
 
     /**
      * Delete an image and its thumbnail
-     *
-     * @param string $path
-     * @return bool
      */
     public function deleteImage(string $path): bool
     {
@@ -132,16 +128,14 @@ class ImageOptimizationService
 
             return true;
         } catch (\Exception $e) {
-            \Log::error('Image deletion failed: ' . $e->getMessage());
+            \Log::error('Image deletion failed: '.$e->getMessage());
+
             return false;
         }
     }
 
     /**
      * Generate SEO-friendly alt text from filename
-     *
-     * @param string $filename
-     * @return string
      */
     public function generateAltText(string $filename): string
     {

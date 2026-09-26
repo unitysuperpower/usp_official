@@ -31,8 +31,8 @@ class PageView extends Model
 
     public static function track($pageType, $viewable = null)
     {
-        $userAgent = request()->userAgent();
-        
+        $userAgent = request()->userAgent() ?? '';
+
         return static::create([
             'url' => request()->fullUrl(),
             'page_type' => $pageType,
@@ -49,21 +49,33 @@ class PageView extends Model
 
     private static function detectDeviceType($userAgent)
     {
-        if (preg_match('/mobile/i', $userAgent)) {
-            return 'mobile';
-        } elseif (preg_match('/tablet|ipad/i', $userAgent)) {
+        if (preg_match('/tablet|ipad/i', $userAgent)) {
             return 'tablet';
+        } elseif (preg_match('/mobile/i', $userAgent)) {
+            return 'mobile';
         }
+
         return 'desktop';
     }
 
     private static function detectBrowser($userAgent)
     {
-        if (preg_match('/edge/i', $userAgent)) return 'Edge';
-        if (preg_match('/chrome/i', $userAgent)) return 'Chrome';
-        if (preg_match('/firefox/i', $userAgent)) return 'Firefox';
-        if (preg_match('/safari/i', $userAgent)) return 'Safari';
-        if (preg_match('/opera/i', $userAgent)) return 'Opera';
+        if (preg_match('/edge|edg\//i', $userAgent)) {
+            return 'Edge';
+        }
+        if (preg_match('/opera|opr\//i', $userAgent)) {
+            return 'Opera';
+        }
+        if (preg_match('/chrome/i', $userAgent)) {
+            return 'Chrome';
+        }
+        if (preg_match('/firefox/i', $userAgent)) {
+            return 'Firefox';
+        }
+        if (preg_match('/safari/i', $userAgent)) {
+            return 'Safari';
+        }
+
         return 'Other';
     }
 }

@@ -2,92 +2,28 @@
 
 namespace App\Console\Commands;
 
+use App\Services\SitemapService;
+use App\Support\Seo;
 use Illuminate\Console\Command;
-use Spatie\Sitemap\Sitemap;
-use Spatie\Sitemap\Tags\Url;
-use App\Models\Blog;
-use App\Models\Service;
-use App\Models\ServiceCategory;
-use App\Models\BlogCategory;
+use Illuminate\Support\Facades\File;
 
 class GenerateSitemap extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'sitemap:generate';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Generate the sitemap for the website';
+    protected $description = 'Generate a private sitemap-index snapshot; public sitemaps always update live';
 
-    /**
-     * Execute the console command.
-     */
-    public function handle()
+    public function handle(SitemapService $sitemap): int
     {
-        $this->info('Generating sitemap...');
+        $directory = storage_path('app/private/seo');
+        File::ensureDirectoryExists($directory);
+        File::replace($directory.'/sitemap.xml', $sitemap->index());
+        $this->info('Live sitemap: '.Seo::url('/sitemap.xml'));
+        $this->info('Private index snapshot saved to storage/app/private/seo/sitemap.xml. No public static files are generated.');
+        if (! config('seo.indexable')) {
+            $this->warn('Indexing is disabled. Set SEO_INDEXABLE=true only on the public production site.');
+        }
 
-        $sitemap = Sitemap::create();
-
-        // Add static pages
-        $sitemap->add(Url::create(route('home'))
-            ->setLastModificationDate(now())
-            ->setChangeFrequency(Url::CHANGE_FREQUENCY_DAILY)
-            ->setPriority(1.0));
-
-        $sitemap->add(Url::create(route('services.index'))
-            ->setLastModificationDate(now())
-            ->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY)
-            ->setPriority(0.9));
-
-        $sitemap->add(Url::create(route('blogs.index'))
-            ->setLastModificationDate(now())
-            ->setChangeFrequency(Url::CHANGE_FREQUENCY_DAILY)
-            ->setPriority(0.9));
-
-        // Add services
-        Service::where('is_active', true)->each(function (Service $service) use ($sitemap) {
-            $sitemap->add(Url::create(route('services.show', $service->slug))
-                ->setLastModificationDate($service->updated_at)
-                ->setChangeFrequency(Url::CHANGE_FREQUENCY_MONTHLY)
-                ->setPriority(0.8));
-        });
-
-        // Add service categories
-        ServiceCategory::where('is_active', true)->each(function (ServiceCategory $category) use ($sitemap) {
-            $sitemap->add(Url::create(route('services.category', $category->slug))
-                ->setLastModificationDate($category->updated_at)
-                ->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY)
-                ->setPriority(0.7));
-        });
-
-        // Add published blogs
-        Blog::where('is_published', true)->each(function (Blog $blog) use ($sitemap) {
-            $sitemap->add(Url::create(route('blogs.show', $blog->slug))
-                ->setLastModificationDate($blog->updated_at)
-                ->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY)
-                ->setPriority(0.8));
-        });
-
-        // Add blog categories
-        BlogCategory::where('is_active', true)->each(function (BlogCategory $category) use ($sitemap) {
-            $sitemap->add(Url::create(route('blogs.category', $category->slug))
-                ->setLastModificationDate($category->updated_at)
-                ->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY)
-                ->setPriority(0.7));
-        });
-
-        // Write to public directory
-        $sitemap->writeToFile(public_path('sitemap.xml'));
-
-        $this->info('Sitemap generated successfully at public/sitemap.xml!');
-        
-        return Command::SUCCESS;
+        return self::SUCCESS;
     }
 }

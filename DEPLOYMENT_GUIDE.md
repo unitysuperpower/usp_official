@@ -211,12 +211,9 @@ shell_exec('composer install --optimize-autoloader --no-dev');
    php artisan key:generate
    ```
 
-### 6.2 Update robots.txt
+### 6.2 Configure live SEO endpoints
 
-Edit `/public_html/robots.txt` and replace `{{APP_URL}}` with your actual domain:
-```
-Sitemap: https://yourdomain.com/sitemap.xml
-```
+Set `SEO_URL=https://usp.com.pk` and `SEO_INDEXABLE=true` on production, then refresh the configuration cache. Remove old `public_html/robots.txt` and `public_html/sitemap.xml` copies: Laravel now serves these URLs dynamically. Preserve standard front-controller rewrites for `.xml` and `.txt` requests. See [SEO_GUIDE.md](SEO_GUIDE.md) for verification tags, server configuration, and search-console submission.
 
 ---
 
@@ -242,7 +239,7 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# Generate sitemap
+# Optionally save a private sitemap-index snapshot
 php artisan sitemap:generate
 
 # Create storage link (if not exists)
@@ -268,7 +265,7 @@ cd /home/username/laravel && php artisan schedule:run >> /dev/null 2>&1
 **Schedule:** `* * * * *` (Every minute)
 
 This will automatically:
-- Generate sitemap daily
+- Run registered application tasks (sitemap freshness does not require cron)
 - Run any scheduled tasks
 - Clean up old sessions
 
@@ -477,7 +474,7 @@ When updating your application:
    php artisan view:cache
    ```
 
-4. **Regenerate sitemap:**
+4. **Optionally save a private sitemap-index snapshot (live sitemap updates automatically):**
    ```bash
    php artisan sitemap:generate
    ```

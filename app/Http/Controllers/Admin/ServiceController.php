@@ -6,22 +6,24 @@ use App\Http\Controllers\Controller;
 use App\Models\Service;
 use App\Models\ServiceCategory;
 use App\Services\ImageOptimizationService;
+use App\Support\ReactPage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
 
 class ServiceController extends Controller
 {
     public function index()
     {
         $services = Service::with('category')->latest()->get();
-        return \App\Support\ReactPage::render('admin.services.index', compact('services'));
+
+        return ReactPage::render('admin.services.index', compact('services'));
     }
 
     public function create()
     {
         $categories = ServiceCategory::where('is_active', true)->get();
-        return \App\Support\ReactPage::render('admin.services.create', compact('categories'));
+
+        return ReactPage::render('admin.services.create', compact('categories'));
     }
 
     public function store(Request $request)
@@ -42,13 +44,13 @@ class ServiceController extends Controller
 
         $validated['slug'] = Str::slug($validated['title']);
         $originalSlug = $validated['slug'];
-        while (\App\Models\Service::where('slug', $validated['slug'])->exists()) {
-            $validated['slug'] = $originalSlug . '-' . uniqid();
+        while (Service::where('slug', $validated['slug'])->exists()) {
+            $validated['slug'] = $originalSlug.'-'.uniqid();
         }
-        
+
         // Handle checkboxes (they won't be in request if unchecked)
-        $validated['is_featured'] = $request->has('is_featured') ? 1 : 0;
-        $validated['is_active'] = $request->has('is_active') ? 1 : 0;
+        $validated['is_featured'] = $request->boolean('is_featured');
+        $validated['is_active'] = $request->boolean('is_active');
 
         // Convert features text to array
         if ($request->has('features_text')) {
@@ -58,7 +60,7 @@ class ServiceController extends Controller
 
         // Handle image upload with optimization
         if ($request->hasFile('image')) {
-            $imageService = new ImageOptimizationService();
+            $imageService = new ImageOptimizationService;
             $validated['image'] = $imageService->processImage($request->file('image'), 'services');
         }
 
@@ -71,7 +73,8 @@ class ServiceController extends Controller
     public function edit(Service $service)
     {
         $categories = ServiceCategory::where('is_active', true)->get();
-        return \App\Support\ReactPage::render('admin.services.edit', compact('service', 'categories'));
+
+        return ReactPage::render('admin.services.edit', compact('service', 'categories'));
     }
 
     public function update(Request $request, Service $service)
@@ -92,13 +95,13 @@ class ServiceController extends Controller
 
         $validated['slug'] = Str::slug($validated['title']);
         $originalSlug = $validated['slug'];
-        while (\App\Models\Service::where('slug', $validated['slug'])->where('id', '!=', $service->id)->exists()) {
-            $validated['slug'] = $originalSlug . '-' . uniqid();
+        while (Service::where('slug', $validated['slug'])->where('id', '!=', $service->id)->exists()) {
+            $validated['slug'] = $originalSlug.'-'.uniqid();
         }
-        
+
         // Handle checkboxes (they won't be in request if unchecked)
-        $validated['is_featured'] = $request->has('is_featured') ? 1 : 0;
-        $validated['is_active'] = $request->has('is_active') ? 1 : 0;
+        $validated['is_featured'] = $request->boolean('is_featured');
+        $validated['is_active'] = $request->boolean('is_active');
 
         // Convert features text to array
         if ($request->has('features_text')) {
@@ -108,7 +111,7 @@ class ServiceController extends Controller
 
         // Handle image upload with optimization
         if ($request->hasFile('image')) {
-            $imageService = new ImageOptimizationService();
+            $imageService = new ImageOptimizationService;
             if ($service->image) {
                 $imageService->deleteImage($service->image);
             }
@@ -124,7 +127,7 @@ class ServiceController extends Controller
     public function destroy(Service $service)
     {
         if ($service->image) {
-            $imageService = new ImageOptimizationService();
+            $imageService = new ImageOptimizationService;
             $imageService->deleteImage($service->image);
         }
 

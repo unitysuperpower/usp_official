@@ -319,7 +319,6 @@ export function ResourceEditor({ kind, ...props }) {
                                 Add feature +
                             </button>
                         </fieldset>
-                        <input type="hidden" name="is_active" value="0" />
                     </>
                 )}
                 {kind === "blog-categories" && (
@@ -398,65 +397,6 @@ function RequestsTable({ data }) {
                 },
             ]}
         />
-    );
-}
-export function Requests({ requests, request }) {
-    return (
-        <>
-            <Heading
-                title={request ? "Service request" : "Service requests"}
-                description="Turn new inquiries into meaningful partnerships."
-            />
-            {request ? (
-                <div className="split-panels">
-                    <div className="panel">
-                        <Badge>{request.status}</Badge>
-                        <h2>
-                            {request.service?.title || "Service unavailable"}
-                        </h2>
-                        <h3>{request.name}</h3>
-                        <p>
-                            <a href={`mailto:${request.email}`}>
-                                {request.email}
-                            </a>
-                        </p>
-                        <p>
-                            {request.phone} {request.company}
-                        </p>
-                        <p className="preserve">{request.message}</p>
-                        <small>{date(request.created_at)}</small>
-                    </div>
-                    <Form
-                        action={`/admin/requests/${request.id}/status`}
-                        method="PATCH"
-                        className="panel"
-                    >
-                        <Field
-                            name="status"
-                            type="select"
-                            value={request.status}
-                            options={[
-                                "pending",
-                                "in_progress",
-                                "completed",
-                                "cancelled",
-                            ]}
-                        />
-                        <Field
-                            name="admin_notes"
-                            title="Internal notes"
-                            type="textarea"
-                            value={request.admin_notes}
-                        />
-                    </Form>
-                </div>
-            ) : (
-                <div className="panel">
-                    <RequestsTable data={requests} />
-                    <Pagination data={requests} />
-                </div>
-            )}
-        </>
     );
 }
 export function Contacts({

@@ -6,6 +6,7 @@ use App\Events\NewChatMessage;
 use App\Http\Controllers\Controller;
 use App\Models\ChatConversation;
 use App\Models\ChatMessage;
+use App\Support\ReactPage;
 use Illuminate\Http\Request;
 
 class ChatController extends Controller
@@ -22,7 +23,7 @@ class ChatController extends Controller
         $totalUnread = ChatMessage::fromUser()->unread()->count();
         $activeConversations = ChatConversation::active()->count();
 
-        return \App\Support\ReactPage::render('admin.chat.index', compact('conversations', 'totalUnread', 'activeConversations'));
+        return ReactPage::render('admin.chat.index', compact('conversations', 'totalUnread', 'activeConversations'));
     }
 
     public function show($id)
@@ -36,7 +37,7 @@ class ChatController extends Controller
             ->where('is_read', false)
             ->update(['is_read' => true, 'read_at' => now()]);
 
-        return \App\Support\ReactPage::render('admin.chat.show', compact('conversation'));
+        return ReactPage::render('admin.chat.show', compact('conversation'));
     }
 
     public function sendMessage(Request $request)
@@ -65,14 +66,14 @@ class ChatController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => $message->load('user'),
+            'message' => $message->load('user:id,name'),
         ]);
     }
 
     public function getMessages($conversationId)
     {
         $messages = ChatMessage::where('conversation_id', $conversationId)
-            ->with('user')
+            ->with('user:id,name')
             ->orderBy('created_at', 'asc')
             ->get();
 

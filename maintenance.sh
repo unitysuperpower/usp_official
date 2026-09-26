@@ -1,22 +1,24 @@
 #!/bin/bash
+set -euo pipefail
 
 # Laravel Maintenance Commands for cPanel
 # Usage: Run these commands when performing updates
 
-LARAVEL_PATH="/home/username/laravel"
+LARAVEL_PATH="${LARAVEL_PATH:-/home/username/laravel}"
 
 echo "======================================"
 echo "Laravel Maintenance & Optimization"
 echo "======================================"
 
 # Navigate to Laravel directory
-cd $LARAVEL_PATH
+cd "$LARAVEL_PATH"
 
 echo ""
 echo "1. Putting application in maintenance mode..."
-php artisan down --refresh=15 --secret="maintenance-bypass-token"
+MAINTENANCE_SECRET="$(php -r 'echo bin2hex(random_bytes(24));')"
+php artisan down --refresh=15 --secret="$MAINTENANCE_SECRET"
 echo "   ✓ Maintenance mode enabled"
-echo "   Access during maintenance: https://yourdomain.com/maintenance-bypass-token"
+echo "   Access during maintenance: https://yourdomain.com/$MAINTENANCE_SECRET"
 
 echo ""
 echo "2. Clearing all caches..."
@@ -40,9 +42,9 @@ php artisan optimize
 echo "   ✓ Optimization completed"
 
 echo ""
-echo "5. Regenerating sitemap..."
+echo "5. Saving a private sitemap index snapshot..."
 php artisan sitemap:generate
-echo "   ✓ Sitemap generated"
+echo "   ✓ Snapshot saved; public sitemaps update live"
 
 echo ""
 echo "6. Bringing application back online..."

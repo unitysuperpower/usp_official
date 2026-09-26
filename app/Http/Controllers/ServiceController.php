@@ -4,19 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Service;
 use App\Models\ServiceCategory;
+use App\Support\ReactPage;
 use Illuminate\Http\Request;
-use Artesaos\SEOTools\Facades\SEOMeta;
-use Artesaos\SEOTools\Facades\OpenGraph;
-use Artesaos\SEOTools\Facades\TwitterCard;
 
 class ServiceController extends Controller
 {
     public function index(Request $request)
     {
-        SEOMeta::setTitle('Our Services');
-        SEOMeta::setDescription('Explore our comprehensive range of professional services designed to meet your business needs.');
-        SEOMeta::addKeyword(['services', 'professional services', 'business solutions']);
-
         $query = Service::where('is_active', true)->with('category');
 
         if ($request->has('category')) {
@@ -27,15 +21,15 @@ class ServiceController extends Controller
 
         if ($request->has('search')) {
             $query->where(function ($q) use ($request) {
-                $q->where('title', 'like', '%' . $request->search . '%')
-                    ->orWhere('description', 'like', '%' . $request->search . '%');
+                $q->where('title', 'like', '%'.$request->search.'%')
+                    ->orWhere('description', 'like', '%'.$request->search.'%');
             });
         }
 
         $services = $query->paginate(12)->withQueryString();
         $categories = ServiceCategory::where('is_active', true)->get();
 
-        return \App\Support\ReactPage::render('services.index', compact('services', 'categories'));
+        return ReactPage::render('services.index', compact('services', 'categories'));
     }
 
     public function category($slug)
@@ -50,7 +44,7 @@ class ServiceController extends Controller
 
         $allCategories = ServiceCategory::where('is_active', true)->get();
 
-        return \App\Support\ReactPage::render('services.category', compact('category', 'services', 'allCategories'));
+        return ReactPage::render('services.category', compact('category', 'services', 'allCategories'));
     }
 
     public function show($slug)
@@ -63,25 +57,12 @@ class ServiceController extends Controller
         // Increment views
         $service->incrementViews();
 
-        SEOMeta::setTitle($service->title);
-        SEOMeta::setDescription(strip_tags($service->short_description ?? $service->description));
-        SEOMeta::addKeyword([$service->title, $service->category->name, 'service']);
-
-        OpenGraph::setTitle($service->title);
-        OpenGraph::setDescription(strip_tags($service->short_description ?? $service->description));
-        if ($service->image) {
-            OpenGraph::addImage(asset('storage/' . $service->image));
-        }
-
-        TwitterCard::setTitle($service->title);
-        TwitterCard::setDescription(strip_tags($service->short_description ?? $service->description));
-
         $relatedServices = Service::where('category_id', $service->category_id)
             ->where('id', '!=', $service->id)
             ->where('is_active', true)
             ->take(3)
             ->get();
 
-        return \App\Support\ReactPage::render('services.show', compact('service', 'relatedServices'));
+        return ReactPage::render('services.show', compact('service', 'relatedServices'));
     }
 }

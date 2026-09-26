@@ -43,6 +43,6 @@ class Service extends Model
 
     public function incrementViews(): void
     {
-        $this->increment('views');
+        static::withoutTimestamps(fn () => $this->increment('views'));
     }
 }

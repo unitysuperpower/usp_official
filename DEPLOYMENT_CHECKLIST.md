@@ -8,7 +8,7 @@
 - [ ] Run `php artisan config:cache`
 - [ ] Run `php artisan route:cache`
 - [ ] Run `php artisan view:cache`
-- [ ] Run `php artisan sitemap:generate`
+- [ ] Check live `/sitemap.xml`; optionally run `php artisan sitemap:generate` for a private index snapshot
 - [ ] Create ZIP file (exclude: node_modules, vendor, .git, .env)
 
 ## cPanel Setup
@@ -42,7 +42,7 @@ Choose ONE option:
 - [ ] Update database credentials in `.env`
 - [ ] Update APP_URL in `.env`
 - [ ] Run `php artisan key:generate`
-- [ ] Update `public_html/robots.txt` with actual domain
+- [ ] Set `SEO_URL=https://usp.com.pk`, enable `SEO_INDEXABLE` on production, and remove old static robots/sitemap copies; see `SEO_GUIDE.md`.
 
 ## Database & Optimization
 
@@ -52,7 +52,7 @@ Choose ONE option:
 - [ ] Run `php artisan config:cache`
 - [ ] Run `php artisan route:cache`
 - [ ] Run `php artisan view:cache`
-- [ ] Run `php artisan sitemap:generate`
+- [ ] Check live `/sitemap.xml`; optionally run `php artisan sitemap:generate` for a private index snapshot
 
 ## Cron Job Setup
 
@@ -153,8 +153,8 @@ find storage -type f -exec chmod 644 {} \;
 - [ ] `.htaccess` (in public_html, from `.htaccess.cpanel`)
 - [ ] `composer.json` and `composer.lock`
 - [ ] `public/build/` (production assets)
-- [ ] `public/sitemap.xml`
-- [ ] `public/robots.txt`
+- [ ] Live `/sitemap.xml` route reachable (no static copy)
+- [ ] Live `/robots.txt` route reachable (no static copy)
 - [ ] All `app/` files
 - [ ] All `config/` files
 - [ ] All `database/` files

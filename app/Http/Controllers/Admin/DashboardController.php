@@ -3,11 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Project;
 use App\Models\Service;
-use App\Models\ServiceCategory;
 use App\Models\ServiceRequest;
-use App\Models\User;
-use Illuminate\Http\Request;
+use App\Support\ReactPage;
 
 class DashboardController extends Controller
 {
@@ -15,10 +14,10 @@ class DashboardController extends Controller
     {
         $stats = [
             'total_services' => Service::count(),
-            'total_categories' => ServiceCategory::count(),
+            'active_projects' => Project::whereNotIn('status', ['completed', 'cancelled'])->count(),
             'total_requests' => ServiceRequest::count(),
             'pending_requests' => ServiceRequest::where('status', 'pending')->count(),
-            'total_users' => User::count(),
+            'overdue_follow_ups' => ServiceRequest::whereNotIn('lead_stage', ['won', 'lost'])->whereDate('follow_up_on', '<', today())->count(),
         ];
 
         $recentRequests = ServiceRequest::with(['service.category', 'user'])
@@ -26,6 +25,6 @@ class DashboardController extends Controller
             ->take(10)
             ->get();
 
-        return \App\Support\ReactPage::render('admin.dashboard', compact('stats', 'recentRequests'));
+        return ReactPage::render('admin.dashboard', compact('stats', 'recentRequests'));
     }
 }

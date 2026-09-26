@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { createContext, useContext, useState } from "react";
 import DOMPurify from "dompurify";
 export const context = window.__USP__;
+const FormScope = createContext(null);
 export const rows = (value) =>
     Array.isArray(value) ? value : value?.data || [];
 export const label = (value) =>
@@ -33,14 +34,20 @@ export function Html({ value }) {
 export function Badge({ children }) {
     return <span className={`badge ${children}`}>{label(children)}</span>;
 }
-export function Heading({ eyebrow, title, description, children }) {
+export function Heading({
+    eyebrow,
+    title,
+    description,
+    children,
+    as: Title = "h1",
+}) {
     return (
         <header className="page-heading">
             <div>
                 <span className="eyebrow">
                     {eyebrow || "USP TECH SOLUTION"}
                 </span>
-                <h1>{title}</h1>
+                <Title className="page-title">{title}</Title>
                 {description && <p>{description}</p>}
             </div>
             {children}
@@ -96,7 +103,10 @@ export function Field({
     required = false,
     ...rest
 }) {
-    const initial = context.old[name] ?? value ?? "";
+    const action = useContext(FormScope);
+    const useOld =
+        !context.old._form_action || context.old._form_action === action;
+    const initial = (useOld ? context.old[name] : undefined) ?? value ?? "";
     return (
         <label className={type === "checkbox" ? "check-field" : "field"}>
             <span>
@@ -125,13 +135,18 @@ export function Field({
                     ))}
                 </select>
             ) : type === "checkbox" ? (
-                <input
-                    type="checkbox"
-                    name={name}
-                    value="1"
-                    defaultChecked={Boolean(initial)}
-                    {...rest}
-                />
+                <>
+                    <input type="hidden" name={name} value="0" />
+                    <input
+                        type="checkbox"
+                        name={name}
+                        value="1"
+                        defaultChecked={
+                            initial === true || initial === 1 || initial === "1"
+                        }
+                        {...rest}
+                    />
+                </>
             ) : (
                 <input
                     name={name}
@@ -141,7 +156,7 @@ export function Field({
                     {...rest}
                 />
             )}{" "}
-            {context.errors[name] && (
+            {useOld && context.errors[name] && (
                 <small className="error">
                     {context.errors[name].join(" ")}
                 </small>
@@ -160,34 +175,45 @@ export function Form({
 }) {
     const [busy, setBusy] = useState(false);
     return (
-        <form
-            action={action}
-            method={method === "GET" ? "GET" : "POST"}
-            encType={method === "GET" ? undefined : "multipart/form-data"}
-            className={`form ${className}`}
-            onSubmit={(e) => {
-                if (confirm && !window.confirm(confirm)) {
-                    e.preventDefault();
-                    return;
-                }
-                setBusy(true);
-            }}
-            {...rest}
-        >
-            {method !== "GET" && (
-                <>
-                    <input type="hidden" name="_token" value={context.csrf} />
-                    <input type="hidden" name="_method" value={method} />
-                </>
-            )}
-            {children}
-            {submit && (
-                <button className="button" disabled={busy}>
-                    {busy ? "Please wait…" : submit}
-                    <span aria-hidden="true"> ↗</span>
-                </button>
-            )}
-        </form>
+        <FormScope.Provider value={action}>
+            <form
+                action={action}
+                method={method === "GET" ? "GET" : "POST"}
+                encType={method === "GET" ? undefined : "multipart/form-data"}
+                className={`form ${className}`}
+                onSubmit={(e) => {
+                    if (confirm && !window.confirm(confirm)) {
+                        e.preventDefault();
+                        return;
+                    }
+                    setBusy(true);
+                }}
+                {...rest}
+            >
+                {method !== "GET" && (
+                    <>
+                        <input
+                            type="hidden"
+                            name="_form_action"
+                            value={action}
+                        />
+                        <input
+                            type="hidden"
+                            name="_token"
+                            value={context.csrf}
+                        />
+                        <input type="hidden" name="_method" value={method} />
+                    </>
+                )}
+                {children}
+                {submit && (
+                    <button className="button" disabled={busy}>
+                        {busy ? "Please wait…" : submit}
+                        <span aria-hidden="true"> ↗</span>
+                    </button>
+                )}
+            </form>
+        </FormScope.Provider>
     );
 }
 export async function api(url, options = {}) {

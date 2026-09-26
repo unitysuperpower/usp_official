@@ -14,6 +14,7 @@ Run `php artisan serve` in another terminal. Open the Laravel URL, not the Vite 
 ## Where to edit
 
 - `resources/js/react/app.jsx`: navigation, layouts, and page selection.
+- `resources/js/react/sidebar.jsx`: grouped admin navigation, persisted compact mode, and accessible mobile drawer.
 - `resources/js/react/public.jsx`: homepage, services, journal, contact, and customer dashboard.
 - `resources/js/react/admin.jsx`: content management, requests, contact inbox, and analytics.
 - `resources/js/react/account.jsx`: authentication, profile, appearance, security, and chat.
@@ -32,7 +33,7 @@ Existing Blade pages are retained for reference; editing `home.blade.php`, `dash
 - Chat uses authenticated JSON endpoints and refreshes every five seconds. Existing broadcasting support remains available in the backend.
 - Email replies and password-reset emails still depend on the application's mail configuration. Browser tests used an isolated database and an in-memory mailer, so external delivery was not tested.
 - Two-factor setup and recovery codes use Fortify endpoints. Visiting security settings never changes two-factor credentials.
-- Server-generated SEO metadata is retained. Page body content is rendered client-side and requires JavaScript; server-side React rendering is not configured.
+- Public pages send centralized SEO metadata, structured data, and readable server-rendered HTML before React mounts. The HTML uses the same content records for all visitors; React replaces it with the interactive interface. This is a Blade content fallback, not React hydration. Account features and forms still require JavaScript. See `SEO_GUIDE.md`.
 - Uploaded images continue using Laravel public storage. Existing upload, storage-link, mail, and broadcasting configuration applies.
 
 ## Validation
@@ -42,4 +43,4 @@ npm run build
 php artisan test
 ```
 
-The migration adds integration coverage in `tests/Feature/ReactMigrationTest.php`, including admin authorization, customer request isolation, author privacy, profile updates, contact submission, request status changes, chat relation serialization, and clearing optional editor fields. The existing PHP configuration produces a `PDO::MYSQL_ATTR_SSL_CA` deprecation warning on this machine.
+The migration adds integration coverage in `tests/Feature/ReactMigrationTest.php`, including admin authorization, customer request isolation, author privacy, profile updates, contact submission, request status changes, chat relation serialization, and clearing optional editor fields. PHP 8.5 MySQL SSL constants are selected conditionally while retaining compatibility with PHP 8.2–8.4. Further regression coverage is in `tests/Feature/ProjectReviewTest.php`.

@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # ==============================================
 # Laravel cPanel Deployment Script
@@ -6,8 +7,8 @@
 # ==============================================
 
 # IMPORTANT: Update these paths for your cPanel
-LARAVEL_PATH="/home/username/laravel"
-PUBLIC_HTML="/home/username/public_html"
+LARAVEL_PATH="${LARAVEL_PATH:-/home/username/laravel}"
+PUBLIC_HTML="${PUBLIC_HTML:-/home/username/public_html}"
 
 echo "======================================"
 echo "Laravel cPanel Deployment"
@@ -21,7 +22,7 @@ if [ ! -f "$LARAVEL_PATH/artisan" ]; then
     exit 1
 fi
 
-cd $LARAVEL_PATH
+cd "$LARAVEL_PATH"
 
 echo "✓ Found Laravel installation"
 echo ""
@@ -52,10 +53,14 @@ else
 fi
 echo ""
 
-# Step 3: Generate Application Key
-echo "3. Generating application key..."
-php artisan key:generate --force
-echo "   ✓ Application key generated"
+# Step 3: Preserve existing encryption keys across deployments.
+echo "3. Checking application key..."
+if php -r 'require "vendor/autoload.php"; $values = Dotenv\Dotenv::parse(file_get_contents(".env")); exit(empty($values["APP_KEY"]) ? 0 : 1);'; then
+    php artisan key:generate --force
+    echo "   ✓ Application key generated"
+else
+    echo "   ✓ Existing application key preserved"
+fi
 echo ""
 
 # Step 4: Set Permissions
@@ -103,27 +108,25 @@ echo "   ✓ Optimization completed"
 echo ""
 
 # Step 9: Generate Sitemap
-echo "9. Generating sitemap..."
+echo "9. Saving a private sitemap index snapshot..."
 php artisan sitemap:generate
-echo "   ✓ Sitemap generated"
+echo "   ✓ Live sitemap available; private snapshot saved"
 echo ""
 
-# Step 10: Update robots.txt
-echo "10. Updating robots.txt..."
-if [ -f "$PUBLIC_HTML/robots.txt" ]; then
-    # This will need manual update with actual domain
-    echo "   ⚠ Please manually update $PUBLIC_HTML/robots.txt with your domain"
-    echo "   Replace {{APP_URL}} with https://yourdomain.com"
-else
-    echo "   ⚠ robots.txt not found in public_html"
+# Step 10: Static copies bypass the live Laravel discovery endpoints.
+echo "10. Checking for obsolete static SEO files..."
+if [ -f "$PUBLIC_HTML/robots.txt" ] || [ -f "$PUBLIC_HTML/sitemap.xml" ]; then
+    echo "   ❌ Remove the obsolete robots.txt/sitemap.xml copies from $PUBLIC_HTML so Laravel serves the live endpoints. See SEO_GUIDE.md."
+    exit 1
 fi
+echo "   ✓ Discovery endpoints will be served by Laravel"
 echo ""
 
 # Step 11: Copy .htaccess
 echo "11. Setting up .htaccess..."
 if [ -f ".htaccess.cpanel" ]; then
     if [ ! -f "$PUBLIC_HTML/.htaccess" ]; then
-        cp .htaccess.cpanel $PUBLIC_HTML/.htaccess
+        cp .htaccess.cpanel "$PUBLIC_HTML/.htaccess"
         echo "   ✓ .htaccess copied to public_html"
     else
         echo "   ⚠ .htaccess already exists in public_html"
@@ -144,9 +147,9 @@ echo ""
 echo "[ ] Update .env with your database credentials"
 echo "[ ] Update .env with your APP_URL (https://yourdomain.com)"
 echo "[ ] Update .env with your mail settings"
-echo "[ ] Update robots.txt with your actual domain"
+echo "[ ] Set SEO_URL=https://usp.com.pk and SEO_INDEXABLE=true on production"
 echo "[ ] Setup cron job for scheduler:"
-echo "    * * * * * cd $LARAVEL_PATH && php artisan schedule:run >> /dev/null 2>&1"
+echo "    * * * * * cd "$LARAVEL_PATH" && php artisan schedule:run >> /dev/null 2>&1"
 echo "[ ] Enable SSL certificate in cPanel"
 echo "[ ] Test your website: https://yourdomain.com"
 echo "[ ] Submit sitemap to Google Search Console"
@@ -155,7 +158,7 @@ echo ""
 echo "🔍 Important Files to Review:"
 echo "  - $LARAVEL_PATH/.env (database credentials)"
 echo "  - $PUBLIC_HTML/.htaccess (Apache config)"
-echo "  - $PUBLIC_HTML/robots.txt (SEO directives)"
+echo "  - https://usp.com.pk/robots.txt (live SEO directives)"
 echo ""
 
 echo "📊 Test These URLs:"

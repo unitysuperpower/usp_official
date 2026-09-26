@@ -4,8 +4,9 @@ namespace App\Mail;
 
 use App\Models\ContactMessage;
 use Illuminate\Mail\Mailable;
-use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
 class ContactReplyMail extends Mailable
@@ -13,7 +14,9 @@ class ContactReplyMail extends Mailable
     use SerializesModels;
 
     public ContactMessage $message;
-    public string $subject;
+
+    public string $replySubject;
+
     public string $replyContent;
 
     /**
@@ -22,7 +25,7 @@ class ContactReplyMail extends Mailable
     public function __construct(ContactMessage $message, string $subject, string $replyContent)
     {
         $this->message = $message;
-        $this->subject = $subject;
+        $this->replySubject = $subject;
         $this->replyContent = $replyContent;
     }
 
@@ -32,7 +35,7 @@ class ContactReplyMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: $this->subject,
+            subject: $this->replySubject,
         );
     }
 
@@ -44,6 +47,7 @@ class ContactReplyMail extends Mailable
         return new Content(
             view: 'emails.contact-reply',
             with: [
+                'subject' => $this->replySubject,
                 'originalMessage' => $this->message,
                 'replyContent' => $this->replyContent,
             ],
@@ -53,7 +57,7 @@ class ContactReplyMail extends Mailable
     /**
      * Get the attachments for the message.
      *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     * @return array<int, Attachment>
      */
     public function attachments(): array
     {

@@ -4,15 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Events\NewContactMessage as NewContactMessageEvent;
 use App\Models\ContactMessage;
-use App\Models\Service;
 use App\Models\ServiceRequest;
+use App\Support\ReactPage;
 use Illuminate\Http\Request;
 
 class ContactController extends Controller
 {
     public function index()
     {
-        return \App\Support\ReactPage::render('contact');
+        return ReactPage::render('contact');
     }
 
     public function store(Request $request)
@@ -28,7 +28,7 @@ class ContactController extends Controller
     protected function storeServiceRequest(Request $request)
     {
         $validated = $request->validate([
-            'service_id' => 'required|exists:services,id',
+            'service_id' => 'required|exists:services,id,is_active,1',
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'phone' => 'nullable|string|max:20',
