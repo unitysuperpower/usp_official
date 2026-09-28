@@ -56,14 +56,8 @@ export function AdminDashboard({ stats, recentRequests }) {
     );
 }
 export function ResourceList({ kind, ...props }) {
-    const [search, setSearch] = useState("");
     const data = props[kind === "blog-categories" ? "categories" : kind] || [];
     const categories = kind.includes("categories");
-    const filtered = rows(data).filter((x) =>
-        `${x.title || x.name} ${x.category?.name || ""}`
-            .toLowerCase()
-            .includes(search.toLowerCase()),
-    );
     return (
         <>
             <Heading
@@ -81,17 +75,13 @@ export function ResourceList({ kind, ...props }) {
                 </a>
             </Heading>
             <div className="panel">
-                <label className="field">
-                    <span>Search {resourceNames[kind].toLowerCase()}</span>
-                    <input
-                        type="search"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search by name…"
-                    />
-                </label>
+                <Form action={`/admin/${kind}`} method="GET" className="search-form" submit="Search">
+                    <Field name="search" type="search" title={`Search ${resourceNames[kind].toLowerCase()}`} value={props.filters?.search} maxLength={200} placeholder="Search by name or category…" />
+                    <a className="text-link" href={`/admin/${kind}`}>Reset</a>
+                </Form>
+                <p>{data.total || 0} results</p>
                 <Table
-                    data={filtered}
+                    data={data}
                     columns={[
                         {
                             title: "Name",
@@ -152,8 +142,9 @@ export function ResourceList({ kind, ...props }) {
                             ),
                         },
                     ]}
-                    empty="Ready for something new?"
+                    empty={props.filters?.search ? "No matching results" : "Ready for something new?"}
                 />
+                <Pagination data={data} />
             </div>
         </>
     );

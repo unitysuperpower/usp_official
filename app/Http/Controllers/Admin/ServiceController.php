@@ -12,11 +12,17 @@ use Illuminate\Support\Str;
 
 class ServiceController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $services = Service::with('category')->latest()->get();
+        $filters = $request->validate(['search' => 'nullable|string|max:200']);
+        $search = trim($filters['search'] ?? '');
+        $services = Service::with('category')
+            ->when($search !== '', fn ($query) => $query->where(fn ($match) => $match
+                ->where('title', 'like', "%{$search}%")
+                ->orWhereHas('category', fn ($category) => $category->where('name', 'like', "%{$search}%"))))
+            ->latest()->orderByDesc('id')->paginate(20)->withQueryString();
 
-        return ReactPage::render('admin.services.index', compact('services'));
+        return ReactPage::render('admin.services.index', compact('services', 'filters'));
     }
 
     public function create()

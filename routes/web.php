@@ -173,3 +173,5 @@ Route::middleware('auth')->group(function () {
     Route::get('projects/{project}/files/{file}', [ProjectController::class, 'download'])->name('projects.files.download');
     Route::delete('projects/{project}/files/{file}', [ProjectController::class, 'deleteFile'])->name('projects.files.delete');
 });
+
+require __DIR__.'/education.php';

@@ -11,11 +11,16 @@ use Illuminate\Validation\Rule;
 
 class ServiceCategoryController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $categories = ServiceCategory::withCount('services')->latest()->get();
+        $filters = $request->validate(['search' => 'nullable|string|max:200']);
+        $search = trim($filters['search'] ?? '');
+        $categories = ServiceCategory::withCount('services')
+            ->when($search !== '', fn ($query) => $query->where(fn ($match) => $match
+                ->where('name', 'like', "%{$search}%")))
+            ->latest()->orderByDesc('id')->paginate(20)->withQueryString();
 
-        return ReactPage::render('admin.categories.index', compact('categories'));
+        return ReactPage::render('admin.categories.index', compact('categories', 'filters'));
     }
 
     public function create()

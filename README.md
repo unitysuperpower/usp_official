@@ -1,6 +1,6 @@
 # USP Technology Company - Complete Tech Services Website
 
-A fully dynamic, responsive tech solution website built with Laravel and Tailwind CSS featuring service management, contact system, and live chat.
+A fully dynamic, responsive tech solution website built with Laravel, React, and Tailwind CSS featuring service management, contact system, and live chat.
 
 ## Features
 
@@ -20,7 +20,7 @@ A fully dynamic, responsive tech solution website built with Laravel and Tailwin
 
 ### Live Chat System
 - **Floating Chat Button**: Visible only to logged-in users
-- **Real-time Messaging**: Livewire-powered chat interface
+- **Real-time Messaging**: React chat interface with polling and optional WebSocket updates
 - **Message History**: Persistent conversation storage
 - **Admin/User Distinction**: Different message styles for admins and users
 - **Auto-scroll**: Automatically scrolls to latest messages
@@ -28,8 +28,8 @@ A fully dynamic, responsive tech solution website built with Laravel and Tailwin
 ## Technology Stack
 
 - **Backend**: Laravel 12
-- **Frontend**: Blade Templates, Tailwind CSS
-- **Real-time**: Livewire 3
+- **Frontend**: React 19, Tailwind CSS, Blade page shell
+- **Real-time**: Laravel Echo / Pusher, with polling fallback
 - **Database**: MySQL/SQLite
 - **Authentication**: Laravel Fortify
 - **Assets**: Vite
@@ -76,10 +76,12 @@ A fully dynamic, responsive tech solution website built with Laravel and Tailwin
    - Public site: http://localhost:8000
    - Admin panel: http://localhost:8000/admin/dashboard
 
-## Default Credentials
+## Local demo credentials
+
+Only run `DemoDataSeeder` in a disposable local database. For a real installation, skip demo seeding and create your administrator with `php artisan admin:create`.
 
 ### Admin Account
-- Email: `admin@techsolution.com`
+- Email: `admin@usp.com.pk`
 - Password: `password`
 
 ### Regular User
@@ -146,14 +148,18 @@ A fully dynamic, responsive tech solution website built with Laravel and Tailwin
 3. Set as active
 
 ### Modifying Design
-- Layouts: `resources/views/layouts/`
-- Public views: `resources/views/`
-- Admin views: `resources/views/admin/`
-- Styles: `resources/css/app.css`
+- Public pages and homepage: `resources/js/react/public.jsx`
+- Admin content: `resources/js/react/admin.jsx`
+- Leads and project workspaces: `resources/js/react/projects.jsx`
+- Shared forms and tables: `resources/js/react/ui.jsx`
+- Styles: `resources/css/react.css`
+- Blade shell: `resources/views/react.blade.php`
+
+`resources/views/welcome.blade.php` is a legacy template and does not control the homepage.
 
 ### Extending Chat Features
-- Chat components: `app/Livewire/Chat/`
-- Chat views: `resources/views/livewire/chat/`
+- Floating chat: `resources/js/react/floating-chat.jsx`
+- Chat endpoints: `app/Http/Controllers/ChatController.php` and `app/Http/Controllers/Admin/ChatController.php`
 
 ## Production Deployment
 
@@ -206,3 +212,17 @@ For issues or questions about this project, please check the Laravel and Livewir
 ## License
 
 This is a custom-built application. Please refer to your organization's licensing terms.
+
+## Verification and delivery
+
+Run `php artisan test --compact` and `npm run build` before delivery.
+
+The app also includes lead assignment and follow-ups, lead-to-project conversion,
+customer project workspaces, milestone approvals, private file sharing, blog
+engagement, two-factor settings, and SEO endpoints. Admin services, articles,
+and categories support server-side search and pagination.
+
+See `REACT_FRONTEND.md`, `SEO_GUIDE.md`, and `DEPLOYMENT_GUIDE.md` for deployment
+and integration setup. Default mail and broadcast drivers write to logs; real
+email, WebSocket, and browser push delivery require configured providers and
+verification in the target environment.

@@ -11,11 +11,16 @@ use Illuminate\Validation\Rule;
 
 class BlogCategoryController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $categories = BlogCategory::withCount('blogs')->latest()->get();
+        $filters = $request->validate(['search' => 'nullable|string|max:200']);
+        $search = trim($filters['search'] ?? '');
+        $categories = BlogCategory::withCount('blogs')
+            ->when($search !== '', fn ($query) => $query->where(fn ($match) => $match
+                ->where('name', 'like', "%{$search}%")))
+            ->latest()->orderByDesc('id')->paginate(20)->withQueryString();
 
-        return ReactPage::render('admin.blog-categories.index', compact('categories'));
+        return ReactPage::render('admin.blog-categories.index', compact('categories', 'filters'));
     }
 
     public function create()

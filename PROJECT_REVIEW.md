@@ -24,7 +24,7 @@ Reviewed routes, controllers, models, authorization, React layouts/forms, chat, 
 ## Remaining opportunities
 
 - **Legacy frontend:** older Blade pages, Livewire components, and chat models coexist with React. Some still reference one another and existing tests exercise Livewire. Retire these together in a dedicated migration cleanup. Editing `welcome.blade.php` does not change the active React homepage. The active sidebar is `resources/js/react/sidebar.jsx`.
-- **Large datasets:** admin content lists search all loaded rows; full-page chat loads complete history. Add server-side search/pagination and incremental message loading as volumes grow.
+- **Large datasets:** admin services, articles, and categories now use server-side search and pagination. Full-page chat still loads complete history; incremental message loading remains a future improvement.
 - **Search visibility:** the SEO follow-up now provides readable public HTML before React mounts, centralized metadata, structured data, and live sitemaps. See `SEO_GUIDE.md`; full React hydration remains a possible future architectural improvement.
 - **Analytics:** content rankings use lifetime counters while visit summaries use the selected period. Session estimates group by IP/day; clarify these definitions before relying on them as precise business measurements.
 - **Build maintenance:** Browserslist data is stale. Refresh it during dependency maintenance; package/framework upgrades were outside this change.
@@ -39,3 +39,11 @@ Reviewed routes, controllers, models, authorization, React layouts/forms, chat, 
 - Desktop, compact, and mobile screenshots inspected. Preview data stayed under `/tmp`; the application database was not migrated or seeded.
 
 Tests used fake mail/storage or an in-memory database. Browser preview used non-delivering mail/broadcast drivers. No live deployment or external delivery was performed.
+
+## Completion pass — 28 September 2026
+
+- Added database search and 20-row pagination to all four admin content lists, including category-name search for services and articles, retained query parameters, reset controls, result counts, and empty search states.
+- Corrected README frontend paths, demo administrator email, administrator setup, and integration notes.
+- Added four parameterized regression cases covering pagination, matches beyond the first page, empty results, invalid search input, category matching, and retained search links.
+- Verification: 86 tests passed (460 assertions); production frontend build and diff whitespace checks passed. Build still reports stale Browserslist data.
+- No production deployment or live mail, WebSocket, or push delivery was performed. Legacy frontend cleanup and incremental chat history remain outside this pass.

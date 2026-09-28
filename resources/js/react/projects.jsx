@@ -45,6 +45,70 @@ function Progress({ project }) {
         </div>
     );
 }
+function LeadInbox({ requests, assignees, stats = {}, filters }) {
+    const filtered = Boolean(filters.search || filters.stage || filters.assigned_to || Number(filters.overdue));
+    const metrics = [
+        ["open_leads", "Open leads", "New, contacted & qualified", "◎"],
+        ["qualified", "Qualified", "Ready for the next step", "✓"],
+        ["overdue_follow_ups", "Overdue follow-ups", "Open leads needing attention", "◷"],
+        ["won", "Won leads", "Closed as won", "↗"],
+    ];
+    return (
+        <div className="lead-inbox">
+            <div className="lead-metrics" aria-label="Overall pipeline summary">
+                {metrics.map(([key, title, hint, icon]) => (
+                    <article className={`lead-metric ${key === "overdue_follow_ups" && stats[key] > 0 ? "needs-attention" : ""}`} key={key}>
+                        <div><span>{title}</span><span className="lead-metric-icon" aria-hidden="true">{icon}</span></div>
+                        <strong>{Number(stats[key] || 0).toLocaleString()}</strong>
+                        <small>{hint}</small>
+                    </article>
+                ))}
+            </div>
+            <section className="panel lead-list" aria-labelledby="requests-heading">
+                <div className="lead-list-heading">
+                    <div><h2 id="requests-heading">Request inbox <span className="lead-count">{requests?.total || 0}</span></h2><p>Review inquiries, assign an owner, and plan the next follow-up.</p></div>
+                    <span className="lead-sort">Newest first</span>
+                </div>
+                <Form action="/admin/requests" method="GET" className="lead-filters" submit={null}>
+                    <div className="lead-filter-fields">
+                        <Field name="search" type="search" title="Search requests" placeholder="Name, email or company" value={filters.search} maxLength={200} />
+                        <Field name="stage" title="Lead stage" type="select" value={filters.stage} options={[{ value: "", label: "All stages" }, ...stages]} />
+                        <Field name="assigned_to" title="Assigned owner" type="select" value={filters.assigned_to} options={owners(assignees, "All owners")} />
+                    </div>
+                    <div className="lead-filter-actions">
+                        <Field name="overdue" title="Overdue follow-ups only" type="checkbox" value={filters.overdue} />
+                        <div>{filtered && <a className="text-link" href="/admin/requests">Clear filters</a>}<button className="button" type="submit">Apply filters <span aria-hidden="true">→</span></button></div>
+                    </div>
+                </Form>
+                {rows(requests).length ? (
+                    <div className="lead-table-wrap">
+                        <table className="lead-table">
+                            <caption className="lead-sr-only">Customer requests, newest first</caption>
+                            <thead><tr>{["Customer / service", "Stage / priority", "Owner", "Follow-up", ""].map((title, i) => <th scope="col" key={i}>{title || <span className="lead-sr-only">Actions</span>}</th>)}</tr></thead>
+                            <tbody>{rows(requests).map((r) => (
+                                <tr key={r.id}>
+                                    <td className="lead-customer-cell">
+                                        <div className="lead-customer">
+                                            <span className="lead-avatar" aria-hidden="true">{r.name.trim().split(/\s+/).slice(0, 2).map(part => part[0]).join("")}</span>
+                                            <div><a className="table-title" href={`/admin/requests/${r.id}`}>{r.name}</a><span className="table-subtitle">{r.company || r.email}</span><span className="lead-service">{r.service?.title || "Service unavailable"}</span></div>
+                                        </div>
+                                    </td>
+                                    <td data-label="Stage / priority"><div className="lead-status"><Badge>{r.lead_stage}</Badge><span className={`lead-priority ${r.priority}`}><span aria-hidden="true">●</span> {r.priority} priority</span></div></td>
+                                    <td data-label="Owner"><span className={!r.assignee ? "lead-muted" : ""}>{r.assignee?.name || "Unassigned"}</span></td>
+                                    <td data-label="Follow-up">{r.follow_up_on ? <Due value={r.follow_up_on} closed={["won", "lost"].includes(r.lead_stage)} /> : <span className="lead-muted">Not scheduled</span>}</td>
+                                    <td className="lead-row-actions"><a className="lead-review" href={`/admin/requests/${r.id}`} aria-label={`Review request from ${r.name}`}>Review <span aria-hidden="true">→</span></a>{r.project && <a className="lead-project" href={`/admin/projects/${r.project.id}`}>View project ↗</a>}</td>
+                                </tr>
+                            ))}</tbody>
+                        </table>
+                    </div>
+                ) : (
+                    <div className="lead-empty"><span aria-hidden="true">◎</span><h3>{filtered ? "No requests match your filters" : "Your inbox is clear"}</h3><p>{filtered ? "Try a different search, stage, or owner to find the request you need." : "New service inquiries will appear here, ready for your team to follow up."}</p>{filtered && <a className="button" href="/admin/requests">Clear filters</a>}</div>
+                )}
+                <footer className="lead-list-footer"><span>{requests?.total ? `Showing ${requests.from}–${requests.to} of ${requests.total} requests` : "0 requests"}{filtered && " · Filtered results"}</span><Pagination data={requests} /></footer>
+            </section>
+        </div>
+    );
+}
 export function Leads({ requests, request, assignees, stats, filters = {} }) {
     return (
         <>
@@ -64,113 +128,7 @@ export function Leads({ requests, request, assignees, stats, filters = {} }) {
                 )}
             </Heading>
             {!request ? (
-                <>
-                    <Stats stats={stats} />
-                    <Form
-                        action="/admin/requests"
-                        method="GET"
-                        className="panel workflow-filters"
-                        submit="Apply filters"
-                    >
-                        <Field
-                            name="search"
-                            title="Search name, email or company"
-                            value={filters.search}
-                        />
-                        <Field
-                            name="stage"
-                            title="Stage"
-                            type="select"
-                            value={filters.stage}
-                            options={[
-                                { value: "", label: "All stages" },
-                                ...stages,
-                            ]}
-                        />
-                        <Field
-                            name="assigned_to"
-                            title="Owner"
-                            type="select"
-                            value={filters.assigned_to}
-                            options={owners(assignees, "All owners")}
-                        />
-                        <Field
-                            name="overdue"
-                            title="Overdue follow-ups only"
-                            type="checkbox"
-                            value={filters.overdue}
-                        />
-                        <a className="text-link" href="/admin/requests">
-                            Reset
-                        </a>
-                    </Form>
-                    <div className="panel">
-                        <Table
-                            data={requests}
-                            columns={[
-                                {
-                                    title: "Customer",
-                                    render: (r) => (
-                                        <a
-                                            className="table-title"
-                                            href={`/admin/requests/${r.id}`}
-                                        >
-                                            {r.name}
-                                            <small className="table-subtitle">
-                                                {r.company || r.email}
-                                            </small>
-                                        </a>
-                                    ),
-                                },
-                                {
-                                    title: "Service",
-                                    render: (r) =>
-                                        r.service?.title || "Unavailable",
-                                },
-                                {
-                                    title: "Stage",
-                                    render: (r) => (
-                                        <Badge>{r.lead_stage}</Badge>
-                                    ),
-                                },
-                                {
-                                    title: "Priority",
-                                    render: (r) => <Badge>{r.priority}</Badge>,
-                                },
-                                {
-                                    title: "Owner",
-                                    render: (r) =>
-                                        r.assignee?.name || "Unassigned",
-                                },
-                                {
-                                    title: "Follow-up",
-                                    render: (r) => (
-                                        <Due
-                                            value={r.follow_up_on}
-                                            closed={["won", "lost"].includes(
-                                                r.lead_stage,
-                                            )}
-                                        />
-                                    ),
-                                },
-                                {
-                                    title: "Project",
-                                    render: (r) =>
-                                        r.project ? (
-                                            <a
-                                                href={`/admin/projects/${r.project.id}`}
-                                            >
-                                                Open project ↗
-                                            </a>
-                                        ) : (
-                                            "—"
-                                        ),
-                                },
-                            ]}
-                        />
-                        <Pagination data={requests} />
-                    </div>
-                </>
+                <LeadInbox requests={requests} assignees={assignees} stats={stats} filters={filters} />
             ) : (
                 <>
                     <div className="split-panels">

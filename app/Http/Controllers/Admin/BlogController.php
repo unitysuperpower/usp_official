@@ -13,14 +13,17 @@ use Illuminate\Support\Str;
 
 class BlogController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $blogs = Blog::with(['category', 'user'])
-            ->withCount(['likes', 'comments'])
-            ->latest()
-            ->get();
+        $filters = $request->validate(['search' => 'nullable|string|max:200']);
+        $search = trim($filters['search'] ?? '');
+        $blogs = Blog::with(['category', 'user:id,name'])->withCount(['likes', 'comments'])
+            ->when($search !== '', fn ($query) => $query->where(fn ($match) => $match
+                ->where('title', 'like', "%{$search}%")
+                ->orWhereHas('category', fn ($category) => $category->where('name', 'like', "%{$search}%"))))
+            ->latest()->orderByDesc('id')->paginate(20)->withQueryString();
 
-        return ReactPage::render('admin.blogs.index', compact('blogs'));
+        return ReactPage::render('admin.blogs.index', compact('blogs', 'filters'));
     }
 
     public function create()
