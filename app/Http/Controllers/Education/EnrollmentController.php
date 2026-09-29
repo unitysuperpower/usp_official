@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CourseEnrollment;
 use App\Models\CourseLesson;
 use App\Models\CoursePayment;
+use App\Services\JazzCashService;
 use App\Support\Education;
 use App\Support\ReactPage;
 use Illuminate\Http\Request;
@@ -44,6 +45,8 @@ class EnrollmentController extends Controller
         return ReactPage::render('education.workspace', [
             'enrollment' => $enrollment, 'lessons' => $lessons, 'completed' => $completed,
             'paymentMethods' => Education::methods(),
+            'learning' => \App\Support\EducationLearning::studentProps($enrollment),
+            'jazzcashEnabled' => app(JazzCashService::class)->configured(),
         ]);
     }
 
@@ -52,7 +55,7 @@ class EnrollmentController extends Controller
         $this->authorizeStudent($request, $enrollment);
         Education::locked($enrollment, function ($item) {
             Education::ensure(in_array($item->status, ['applied', 'accepted']), 'Only unpaid applications can be withdrawn. Contact the education team about an enrolled course.');
-            Education::ensure(! $item->payments()->whereIn('status', ['pending', 'approved'])->exists(), 'A payment is being reviewed or has been approved. Contact the education team.');
+            Education::ensure(! $item->payments()->whereIn('status', ['pending', 'approved', 'review_required'])->exists(), 'A payment is being reviewed or has been approved. Contact the education team.');
             $item->update(['status' => 'cancelled']);
         });
 
@@ -72,7 +75,7 @@ class EnrollmentController extends Controller
         try {
             Education::locked($enrollment, function ($item) use ($request, $data, &$path) {
                 Education::ensure($item->status === 'accepted' && $item->fee_minor > 0, 'Payment is available only after acceptance for a paid course.');
-                Education::ensure(! $item->payments()->whereIn('status', ['pending', 'approved'])->exists(), 'You already have a payment awaiting review or approved.');
+                Education::ensure(! $item->payments()->whereIn('status', ['pending', 'approved', 'review_required'])->exists(), 'You already have a payment awaiting review or approved.');
                 $path = $request->file('proof')->store('education/payment-proofs', 'local');
                 abort_unless($path, 503, 'Payment proof could not be stored.');
                 $item->payments()->create(['method' => $data['method'], 'reference' => $data['reference'], 'proof_path' => $path, 'amount_minor' => $item->fee_minor, 'currency' => $item->currency]);
@@ -87,10 +90,41 @@ class EnrollmentController extends Controller
         return back()->with('success', 'Payment proof submitted. Your course unlocks after verification.');
     }
 
+    public function resubmit(Request $request, CoursePayment $payment)
+    {
+        $this->authorizeStudent($request, $payment->enrollment);
+        $request->validate(['proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120']);
+        $path = null;
+        $oldPath = null;
+        try {
+            Education::locked($payment->enrollment, function ($enrollment) use ($payment, $request, &$path, &$oldPath) {
+                $payment = CoursePayment::whereKey($payment->id)->lockForUpdate()->firstOrFail();
+                Education::ensure($payment->method !== 'jazzcash_online' && $payment->status === 'rejected' && $enrollment->status === 'accepted', 'This payment cannot be resubmitted.');
+                Education::ensure(! $enrollment->payments()->whereIn('status', ['pending', 'approved', 'review_required'])->exists(), 'Resolve your existing payment before resubmitting.');
+                $path = $request->file('proof')->store('education/payment-proofs', 'local');
+                abort_unless($path, 503, 'Payment proof could not be stored.');
+                $oldPath = $payment->proof_path;
+                $history = $payment->review_history ?? [];
+                $history[] = ['status' => 'rejected', 'note' => $payment->review_note, 'reviewed_by' => $payment->reviewed_by, 'reviewed_at' => $payment->reviewed_at?->toIso8601String()];
+                $payment->update(['proof_path' => $path, 'status' => 'pending', 'review_note' => null, 'reviewed_by' => null, 'reviewed_at' => null, 'review_history' => $history]);
+            });
+        } catch (\Throwable $error) {
+            if ($path) {
+                Storage::disk('local')->delete($path);
+            }
+            throw $error;
+        }
+        if ($oldPath) {
+            Storage::disk('local')->delete($oldPath);
+        }
+
+        return back()->with('success', 'Corrected proof submitted for the same transaction reference.');
+    }
+
     public function proof(Request $request, CoursePayment $payment)
     {
         abort_unless($request->user()->is_admin || $payment->enrollment->user_id === $request->user()->id, 404);
-        abort_unless(Storage::disk('local')->exists($payment->proof_path), 404);
+        abort_unless($payment->proof_path && Storage::disk('local')->exists($payment->proof_path), 404);
 
         return Storage::disk('local')->download($payment->proof_path, 'payment-'.$payment->id.'.'.pathinfo($payment->proof_path, PATHINFO_EXTENSION), ['Content-Type' => 'application/octet-stream', 'X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'private, no-store']);
     }

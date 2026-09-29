@@ -226,3 +226,13 @@ See `REACT_FRONTEND.md`, `SEO_GUIDE.md`, and `DEPLOYMENT_GUIDE.md` for deploymen
 and integration setup. Default mail and broadcast drivers write to logs; real
 email, WebSocket, and browser push delivery require configured providers and
 verification in the target environment.
+
+## Education module
+
+Public courses are available at `/courses`; students manage applications and learning at `/learn`.
+Administrators manage courses, batches, lessons, students, and payments under `/admin/education`.
+The module supports online, in-person, and hybrid delivery, manual payment verification,
+JazzCash hosted wallet checkout, lesson progress, and printable completion certificates.
+
+See [EDUCATION_SETUP.md](EDUCATION_SETUP.md) for course setup, receiving instructions,
+merchant configuration, deployment requirements, and verified limitations.

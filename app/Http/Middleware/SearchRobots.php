@@ -11,9 +11,9 @@ class SearchRobots
     public function handle(Request $request, Closure $next): Response
     {
         $response = $next($request);
-        $public = $request->routeIs('home', 'services.*', 'blogs.*', 'contact');
+        $public = $request->routeIs('home', 'services.*', 'blogs.*', 'contact', 'education.courses.*');
         $discovery = $request->routeIs('seo.*');
-        $filtered = $request->routeIs('services.index') && ($request->filled('search') || $request->filled('category'));
+        $filtered = ($request->routeIs('services.index') && ($request->filled('search') || $request->filled('category'))) || ($request->routeIs('education.courses.index') && $request->hasAny(['search', 'mode', 'level']));
         if (! config('seo.indexable') || (! $public && ! $discovery) || $filtered || $response->getStatusCode() >= 400) {
             $response->headers->set('X-Robots-Tag', 'noindex, follow');
         }

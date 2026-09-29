@@ -24,6 +24,8 @@ class CourseController extends Controller
             ->withCount(['lessons' => fn ($q) => $q->where('is_published', true)])
             ->latest()->paginate(12)->withQueryString();
 
+        abort_if($courses->currentPage() > $courses->lastPage(), 404);
+
         return ReactPage::render('education.catalog', compact('courses', 'filters'));
     }
 

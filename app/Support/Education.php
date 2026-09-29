@@ -13,7 +13,7 @@ class Education
 
     public static function methods(): array
     {
-        return array_filter(config('education.payment_methods'), fn ($method) => filled($method['instructions']));
+        return array_filter(\App\Models\EducationSetting::current()?->manual_methods ?? config('education.payment_methods'), fn ($method) => filled($method['instructions']));
     }
 
     public static function ensure(bool $condition, string $message, string $field = 'status'): void

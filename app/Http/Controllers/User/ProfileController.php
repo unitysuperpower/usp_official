@@ -3,7 +3,11 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Models\CourseEnrollment;
+use App\Support\Education;
+use App\Support\ReactPage;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
@@ -11,7 +15,7 @@ class ProfileController extends Controller
 {
     public function edit()
     {
-        return \App\Support\ReactPage::render('user.profile.edit');
+        return ReactPage::render('user.profile.edit');
     }
 
     public function update(Request $request)
@@ -44,11 +48,13 @@ class ProfileController extends Controller
 
         return back()->with('success', 'Password updated successfully!');
     }
+
     public function destroy(Request $request)
     {
         $request->validate(['password' => ['required', 'current_password']]);
         $user = $request->user();
-        \Illuminate\Support\Facades\Auth::logout();
+        Education::ensure(! CourseEnrollment::where('user_id', auth()->id())->exists(), 'Your account has education records. Contact support to arrange account closure.', 'password');
+        Auth::logout();
         $user->delete();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

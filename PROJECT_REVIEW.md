@@ -47,3 +47,14 @@ Tests used fake mail/storage or an in-memory database. Browser preview used non-
 - Added four parameterized regression cases covering pagination, matches beyond the first page, empty results, invalid search input, category matching, and retained search links.
 - Verification: 86 tests passed (460 assertions); production frontend build and diff whitespace checks passed. Build still reports stale Browserslist data.
 - No production deployment or live mail, WebSocket, or push delivery was performed. Legacy frontend cleanup and incremental chat history remain outside this pass.
+
+## Education delivery — 29 September 2026
+
+- Completed a separate public catalog, administrator course/batch/curriculum area, and student learning workspace.
+- Added application approval, transactional seat reservations, fee snapshots, private manual payment receipts and correction history, and verified enrollment activation.
+- Integrated configurable JazzCash hosted wallet checkout with signed callbacks, merchant/amount/currency checks, idempotency, interrupted-checkout resume, and administrator reconciliation. Live payment settings remain unconfigured.
+- Added protected learning materials, self-reported lesson progress, administrator completion approval, and printable certificates with issuance snapshots.
+- Connected public and account navigation, metadata, server-readable course content, and course sitemaps.
+- Applied both education migrations successfully on the local MySQL database; fixed an index identifier that exceeded MySQL's length limit. No demo courses or credentials were added to the application database.
+- Verification: 107 tests passed (603 assertions), production build passed, and browser workflow passed admin authoring through student application/payment/progress/certificate at desktop and mobile widths without JavaScript errors. Gateway responses were simulated; merchant sandbox/live delivery still requires credentials and a public HTTPS callback.
+- Operating instructions and boundaries: `EDUCATION_SETUP.md`.

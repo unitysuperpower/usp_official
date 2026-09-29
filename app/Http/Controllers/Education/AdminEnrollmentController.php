@@ -21,7 +21,7 @@ class AdminEnrollmentController extends Controller
             ->when($filters['status'] ?? null, fn ($q, $s) => $q->where('status', $s))
             ->when($filters['search'] ?? null, fn ($q, $s) => $q->whereHas('student', fn ($q) => $q->where('name', 'like', "%{$s}%")->orWhere('email', 'like', "%{$s}%")))
             ->latest()->paginate(20)->withQueryString();
-        $stats = ['courses' => Course::count(), 'applications_to_review' => CourseEnrollment::where('status', 'applied')->count(), 'active_students' => CourseEnrollment::where('status', 'active')->count(), 'payments_to_verify' => CoursePayment::where('status', 'pending')->count()];
+        $stats = ['courses' => Course::count(), 'applications_to_review' => CourseEnrollment::where('status', 'applied')->count(), 'active_students' => CourseEnrollment::where('status', 'active')->count(), 'payments_to_verify' => CoursePayment::whereIn('status', ['pending', 'review_required'])->count()];
 
         return ReactPage::render('admin.education.enrollments', compact('enrollments', 'stats', 'filters'));
     }
@@ -32,7 +32,7 @@ class AdminEnrollmentController extends Controller
         $lessons = $enrollment->batch->course->lessons()->where('is_published', true)->get(['id', 'title']);
         $completed = DB::table('course_lesson_progress')->where('course_enrollment_id', $enrollment->id)->pluck('course_lesson_id');
 
-        return ReactPage::render('admin.education.review', ['enrollment' => $enrollment, 'studentEmail' => $enrollment->student->email, 'lessons' => $lessons, 'completed' => $completed]);
+        return ReactPage::render('admin.education.review', ['enrollment' => $enrollment, 'studentEmail' => $enrollment->student->email, 'lessons' => $lessons, 'completed' => $completed, 'learning' => \App\Support\EducationLearning::studentProps($enrollment)]);
     }
 
     public function review(Request $request, CourseEnrollment $enrollment)
@@ -41,6 +41,7 @@ class AdminEnrollmentController extends Controller
         Education::locked($enrollment, function ($item, $batch) use ($data) {
             if ($data['decision'] === 'complete') {
                 Education::ensure($item->status === 'active', 'Only active enrollments can be completed.');
+                \App\Support\EducationLearning::requireCompletion($item);
                 $lessonIds = $batch->course->lessons()->where('is_published', true)->pluck('id');
                 if ($batch->course->mode !== 'in_person') {
                     Education::ensure($lessonIds->isNotEmpty() && DB::table('course_lesson_progress')->where('course_enrollment_id', $item->id)->whereIn('course_lesson_id', $lessonIds)->count() === $lessonIds->count(), 'The student must finish all published lessons before certification.');
@@ -64,7 +65,7 @@ class AdminEnrollmentController extends Controller
 
     public function payments(Request $request)
     {
-        $filters = $request->validate(['status' => 'nullable|in:pending,approved,rejected']);
+        $filters = $request->validate(['status' => 'nullable|in:pending,approved,rejected,review_required,resolved']);
         $payments = CoursePayment::with(['enrollment.student:id,name', 'enrollment.batch.course'])->when($filters['status'] ?? null, fn ($q, $s) => $q->where('status', $s))->latest()->paginate(20)->withQueryString();
 
         return ReactPage::render('admin.education.payments', compact('payments', 'filters'));
@@ -72,10 +73,23 @@ class AdminEnrollmentController extends Controller
 
     public function verify(Request $request, CoursePayment $payment)
     {
-        $data = $request->validate(['decision' => 'required|in:approve,reject', 'review_note' => 'nullable|required_if:decision,reject|string|max:5000']);
+        $data = $request->validate(['decision' => 'required|in:approve,reject,resolve', 'review_note' => 'nullable|required_if:decision,reject|string|max:5000', 'merchant_verified' => 'nullable|boolean']);
         Education::locked($payment->enrollment, function ($enrollment) use ($payment, $data, $request) {
             $payment = CoursePayment::whereKey($payment->id)->lockForUpdate()->firstOrFail();
+            if ($data['decision'] === 'resolve') {
+                Education::ensure($payment->status === 'review_required' && $payment->method === 'jazzcash_online', 'Only flagged gateway payments can be resolved.');
+                Education::ensure($request->boolean('merchant_verified') && filled($data['review_note'] ?? null), 'Confirm the merchant portal resolution and record its reference.', 'merchant_verified');
+                $history = $payment->review_history ?? [];
+                $history[] = ['status' => 'review_required', 'note' => $payment->review_note, 'reviewed_at' => now()->toIso8601String()];
+                $payment->update(['status' => 'resolved', 'review_note' => $data['review_note'], 'reviewed_by' => $request->user()->id, 'reviewed_at' => now(), 'review_history' => $history]);
+
+                return;
+            }
             Education::ensure($payment->status === 'pending', 'This payment has already been reviewed.');
+            if ($payment->method === 'jazzcash_online') {
+                Education::ensure($request->boolean('merchant_verified') && filled($data['review_note'] ?? null), 'Confirm the merchant portal result and enter its reference in the review note.', 'merchant_verified');
+                Education::ensure($data['decision'] !== 'reject' || $payment->expires_at?->isPast(), 'Wait until this checkout expires before confirming it was not paid.');
+            }
             if ($data['decision'] === 'approve') {
                 Education::ensure($payment->amount_minor === $enrollment->fee_minor && $payment->currency === $enrollment->currency, 'Payment amount or currency does not match the enrollment.');
                 Education::paid($enrollment);

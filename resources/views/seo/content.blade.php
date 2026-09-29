@@ -1,3 +1,6 @@
+@if(str_starts_with($page, 'education.'))
+    @include('education.public-content')
+@else
 {{-- Visible to every visitor before React mounts; no user-agent-specific content. --}}
 <div class="section" data-server-content>
     <header>
@@ -63,3 +66,5 @@
         <noscript><p>Enable JavaScript to use interactive forms, account features, and chat.</p></noscript>
     </main>
 </div>
+
+@endif

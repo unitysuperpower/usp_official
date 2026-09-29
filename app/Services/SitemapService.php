@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Blog;
 use App\Models\BlogCategory;
+use App\Models\Course;
 use App\Models\Service;
 use App\Models\ServiceCategory;
 use App\Support\Seo;
@@ -13,11 +14,12 @@ class SitemapService
 {
     public const PAGE_SIZE = 1000;
 
-    public const SECTIONS = ['services', 'blogs', 'service-categories', 'blog-categories'];
+    public const SECTIONS = ['services', 'blogs', 'service-categories', 'blog-categories', 'courses'];
 
     public function query(string $section): Builder
     {
         return match ($section) {
+            'courses' => Course::where('is_published', true),
             'services' => Service::query()->where('is_active', true),
             'blogs' => Blog::query()->published(),
             'service-categories' => ServiceCategory::query()->where('is_active', true),
@@ -56,7 +58,7 @@ class SitemapService
     {
         $body = '';
         if (config('seo.indexable')) {
-            foreach (['home', 'services.index', 'blogs.index', 'contact'] as $route) {
+            foreach (['home', 'services.index', 'blogs.index', 'contact', 'education.courses.index'] as $route) {
                 $body .= '<url><loc>'.$this->escape(Seo::route($route)).'</loc></url>';
             }
         }
@@ -76,6 +78,7 @@ class SitemapService
         $items = $this->query($section)->select($columns)->orderBy('id')->forPage($page, self::PAGE_SIZE)->get();
         abort_if($items->isEmpty(), 404);
         $route = match ($section) {
+            'courses' => 'education.courses.show',
             'services' => 'services.show',
             'blogs' => 'blogs.show',
             'service-categories' => 'services.category',
@@ -85,7 +88,7 @@ class SitemapService
         foreach ($items as $item) {
             $body .= '<url><loc>'.$this->escape(Seo::route($route, $item->slug)).'</loc>';
             // Omit category dates: child additions/deletions change those pages too.
-            if (in_array($section, ['services', 'blogs'], true) && $item->updated_at) {
+            if (in_array($section, ['services', 'blogs', 'courses'], true) && $item->updated_at) {
                 $body .= '<lastmod>'.$item->updated_at->toAtomString().'</lastmod>';
             }
             $image = $item->featured_image ?? $item->image;

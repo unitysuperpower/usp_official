@@ -19,7 +19,7 @@
             'user' => auth()->user()?->only(['id', 'name', 'email', 'is_admin']),
             'csrf' => csrf_token(),
             'errors' => $errors->toArray(),
-            'old' => collect(session()->getOldInput())->except(['password', 'password_confirmation', 'current_password', 'code', 'recovery_code'])->all(),
+            'old' => collect(session()->getOldInput())->except(['password', 'password_confirmation', 'current_password', 'code', 'recovery_code', 'jazzcash_password', 'jazzcash_integrity_salt'])->all(),
             'flash' => collect(['success', 'error', 'status', 'reply_success'])->mapWithKeys(fn ($key) => [$key => session($key)])->filter()->all(),
         ])); ?>;
     </script>

@@ -127,6 +127,7 @@ export default function UserDropdown({ open, onToggle, onClose }) {
                                 "Personal details & password",
                                 "profile",
                             ],
+                            ["/learn", "My learning", "Courses & enrollments", "dashboard"],
                             [
                                 dashboard,
                                 "Dashboard",

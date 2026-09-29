@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->validateCsrfTokens(except: ['education/jazzcash/return']);
         $middleware->alias([
             'admin' => IsAdmin::class,
         ]);
@@ -22,5 +23,5 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(SearchRobots::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->dontFlash(['current_password', 'password', 'password_confirmation', 'jazzcash_password', 'jazzcash_integrity_salt']);
     })->create();

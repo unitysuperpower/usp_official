@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Projects, ProjectDetail, Leads } from "./projects";
+import EducationPage from "./education";
 import Sidebar, { workspaceTitle } from "./sidebar";
 import UserDropdown from "./user-dropdown";
 import FloatingChat from "./floating-chat";
@@ -104,6 +105,7 @@ function Layout({ children }) {
                                 {[
                                     ["/", "Home"],
                                     ["/services", "Services"],
+                                    ["/courses", "Courses"],
                                     ["/#approach", "Our approach"],
                                     ["/blogs", "Insights"],
                                 ].map(([href, title]) => (
@@ -231,6 +233,8 @@ function Layout({ children }) {
                                 <span className="eyebrow">EXPLORE</span>
                                 <a href="/services">Our services</a>
                                 <a href="/blogs">Journal</a>
+                                <a href="/courses">Courses</a>
+                                <a href="/learn">My learning</a>
                                 <a href="/contact">Get in touch</a>
                             </div>
                             <div>
@@ -277,6 +281,7 @@ function Layout({ children }) {
 function Page() {
     const page = context.page,
         p = context.props;
+    if (page.startsWith("education.") || page.startsWith("admin.education.")) return <EducationPage {...p} />;
     if (page === "home") return <Home {...p} />;
     if (page.startsWith("auth.")) return <Auth {...p} />;
     if (page === "dashboard") return <Dashboard {...p} />;

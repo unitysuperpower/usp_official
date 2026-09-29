@@ -35,6 +35,9 @@ class Seo
 
     public static function forPage(string $page, array $props): array
     {
+        if (in_array($page, ['education.catalog', 'education.course'], true)) {
+            return self::educationPage($props);
+        }
         $public = in_array($page, ['home', 'services.index', 'services.category', 'services.show', 'blogs.index', 'blogs.category', 'blogs.show', 'contact'], true);
         $blog = str_starts_with($page, 'blogs.');
         $item = $props['blog'] ?? $props['service'] ?? null;
@@ -121,6 +124,31 @@ class Seo
             'type' => $page === 'blogs.show' ? 'article' : 'website',
             'robots' => $indexable ? 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1' : 'noindex, follow',
             'schema' => $public ? ['@context' => 'https://schema.org', '@graph' => $graph] : null,
+        ];
+    }
+
+    private static function educationPage(array $props): array
+    {
+        $course = $props['course'] ?? null;
+        $heading = $course['title'] ?? 'Practical courses. New possibilities.';
+        $description = Str::limit(self::text($course['summary'] ?? 'Explore instructor-led online, in-person, and hybrid courses at USP Education. Browse batches, apply, and build practical skills.'), 160);
+        $canonical = self::url(request()->getPathInfo());
+        $pageNumber = $props['courses']['current_page'] ?? 1;
+        if ($pageNumber > 1) {
+            $canonical .= '?page='.$pageNumber;
+        }
+        $indexable = config('seo.indexable') && ! request()->hasAny(['search', 'mode', 'level']);
+        $breadcrumbs = [['name' => 'Home', 'url' => self::url()], ['name' => 'Courses', 'url' => self::url('/courses')]];
+        if ($course) {
+            $breadcrumbs[] = ['name' => $course['title'], 'url' => $canonical];
+        }
+        $schema = $course ? ['@type' => 'Course', 'name' => $heading, 'description' => $description, 'url' => $canonical, 'provider' => ['@type' => 'Organization', 'name' => config('seo.name'), 'url' => self::url()]] : ['@type' => 'CollectionPage', 'name' => $heading, 'description' => $description, 'url' => $canonical];
+
+        return compact('heading', 'description', 'canonical', 'indexable', 'breadcrumbs') + [
+            'public' => true, 'image' => self::image(config('seo.image')), 'type' => 'website',
+            'title' => $heading.($pageNumber > 1 ? ' — Page '.$pageNumber : '').' | USP Education',
+            'robots' => $indexable ? 'index, follow' : 'noindex, follow',
+            'schema' => ['@context' => 'https://schema.org'] + $schema,
         ];
     }
 }

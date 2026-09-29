@@ -91,7 +91,7 @@ return new class extends Migration
             $table->foreignId('course_enrollment_id')->constrained()->cascadeOnDelete();
             $table->foreignId('course_lesson_id')->constrained()->cascadeOnDelete();
             $table->timestamp('completed_at');
-            $table->unique(['course_enrollment_id', 'course_lesson_id']);
+            $table->unique(['course_enrollment_id', 'course_lesson_id'], 'education_lesson_progress_unique');
         });
     }
 

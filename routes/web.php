@@ -38,7 +38,7 @@ Route::get('/robots.txt', [SeoController::class, 'robots'])->name('seo.robots');
 Route::get('/sitemap.xml', [SeoController::class, 'index'])->name('seo.sitemap');
 Route::get('/sitemap-pages.xml', [SeoController::class, 'pages'])->name('seo.pages');
 Route::get('/sitemap-{section}-{page}.xml', [SeoController::class, 'section'])
-    ->where('section', 'services|blogs|service-categories|blog-categories')
+    ->where('section', 'services|blogs|service-categories|blog-categories|courses')
     ->where('page', '[1-9][0-9]{0,4}')->name('seo.section');
 
 // User Chat Routes

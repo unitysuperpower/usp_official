@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { context } from "./ui";
 
 const groups = [
+    ["Education", [["education/courses", "Courses & curriculum"], ["education/enrollments", "Students & applications"], ["education/payments", "Course payments"]]],
     [
         "Workspace",
         [
@@ -29,6 +30,9 @@ const groups = [
     ],
 ];
 const paths = {
+    "education/courses": "M3 4h7l2 2 2-2h7v16h-7l-2 2-2-2H3z M12 6v16",
+    "education/enrollments": "M16 21v-2a6 6 0 0 0-12 0v2 M14 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0 M19 8v6 M16 11h6",
+    "education/payments": "M3 5h18v14H3z M3 10h18 M7 15h3",
     dashboard: "M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z",
     analytics: "M4 3v18h17 M8 16v-5 M13 16V7 M18 16V4",
     services: "M4 7h16v14H4z M8 7V3h8v4 M4 12h16 M10 12v3h4v-3",
@@ -60,9 +64,11 @@ export function NavIcon({ name }) {
         </svg>
     );
 }
-const active = (path) =>
-    context.page === `admin.${path}` ||
-    context.page.startsWith(`admin.${path}.`);
+const active = (path) => {
+    const page = context.page.replace("admin.education.editor", "admin.education.courses").replace("admin.education.review", "admin.education.enrollments");
+    const key = path.replaceAll("/", ".");
+    return page === `admin.${key}` || page.startsWith(`admin.${key}.`);
+};
 export const workspaceTitle =
     groups.flatMap(([, links]) => links).find(([path]) => active(path))?.[1] ||
     (active("profile") ? "My profile" : "Workspace");
