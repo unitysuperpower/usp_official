@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Education;
 
 use App\Http\Controllers\Controller;
 use App\Models\CourseBatch;
-use App\Models\CourseEnrollment;
 use App\Models\EducationAssignment;
 use App\Models\EducationAttendance;
 use App\Models\EducationQuiz;
@@ -26,13 +25,15 @@ class AdminLearningController extends Controller
         $assignments = EducationAssignment::where('course_batch_id', $batch->id)->with(['submissions.enrollment.student:id,name'])->latest()->get();
         $quizzes = EducationQuiz::where('course_batch_id', $batch->id)->withCount('attempts')->latest()->get();
 
-        return ReactPage::render('admin.education.classroom', compact('batch', 'students', 'sessions', 'assignments', 'quizzes'));
+        $announcements = DB::table('education_announcements')->where('course_batch_id', $batch->id)->latest()->limit(20)->get();
+
+        return ReactPage::render('admin.education.classroom', compact('batch', 'students', 'sessions', 'assignments', 'quizzes', 'announcements'));
     }
 
     public function requirements(Request $request, CourseBatch $batch)
     {
         $data = $request->validate(['required_attendance_percent' => 'required|integer|min:0|max:100']);
-        $batch->update($data);
+        DB::transaction(fn () => CourseBatch::whereKey($batch->id)->lockForUpdate()->firstOrFail()->update($data));
 
         return back()->with('success', 'Attendance requirement saved.');
     }
@@ -45,8 +46,11 @@ class AdminLearningController extends Controller
         Education::ensure($data['status'] !== 'completed' || $data['starts_at']->lte(now()), 'A future session cannot be completed.', 'starts_at');
         DB::transaction(function () use ($session, $batch, $data) {
             CourseBatch::whereKey($batch->id)->lockForUpdate()->firstOrFail();
-            if ($session) $session->update($data);
-            else EducationSession::create($data + ['course_batch_id' => $batch->id]);
+            if ($session) {
+                $session->update($data);
+            } else {
+                EducationSession::create($data + ['course_batch_id' => $batch->id]);
+            }
         });
 
         return back()->with('success', 'Class session saved.');
@@ -81,7 +85,9 @@ class AdminLearningController extends Controller
                 $assignment = EducationAssignment::whereKey($assignment->id)->lockForUpdate()->firstOrFail();
                 Education::ensure(! $assignment->submissions()->exists() || (int) $data['pass_percent'] === (int) $assignment->pass_percent, 'The pass mark cannot change after students submit work.', 'pass_percent');
                 $assignment->update($data);
-            } else EducationAssignment::create($data + ['course_batch_id' => $batch->id]);
+            } else {
+                EducationAssignment::create($data + ['course_batch_id' => $batch->id]);
+            }
         });
 
         return back()->with('success', 'Assignment saved.');
@@ -107,6 +113,7 @@ class AdminLearningController extends Controller
         $data['questions'] = array_values(array_map(function ($q) {
             Education::ensure(array_is_list($q['options']), 'Use a numbered list of options.', 'questions');
             Education::ensure(isset($q['options'][(int) $q['correct']]), 'Each correct answer must match an available option.', 'questions');
+
             return ['prompt' => $q['prompt'], 'options' => array_values($q['options']), 'correct' => (int) $q['correct']];
         }, $data['questions']));
         DB::transaction(function () use ($batch, $quiz, $data) {
@@ -116,7 +123,9 @@ class AdminLearningController extends Controller
                 $quiz->fill($data);
                 Education::ensure(! $quiz->attempts()->exists() || ! $quiz->isDirty(['questions', 'pass_percent', 'max_attempts']), 'Questions, pass marks and attempt limits are locked after the first attempt. Create a new quiz to change them.', 'questions');
                 $quiz->save();
-            } else EducationQuiz::create($data + ['course_batch_id' => $batch->id]);
+            } else {
+                EducationQuiz::create($data + ['course_batch_id' => $batch->id]);
+            }
         });
 
         return back()->with('success', 'Quiz saved.');

@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useState } from "react";
+import React, {
+    createContext,
+    useContext,
+    useState,
+    useEffect,
+    useRef,
+    useId,
+} from "react";
 import DOMPurify from "dompurify";
 export const context = window.__USP__;
 const FormScope = createContext(null);
@@ -67,31 +74,196 @@ export function Empty({
     );
 }
 export function Pagination({ data }) {
+    if (!data || !Number.isFinite(Number(data.total)) || !data.links)
+        return null;
+    const path = new URL(data.path || location.pathname, location.origin)
+        .pathname;
+    const configurable =
+        /^\/admin\/(dashboard|services|blogs|categories|blog-categories|requests|projects|contact-messages|chat|education\/(courses|enrollments|payments))$/.test(
+            path,
+        );
     return (
-        data?.last_page > 1 && (
-            <nav className="pagination" aria-label="Pagination">
-                {data.links.map((link, i) =>
-                    link.url ? (
-                        <a
-                            key={i}
-                            className={link.active ? "active" : ""}
-                            href={link.url}
-                            aria-current={link.active ? "page" : undefined}
+        <div className="table-pagination">
+            <span className="pagination-summary">
+                {data.total
+                    ? "Showing " +
+                      (data.from ?? 0) +
+                      "–" +
+                      (data.to ?? 0) +
+                      " of " +
+                      Number(data.total).toLocaleString()
+                    : "0 results"}
+            </span>
+            {configurable && (
+                <label className="page-size">
+                    Rows per page
+                    <select
+                        aria-label="Rows per page"
+                        value={data.per_page}
+                        onChange={(event) => {
+                            const url = new URL(location.href);
+                            url.searchParams.set(
+                                "per_page",
+                                event.target.value,
+                            );
+                            url.searchParams.delete("page");
+                            location.assign(url);
+                        }}
+                    >
+                        {[10, 20, 50, 100].map((size) => (
+                            <option key={size} value={size}>
+                                {size}
+                            </option>
+                        ))}
+                    </select>
+                </label>
+            )}
+            {data.last_page > 1 && (
+                <nav className="pagination" aria-label="Pagination">
+                    {data.links.map((link, i) => {
+                        const text = String(link.label)
+                            .replace(/&laquo;|«/g, "←")
+                            .replace(/&raquo;|»/g, "→")
+                            .replace(/<[^>]*>/g, "");
+                        return link.url ? (
+                            <a
+                                key={i}
+                                href={link.url}
+                                className={link.active ? "active" : ""}
+                                aria-current={link.active ? "page" : undefined}
+                                aria-label={
+                                    /^\d+$/.test(text) ? "Page " + text : text
+                                }
+                            >
+                                {text}
+                            </a>
+                        ) : (
+                            <span key={i} aria-disabled="true">
+                                {text}
+                            </span>
+                        );
+                    })}
+                </nav>
+            )}
+        </div>
+    );
+}
+export function Modal({ open, onClose, title, children }) {
+    const ref = useRef(null);
+    const titleId = useId();
+    useEffect(() => {
+        const dialog = ref.current;
+        if (!open) {
+            if (dialog.open) dialog.close();
+            return;
+        }
+        const previous = document.activeElement;
+        const overflow = document.body.style.overflow;
+        dialog.showModal();
+        document.body.style.overflow = "hidden";
+        return () => {
+            if (dialog.open) dialog.close();
+            document.body.style.overflow = overflow;
+            previous?.focus?.();
+        };
+    }, [open]);
+    return (
+        <dialog
+            className="admin-modal"
+            ref={ref}
+            aria-labelledby={titleId}
+            onCancel={(event) => {
+                event.preventDefault();
+                onClose();
+            }}
+            onClick={(event) => {
+                if (event.target === event.currentTarget) {
+                    const rect = event.currentTarget.getBoundingClientRect();
+                    if (
+                        event.clientX < rect.left ||
+                        event.clientX > rect.right ||
+                        event.clientY < rect.top ||
+                        event.clientY > rect.bottom
+                    )
+                        onClose();
+                }
+            }}
+        >
+            {open && (
+                <>
+                    <header className="modal-heading">
+                        <h2 id={titleId}>{title}</h2>
+                        <button
+                            type="button"
+                            className="modal-close"
+                            onClick={onClose}
+                            aria-label="Close dialog"
                         >
-                            {label(link.label)
-                                .replace("&laquo;", "←")
-                                .replace("&raquo;", "→")}
-                        </a>
-                    ) : (
-                        <span key={i}>
-                            {label(link.label)
-                                .replace("&laquo;", "←")
-                                .replace("&raquo;", "→")}
-                        </span>
-                    ),
-                )}
-            </nav>
-        )
+                            ×
+                        </button>
+                    </header>
+                    <div className="modal-body">{children}</div>
+                </>
+            )}
+        </dialog>
+    );
+}
+export function ModalErrors() {
+    const errors = Object.values(context.errors || {}).flat();
+    return errors.length ? (
+        <div className="notice error" role="alert">
+            <strong>Please check the form</strong>
+            <ul>
+                {errors.map((error, i) => (
+                    <li key={i}>{error}</li>
+                ))}
+            </ul>
+        </div>
+    ) : null;
+}
+export function DeleteAction({ action, name, disabled = false }) {
+    const [open, setOpen] = useState(false);
+    return (
+        <>
+            <button
+                type="button"
+                className="table-action danger-text"
+                disabled={disabled}
+                title={
+                    disabled
+                        ? "Move the items in this category before deleting it"
+                        : undefined
+                }
+                onClick={() => setOpen(true)}
+                aria-label={"Delete " + name}
+            >
+                Delete
+            </button>
+            <Modal
+                open={open}
+                onClose={() => setOpen(false)}
+                title={"Delete " + name + "?"}
+            >
+                <p>
+                    This permanently deletes this item. This action cannot be
+                    undone.
+                </p>
+                <Form
+                    action={action}
+                    method="DELETE"
+                    submit="Confirm deletion"
+                    className="danger"
+                >
+                    <button
+                        className="button secondary"
+                        type="button"
+                        onClick={() => setOpen(false)}
+                    >
+                        Cancel
+                    </button>
+                </Form>
+            </Modal>
+        </>
     );
 }
 export function Field({
@@ -106,7 +278,12 @@ export function Field({
     const action = useContext(FormScope);
     const useOld =
         !context.old._form_action || context.old._form_action === action;
-    const initial = (useOld ? context.old[name] : undefined) ?? value ?? "";
+    const initial =
+        (useOld && Object.prototype.hasOwnProperty.call(context.old, name)
+            ? context.old[name]
+            : undefined) ??
+        value ??
+        "";
     return (
         <label className={type === "checkbox" ? "check-field" : "field"}>
             <span>
@@ -156,11 +333,13 @@ export function Field({
                     {...rest}
                 />
             )}{" "}
-            {useOld && context.errors[name] && (
-                <small className="error">
-                    {context.errors[name].join(" ")}
-                </small>
-            )}
+            {useOld &&
+                Array.isArray(context.errors[name]) &&
+                context.errors[name].length > 0 && (
+                    <small className="error">
+                        {context.errors[name].join(" ")}
+                    </small>
+                )}
         </label>
     );
 }
@@ -263,7 +442,9 @@ export function Table({ columns, data, empty }) {
                 <thead>
                     <tr>
                         {columns.map((c) => (
-                            <th key={c.title}>{c.title}</th>
+                            <th scope="col" key={c.title}>
+                                {c.title}
+                            </th>
                         ))}
                     </tr>
                 </thead>
@@ -271,7 +452,7 @@ export function Table({ columns, data, empty }) {
                     {rows(data).map((item, i) => (
                         <tr key={item.id ?? i}>
                             {columns.map((c) => (
-                                <td key={c.title}>
+                                <td key={c.title} data-label={c.title}>
                                     {c.render
                                         ? c.render(item)
                                         : (item[c.key] ?? "—")}

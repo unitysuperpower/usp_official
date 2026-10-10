@@ -1,3 +1,34 @@
+import LearningCalendar from "./learning-calendar";
+import {
+    EnrollmentReview,
+    EnrollmentJourney,
+    CompletionChecklist,
+} from "./lms-journey";
+import {
+    LearningSpotlight,
+    LearningFilters,
+} from "./education-dashboard-tools";
+import { PaymentMethodCards, PaymentInstructions } from "./payment-cards";
+import {
+    CourseExtras,
+    ExperienceFields,
+    CourseReadiness,
+    Announcements,
+    Deadlines,
+    LessonPlayer,
+    EducationOverview,
+} from "./education-experience";
+import {
+    CourseArtwork,
+    CourseCarousel,
+    CoursePresentationFields,
+} from "./course-visuals";
+import {
+    LearningActivities,
+    BatchClassroom,
+    LearningRecord,
+} from "./education-learning";
+import PaymentSettings from "./education-settings";
 import React, { useState } from "react";
 import {
     context,
@@ -40,13 +71,16 @@ function EducationNav() {
     const admin = context.page.startsWith("admin.");
     const links = admin
         ? [
+              ["/admin/education/overview", "Education overview"],
               [`${adminRoot}/courses`, "Courses & curriculum"],
               [`${adminRoot}/enrollments`, "Applications & students"],
               [`${adminRoot}/payments`, "Payments"],
+              [`${adminRoot}/settings`, "Payment settings"],
           ]
         : [
               ["/courses", "Explore courses"],
               ["/learn", "My learning"],
+              ["/learn/calendar", "Learning calendar"],
           ];
     return (
         <nav className="education-nav" aria-label="Education navigation">
@@ -77,10 +111,12 @@ function Shell({ children }) {
 function CourseCard({ course }) {
     return (
         <a className="education-card" href={`/courses/${course.slug}`}>
-            <div className="education-card-art">
-                <span>{course.category}</span>
-                <span aria-hidden="true">↗</span>
-                <strong>{label(course.mode)}</strong>
+            <div className="course-card-visual">
+                <CourseArtwork course={course} />
+                <span className="course-card-category">{course.category}</span>
+                <span className="course-card-arrow" aria-hidden="true">
+                    ↗
+                </span>
             </div>
             <div className="education-card-body">
                 <div className="education-meta">
@@ -90,6 +126,9 @@ function CourseCard({ course }) {
                 <h2>{course.title}</h2>
                 <p>{course.summary}</p>
                 <small>With {course.instructor}</small>
+                {course.next_batch_on && (
+                    <small>Next batch · {date(course.next_batch_on)}</small>
+                )}
                 <div className="education-card-foot">
                     <strong>
                         {course.fee_minor ? fee(course) : "Free course"}
@@ -100,10 +139,15 @@ function CourseCard({ course }) {
         </a>
     );
 }
-function Catalog({ courses, filters = {} }) {
+function Catalog({
+    courses,
+    filters = {},
+    featured = [],
+    courseCategories = [],
+}) {
     return (
         <Shell>
-            <div className="education-hero">
+            <div className="education-hero course-catalog-intro">
                 <span className="eyebrow">
                     USP EDUCATION · LEARN WITH PURPOSE
                 </span>
@@ -117,12 +161,16 @@ function Catalog({ courses, filters = {} }) {
                     course and choose an online, in-person, or hybrid
                     experience.
                 </p>
+                <a className="course-browse-link" href="#explore-courses">
+                    Find your next course <span aria-hidden="true">↓</span>
+                </a>
                 <div className="education-hero-tags">
                     <span>Guided lessons</span>
                     <span>Scheduled batches</span>
                     <span>Completion certificates</span>
                 </div>
             </div>
+            <CourseCarousel courses={featured} />
             <Form
                 action="/courses"
                 method="GET"
@@ -150,13 +198,46 @@ function Catalog({ courses, filters = {} }) {
                     value={filters.level}
                     options={[{ value: "", label: "All levels" }, ...levels]}
                 />
+                <Field
+                    name="category"
+                    title="Subject"
+                    type="select"
+                    value={filters.category}
+                    options={[
+                        { value: "", label: "All subjects" },
+                        ...courseCategories,
+                    ]}
+                />
+                <Field
+                    name="sort"
+                    title="Sort courses"
+                    type="select"
+                    value={filters.sort || "newest"}
+                    options={[
+                        { value: "newest", label: "Newest first" },
+                        { value: "price_low", label: "Price: low to high" },
+                        { value: "price_high", label: "Price: high to low" },
+                    ]}
+                />
                 <a href="/courses" className="text-link">
                     Reset
                 </a>
             </Form>
-            <div className="panel-heading">
-                <h2>Explore courses</h2>
-                <span>{courses.total} available</span>
+            <div
+                className="panel-heading course-catalog-heading"
+                id="explore-courses"
+            >
+                <div>
+                    <span className="eyebrow">YOUR NEXT CHAPTER</span>
+                    <h2>Explore courses</h2>
+                    <p>Choose a skill. Make time for your future.</p>
+                </div>
+                <span className="course-result-count">
+                    {courses.total} {courses.total === 1 ? "course" : "courses"}
+                    {filters.search || filters.mode || filters.level
+                        ? " found"
+                        : " available"}
+                </span>
             </div>
             {rows(courses).length ? (
                 <div className="education-cards">
@@ -177,11 +258,48 @@ function Catalog({ courses, filters = {} }) {
 function CoursePage({ course, batches, lessons, applications }) {
     return (
         <Shell>
-            <Heading
-                eyebrow={course.category}
-                title={course.title}
-                description={course.summary}
-            />
+            <a href="/courses" className="course-back-link">
+                ← All courses
+            </a>
+            <div className="course-detail-hero">
+                <div className="course-detail-intro">
+                    <Heading
+                        eyebrow={course.category}
+                        title={course.title}
+                        description={course.summary}
+                    />
+                    <div className="course-detail-facts">
+                        <div>
+                            <span>Experience level</span>
+                            <strong>{label(course.level)}</strong>
+                        </div>
+                        <div>
+                            <span>Study format</span>
+                            <strong>{label(course.mode)}</strong>
+                        </div>
+                        <div>
+                            <span>Learning time</span>
+                            <strong>{course.duration_hours} hours</strong>
+                        </div>
+                    </div>
+                    <p className="course-instructor">
+                        Your instructor <strong>{course.instructor}</strong>
+                    </p>
+                </div>
+                <div className="course-detail-cover">
+                    <CourseArtwork course={course} eager />
+                </div>
+            </div>
+            <div className="course-quick-start">
+                <div>
+                    <span className="eyebrow">YOUR NEXT STEP</span>
+                    <p>Choose a batch that fits your schedule.</p>
+                </div>
+                <a className="button" href="#course-batches">
+                    {course.fee_minor ? fee(course) : "Free course"} · View
+                    batches ↓
+                </a>
+            </div>
             <div className="education-detail">
                 <div>
                     <div className="education-overview">
@@ -216,6 +334,7 @@ function CoursePage({ course, batches, lessons, applications }) {
                             </>
                         )}
                     </article>
+                    <CourseExtras course={course} />
                     <section className="panel">
                         <h2>Course curriculum</h2>
                         {rows(lessons).length ? (
@@ -248,7 +367,7 @@ function CoursePage({ course, batches, lessons, applications }) {
                             accepted.
                         </p>
                     </div>
-                    <h2>Choose your batch</h2>
+                    <h2 id="course-batches">Choose your batch</h2>
                     {!rows(batches).length && (
                         <div className="panel">
                             <p>
@@ -302,39 +421,18 @@ function CoursePage({ course, batches, lessons, applications }) {
                                         Students can apply using their own
                                         account.
                                     </p>
-                                ) : context.user ? (
-                                    <details>
-                                        <summary>
-                                            Apply for this batch →
-                                        </summary>
-                                        <Form
-                                            action={`/education/batches/${batch.id}/apply`}
-                                            submit="Submit application"
-                                        >
-                                            <Field
-                                                name="phone"
-                                                title="Contact phone"
-                                                type="tel"
-                                                required
-                                                maxLength={40}
-                                            />
-                                            <Field
-                                                name="motivation"
-                                                title="Your background and learning goals"
-                                                type="textarea"
-                                                required
-                                                maxLength={5000}
-                                            />
-                                            <small>
-                                                Your seat is reserved once the
-                                                education team accepts your
-                                                application.
-                                            </small>
-                                        </Form>
-                                    </details>
                                 ) : (
-                                    <a className="button" href="/login">
-                                        Sign in to apply →
+                                    <a
+                                        className="button"
+                                        href={
+                                            "/education/batches/" +
+                                            batch.id +
+                                            "/enroll"
+                                        }
+                                    >
+                                        {context.user
+                                            ? "Review & enroll →"
+                                            : "Sign in & enroll →"}
                                     </a>
                                 )}
                             </article>
@@ -345,7 +443,14 @@ function CoursePage({ course, batches, lessons, applications }) {
         </Shell>
     );
 }
-function StudentEnrollments({ enrollments }) {
+function StudentEnrollments({
+    enrollments,
+    stats = {},
+    nextClasses = [],
+    deadlines = [],
+    filters = {},
+    continueLearning = null,
+}) {
     return (
         <Shell>
             <Heading
@@ -353,10 +458,67 @@ function StudentEnrollments({ enrollments }) {
                 title="My learning"
                 description="Track applications, complete payments, and continue your courses."
             />
+            <LearningSpotlight course={continueLearning} />
+            <div className="learning-stat-grid">
+                {[
+                    ["Active courses", stats.active || 0],
+                    ["Awaiting payment", stats.accepted || 0],
+                    ["Completed", stats.completed || 0],
+                    ["Applications", stats.applied || 0],
+                ].map(([title, value]) => (
+                    <div className="panel" key={title}>
+                        <span>{title}</span>
+                        <strong>{value}</strong>
+                    </div>
+                ))}
+            </div>
+            <Deadlines items={deadlines} />
+            {nextClasses.length > 0 && (
+                <section className="panel">
+                    <h2>Coming up next</h2>
+                    <div className="learning-session-list">
+                        {nextClasses.map((session) => (
+                            <article key={session.id}>
+                                <div>
+                                    <h3>{session.title}</h3>
+                                    <p>
+                                        {session.course_title} ·{" "}
+                                        {new Date(
+                                            session.starts_at,
+                                        ).toLocaleString(undefined, {
+                                            dateStyle: "medium",
+                                            timeStyle: "short",
+                                        })}
+                                    </p>
+                                </div>
+                                <a
+                                    className="text-link"
+                                    href={`/learn/${session.enrollment_id}`}
+                                >
+                                    Open classroom →
+                                </a>
+                            </article>
+                        ))}
+                    </div>
+                </section>
+            )}
+            <div className="learning-dashboard-heading">
+                <h2>Your courses</h2>
+                <a className="button secondary" href="/courses">
+                    Explore courses →
+                </a>
+            </div>
+            <LearningFilters filters={filters} stats={stats} />
             {rows(enrollments).length ? (
                 <div className="education-cards">
                     {rows(enrollments).map((e) => (
-                        <article className="panel" key={e.id}>
+                        <article
+                            className="panel student-course-card"
+                            key={e.id}
+                        >
+                            <div className="student-course-cover">
+                                <CourseArtwork course={e.batch.course} />
+                            </div>
                             <Badge>{e.status}</Badge>
                             <h2>{e.batch.course.title}</h2>
                             <p>
@@ -366,16 +528,51 @@ function StudentEnrollments({ enrollments }) {
                                 {dayLabel(e.batch.starts_on)} –{" "}
                                 {dayLabel(e.batch.ends_on)}
                             </p>
+                            {["active", "completed"].includes(e.status) &&
+                                e.batch.course.published_lessons_count > 0 && (
+                                    <div className="education-progress">
+                                        <span>
+                                            {e.completed_lessons_count} of{" "}
+                                            {
+                                                e.batch.course
+                                                    .published_lessons_count
+                                            }{" "}
+                                            lessons complete
+                                        </span>
+                                        <progress
+                                            aria-label="Lesson completion"
+                                            value={e.completed_lessons_count}
+                                            max={
+                                                e.batch.course
+                                                    .published_lessons_count
+                                            }
+                                        />
+                                    </div>
+                                )}
                             <a className="button" href={`/learn/${e.id}`}>
-                                Open workspace →
+                                {e.status === "active"
+                                    ? "Continue learning →"
+                                    : e.status === "accepted"
+                                      ? "Complete payment →"
+                                      : e.status === "completed"
+                                        ? "View course & certificate →"
+                                        : "View application →"}
                             </a>
                         </article>
                     ))}
                 </div>
             ) : (
                 <Empty
-                    title="Your learning journey starts here"
-                    description="Explore the course catalog and apply for a batch that suits you."
+                    title={
+                        filters.search || filters.status
+                            ? "No matching courses"
+                            : "Your learning journey starts here"
+                    }
+                    description={
+                        filters.search || filters.status
+                            ? "Try another search or select All courses."
+                            : "Explore the course catalog and apply for a batch that suits you."
+                    }
                 />
             )}
             <Pagination data={enrollments} />
@@ -384,7 +581,7 @@ function StudentEnrollments({ enrollments }) {
 }
 function PaymentHistory({ enrollment, admin = false }) {
     return (
-        <section className="panel">
+        <section className="panel" id="payment-history">
             <h2>Payment history</h2>
             {!enrollment.payments.length && <p>No payments submitted yet.</p>}
             {enrollment.payments.map((p) => (
@@ -397,6 +594,18 @@ function PaymentHistory({ enrollment, admin = false }) {
                         {label(p.method)} · {p.reference}
                     </p>
                     <small>Submitted {date(p.created_at)}</small>
+                    {p.status === "approved" && (
+                        <p>
+                            <a
+                                className="text-link"
+                                href={
+                                    "/education/payments/" + p.id + "/receipt"
+                                }
+                            >
+                                View payment receipt / save PDF ↗
+                            </a>
+                        </p>
+                    )}
                     {p.method !== "jazzcash_online" && (
                         <p>
                             <a
@@ -578,14 +787,36 @@ function PaymentForm({ enrollment, paymentMethods = {}, jazzcashEnabled }) {
             </div>
         );
     return (
-        <section className="panel">
-            <h2>Complete your enrollment</h2>
-            <p>
-                Amount due: <strong>{fee(enrollment)}</strong>
-            </p>
+        <section className="panel payment-checkout" id="course-payment">
+            <div className="payment-checkout-heading">
+                <div>
+                    <span className="eyebrow">
+                        YOUR COURSE · YOUR NEXT STEP
+                    </span>
+                    <h2>Complete your enrollment</h2>
+                    <p>Choose how you’d like to pay.</p>
+                </div>
+                <div className="payment-amount">
+                    <span>Total due</span>
+                    <strong>{fee(enrollment)}</strong>
+                    <small>Full course fee</small>
+                </div>
+            </div>
+            <ol className="payment-steps" aria-label="Manual payment steps">
+                <li>
+                    <span>1</span>Choose a method
+                </li>
+                <li>
+                    <span>2</span>Scan or transfer
+                </li>
+                <li>
+                    <span>3</span>Upload receipt
+                </li>
+            </ol>
             {jazzcashEnabled && (
                 <Form
                     action={`/learn/${enrollment.id}/checkout`}
+                    className="payment-online-card"
                     submit="Pay online with JazzCash"
                 >
                     <p>Continue to JazzCash’s secure payment page.</p>
@@ -594,24 +825,20 @@ function PaymentForm({ enrollment, paymentMethods = {}, jazzcashEnabled }) {
             {Object.keys(paymentMethods).length > 0 && (
                 <>
                     <h3>Manual transfer</h3>
-                    <label className="field">
-                        <span>Payment instructions</span>
-                        <select
-                            value={method}
-                            onChange={(e) => setMethod(e.target.value)}
-                        >
-                            {Object.entries(paymentMethods).map(
-                                ([value, m]) => (
-                                    <option key={value} value={value}>
-                                        {m.label}
-                                    </option>
-                                ),
-                            )}
-                        </select>
-                    </label>
-                    <p className="education-instructions preserve">
-                        {paymentMethods[method]?.instructions}
-                    </p>
+                    <PaymentMethodCards
+                        methods={paymentMethods}
+                        selected={method}
+                        onSelect={setMethod}
+                    />
+                    <PaymentInstructions method={paymentMethods[method]} />
+                    <div className="payment-proof-heading">
+                        <span className="eyebrow">AFTER YOUR TRANSFER</span>
+                        <h3>Submit your payment receipt</h3>
+                        <p>
+                            Scanning the QR does not confirm payment. Upload
+                            your receipt so the team can verify it.
+                        </p>
+                    </div>
                     <Form
                         action={`/learn/${enrollment.id}/payments`}
                         submit="Submit payment proof"
@@ -653,6 +880,9 @@ function StudentWorkspace({
     completed,
     paymentMethods,
     jazzcashEnabled,
+    learning,
+    notes = {},
+    announcements = [],
 }) {
     const canLearn = ["active", "completed"].includes(e.status);
     const count = rows(lessons).filter((l) => completed.includes(l.id)).length;
@@ -675,6 +905,11 @@ function StudentWorkspace({
                 title={e.batch.course.title}
                 description={e.batch.name}
             />
+            <EnrollmentJourney
+                enrollment={e}
+                lessonCount={rows(lessons).length}
+                completedCount={count}
+            />
             <div className="education-status panel">
                 <Badge>{e.status}</Badge>
                 <p>{messages[e.status]}</p>
@@ -689,10 +924,19 @@ function StudentWorkspace({
                     </a>
                 )}
             </div>
+            <Announcements items={announcements} />
+            {canLearn && (
+                <LessonPlayer
+                    enrollment={e}
+                    lessons={lessons}
+                    completed={completed}
+                    notes={notes}
+                />
+            )}
             <div className="education-detail">
                 <div>
                     {canLearn && (
-                        <section className="panel">
+                        <section className="panel" id="classroom">
                             <h2>Your classroom</h2>
                             <p>
                                 {dayLabel(e.batch.starts_on)} –{" "}
@@ -731,50 +975,6 @@ function StudentWorkspace({
                                     classes.
                                 </p>
                             )}
-                            {rows(lessons).map((l, i) => (
-                                <details
-                                    className="education-lesson"
-                                    key={l.id}
-                                    open={i === 0}
-                                >
-                                    <summary>
-                                        <span>
-                                            {completed.includes(l.id)
-                                                ? "✓"
-                                                : "○"}{" "}
-                                            {l.title}
-                                        </span>
-                                        <small>{l.duration_minutes} min</small>
-                                    </summary>
-                                    <p className="preserve">{l.content}</p>
-                                    <div className="education-links">
-                                        {l.video_url && (
-                                            <a
-                                                href={l.video_url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                            >
-                                                Watch lesson ↗
-                                            </a>
-                                        )}
-                                        {l.resource_url && (
-                                            <a
-                                                href={l.resource_url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                            >
-                                                Open learning resource ↗
-                                            </a>
-                                        )}
-                                    </div>
-                                    {!completed.includes(l.id) && (
-                                        <Form
-                                            action={`/learn/${e.id}/lessons/${l.id}/complete`}
-                                            submit="Mark lesson complete"
-                                        />
-                                    )}
-                                </details>
-                            ))}
                             <small>
                                 Lesson progress is self-reported. Certificates
                                 are issued after the education team confirms
@@ -782,6 +982,7 @@ function StudentWorkspace({
                             </small>
                         </section>
                     )}
+                    <LearningActivities enrollment={e} learning={learning} />
                     <PaymentForm
                         enrollment={e}
                         paymentMethods={paymentMethods}
@@ -790,6 +991,12 @@ function StudentWorkspace({
                     <PaymentHistory enrollment={e} />
                 </div>
                 <aside>
+                    <CompletionChecklist
+                        enrollment={e}
+                        lessons={rows(lessons)}
+                        completed={completed}
+                        learning={learning}
+                    />
                     <section className="panel">
                         <h2>Enrollment details</h2>
                         <dl className="education-facts">
@@ -880,6 +1087,28 @@ function AdminCourses({ courses, filters = {} }) {
                         { title: "Fee", render: fee },
                         { title: "Batches", key: "batches_count" },
                         { title: "Lessons", key: "lessons_count" },
+                        {
+                            title: "Actions",
+                            render: (c) => (
+                                <div className="table-actions">
+                                    <a
+                                        href={
+                                            adminRoot +
+                                            "/courses/" +
+                                            c.id +
+                                            "/edit"
+                                        }
+                                    >
+                                        Manage
+                                    </a>
+                                    {c.is_published && (
+                                        <a href={"/courses/" + c.slug}>
+                                            View ↗
+                                        </a>
+                                    )}
+                                </div>
+                            ),
+                        },
                     ]}
                     empty="Create your first course"
                 />
@@ -1033,6 +1262,7 @@ function CourseEditor({ course: c, currency = "PKR" }) {
                     )}
                 </div>
             )}
+            <CourseReadiness course={c} />
             <Form
                 id="course-details"
                 action={
@@ -1043,6 +1273,8 @@ function CourseEditor({ course: c, currency = "PKR" }) {
                 submit="Save course"
             >
                 <h2>Course details</h2>
+                <CoursePresentationFields course={c || {}} />
+                <ExperienceFields course={c || {}} />
                 <div className="form-grid">
                     <Field
                         name="title"
@@ -1163,6 +1395,12 @@ function CourseEditor({ course: c, currency = "PKR" }) {
                                     method="PUT"
                                     submit="Save batch"
                                 >
+                                    <a
+                                        className="button secondary"
+                                        href={`${adminRoot}/batches/${b.id}/classroom`}
+                                    >
+                                        Attendance, assignments & quizzes →
+                                    </a>
                                     <BatchFields batch={b} />
                                 </Form>
                             </details>
@@ -1284,7 +1522,13 @@ function AdminEnrollments({ enrollments, stats, filters = {} }) {
         </Shell>
     );
 }
-function AdminReview({ enrollment: e, studentEmail, lessons, completed }) {
+function AdminReview({
+    enrollment: e,
+    studentEmail,
+    lessons,
+    completed,
+    learning,
+}) {
     return (
         <Shell>
             <Heading
@@ -1315,6 +1559,13 @@ function AdminReview({ enrollment: e, studentEmail, lessons, completed }) {
                             </p>
                         )}
                     </article>
+                    <LearningRecord learning={learning} />
+                    <a
+                        className="button secondary"
+                        href={`${adminRoot}/batches/${e.course_batch_id}/classroom`}
+                    >
+                        Manage classroom
+                    </a>
                     <PaymentHistory enrollment={e} admin />
                 </div>
                 <aside>
@@ -1493,6 +1744,9 @@ function AdminPayments({ payments, filters = {} }) {
 }
 export default function EducationPage(props) {
     const pages = {
+        "admin.education.overview": EducationOverview,
+        "education.enroll": EnrollmentReview,
+        "education.calendar": LearningCalendar,
         "education.catalog": Catalog,
         "education.course": CoursePage,
         "education.enrollments": StudentEnrollments,
@@ -1502,6 +1756,8 @@ export default function EducationPage(props) {
         "admin.education.enrollments": AdminEnrollments,
         "admin.education.review": AdminReview,
         "admin.education.payments": AdminPayments,
+        "admin.education.classroom": BatchClassroom,
+        "admin.education.settings": PaymentSettings,
     };
     const Page = pages[context.page];
     return Page ? <Page {...props} /> : <Empty />;

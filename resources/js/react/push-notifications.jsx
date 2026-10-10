@@ -7,15 +7,21 @@ export default function PushNotifications() {
         "serviceWorker" in navigator &&
         "PushManager" in window &&
         "Notification" in window;
+    const [publicKey, setPublicKey] = useState(null);
     const [enabled, setEnabled] = useState(false);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState("");
     useEffect(() => {
         if (!supported) return;
         let active = true;
-        navigator.serviceWorker
-            .getRegistration("/chat-worker.js")
-            .then(async (registration) => {
+        api("/notifications/push")
+            .then(async (config) => {
+                if (!active || !config.public_key) return;
+                setPublicKey(config.public_key);
+                const registration =
+                    await navigator.serviceWorker.getRegistration(
+                        "/chat-worker.js",
+                    );
                 const subscription =
                     await registration?.pushManager.getSubscription();
                 if (subscription && Notification.permission === "granted") {
@@ -33,6 +39,7 @@ export default function PushNotifications() {
         };
     }, [supported]);
     async function toggle() {
+        if (!publicKey) return;
         setBusy(true);
         setError("");
         try {
@@ -62,18 +69,11 @@ export default function PushNotifications() {
                         ? "Notifications are blocked. Allow them in your browser’s site settings."
                         : "Notifications were not enabled. You can try again anytime.",
                 );
-            const config = await api("/notifications/push");
-            if (!config.public_key)
-                throw new Error(
-                    "Push notifications are not available yet. You can still check messages here.",
-                );
             await navigator.serviceWorker.register("/chat-worker.js", {
                 scope: "/",
             });
             const registration = await navigator.serviceWorker.ready;
-            const encoded = config.public_key
-                .replace(/-/g, "+")
-                .replace(/_/g, "/");
+            const encoded = publicKey.replace(/-/g, "+").replace(/_/g, "/");
             const key = Uint8Array.from(atob(encoded), (character) =>
                 character.charCodeAt(0),
             );
@@ -94,6 +94,12 @@ export default function PushNotifications() {
             setBusy(false);
         }
     }
+    if (
+        !supported ||
+        !publicKey ||
+        (!enabled && Notification.permission === "denied")
+    )
+        return null;
     return (
         <div className="chat-notifications">
             <span aria-hidden="true">♧</span>

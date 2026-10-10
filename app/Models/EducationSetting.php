@@ -8,7 +8,9 @@ use Illuminate\Support\Facades\Schema;
 class EducationSetting extends Model
 {
     protected $fillable = ['id', 'manual_methods', 'gateway'];
+
     protected $casts = ['manual_methods' => 'array', 'gateway' => 'encrypted:array'];
+
     protected $hidden = ['gateway'];
 
     public static function current(): ?self

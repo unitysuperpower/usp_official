@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ServiceCategory;
+use App\Support\AdminListing;
 use App\Support\ReactPage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -18,7 +19,7 @@ class ServiceCategoryController extends Controller
         $categories = ServiceCategory::withCount('services')
             ->when($search !== '', fn ($query) => $query->where(fn ($match) => $match
                 ->where('name', 'like', "%{$search}%")))
-            ->latest()->orderByDesc('id')->paginate(20)->withQueryString();
+            ->latest()->orderByDesc('id')->paginate(AdminListing::perPage($request))->withQueryString();
 
         return ReactPage::render('admin.categories.index', compact('categories', 'filters'));
     }
@@ -83,6 +84,10 @@ class ServiceCategoryController extends Controller
 
     public function destroy(ServiceCategory $category)
     {
+        if ($category->services()->exists()) {
+            return back()->withErrors(['category' => 'Move or remove the items in this category before deleting it.']);
+        }
+
         $category->delete();
 
         return redirect()->route('admin.categories.index')

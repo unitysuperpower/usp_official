@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Support\ReactPage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -11,7 +12,7 @@ class ProfileController extends Controller
 {
     public function edit()
     {
-        return \App\Support\ReactPage::render('admin.profile.edit');
+        return ReactPage::render('admin.profile.edit');
     }
 
     public function update(Request $request)

@@ -258,3 +258,41 @@ test('administrators can record external resolution without changing enrollment 
     $this->post('/education/jazzcash/return', jazzCashResponse($payment))->assertOk();
     expect($payment->refresh()->status)->toBe('resolved')->and($enrollment->refresh()->status)->toBe('active');
 });
+
+test('enrollment review preserves login destination and hides private classroom links', function () {
+    $url = '/education/batches/'.$this->batch->id.'/enroll';
+    $this->get($url)->assertRedirect('/login')->assertSessionHas('url.intended', url($url));
+    $this->actingAs($this->student)->get($url)->assertOk()->assertViewHas('page', 'education.enroll')->assertDontSee('private-class')->assertViewHas('props', fn ($p) => $p['available'] === true);
+    $this->batch->update(['is_open' => false]);
+    $this->get($url)->assertViewHas('props', fn ($p) => $p['available'] === false);
+});
+test('reviewed fee changes require reconfirmation and repeat applications reuse enrollment', function () {
+    $data = ['phone' => '03001234567', 'motivation' => 'Learn', 'quoted_fee_minor' => 150000, 'quoted_currency' => 'PKR'];
+    $this->course->update(['fee_minor' => 200000]);
+    $this->actingAs($this->student)->post('/education/batches/'.$this->batch->id.'/apply', $data)->assertSessionHasErrors('quoted_fee_minor');
+    expect(CourseEnrollment::count())->toBe(0);
+    $data['quoted_fee_minor'] = 200000;
+    $this->post('/education/batches/'.$this->batch->id.'/apply', $data)->assertSessionHasNoErrors();
+    $enrollment = CourseEnrollment::sole();
+    $this->get('/education/batches/'.$this->batch->id.'/enroll')->assertRedirect('/learn/'.$enrollment->id);
+    expect($enrollment->fee_minor)->toBe(200000);
+});
+test('paid LMS journey unlocks after verification and ends with receipt and certificate', function () {
+    $this->actingAs($this->student)->post('/education/batches/'.$this->batch->id.'/apply', ['phone' => '03001234567', 'motivation' => 'Learn'])->assertSessionHasNoErrors();
+    $enrollment = CourseEnrollment::sole();
+    $url = '/learn/'.$enrollment->id;
+    $this->get($url)->assertDontSee('PRIVATE_LESSON_CONTENT');
+    $this->actingAs($this->educationAdmin)->patch('/admin/education/enrollments/'.$enrollment->id, ['decision' => 'accept'])->assertSessionHasNoErrors();
+    $this->actingAs($this->student)->get($url)->assertDontSee('PRIVATE_LESSON_CONTENT');
+    $this->post($url.'/payments', ['method' => 'bank_transfer', 'reference' => 'JOURNEY-RECEIPT', 'proof' => UploadedFile::fake()->create('receipt.pdf', 10, 'application/pdf')])->assertSessionHasNoErrors();
+    $this->get($url)->assertDontSee('PRIVATE_LESSON_CONTENT');
+    $this->post($url.'/lessons/'.$this->lesson->id.'/complete')->assertForbidden();
+    $payment = $enrollment->payments()->sole();
+    $this->actingAs($this->educationAdmin)->patch('/admin/education/payments/'.$payment->id, ['decision' => 'approve'])->assertSessionHasNoErrors();
+    $this->actingAs($this->student)->get($url)->assertSee('PRIVATE_LESSON_CONTENT');
+    $this->get('/education/payments/'.$payment->id.'/receipt')->assertOk();
+    $this->post($url.'/lessons/'.$this->lesson->id.'/complete')->assertSessionHasNoErrors();
+    $this->actingAs($this->educationAdmin)->patch('/admin/education/enrollments/'.$enrollment->id, ['decision' => 'complete'])->assertSessionHasNoErrors();
+    $this->actingAs($this->student)->get($url.'/certificate')->assertOk();
+    expect($enrollment->refresh()->status)->toBe('completed');
+});

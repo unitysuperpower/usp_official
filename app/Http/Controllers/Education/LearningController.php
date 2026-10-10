@@ -40,10 +40,14 @@ class LearningController extends Controller
                 $assignment->submissions()->updateOrCreate(['course_enrollment_id' => $item->id], $values);
             });
         } catch (\Throwable $error) {
-            if ($path) Storage::disk('local')->delete($path);
+            if ($path) {
+                Storage::disk('local')->delete($path);
+            }
             throw $error;
         }
-        if ($oldPath) Storage::disk('local')->delete($oldPath);
+        if ($oldPath) {
+            Storage::disk('local')->delete($oldPath);
+        }
 
         return back()->with('success', 'Assignment submitted. Your instructor will review it.');
     }
@@ -66,7 +70,9 @@ class LearningController extends Controller
             abort_unless($quiz->course_batch_id === $batch->id && $quiz->is_published, 404);
             $attempts = $quiz->attempts()->where('course_enrollment_id', $item->id)->get();
             // Browser retries of an already recorded attempt do not consume a new attempt.
-            if ($attempts->contains('attempt_number', (int) $data['attempt_number'])) return;
+            if ($attempts->contains('attempt_number', (int) $data['attempt_number'])) {
+                return;
+            }
             Education::ensure(! $attempts->contains('passed', true), 'You have already passed this quiz.', 'answers');
             Education::ensure($attempts->count() < $quiz->max_attempts && (int) $data['attempt_number'] === $attempts->count() + 1, 'No quiz attempts remain, or this form is out of date. Refresh the page.', 'answers');
             $questions = $quiz->questions;
@@ -74,7 +80,9 @@ class LearningController extends Controller
             $correct = 0;
             foreach ($questions as $index => $question) {
                 Education::ensure(isset($question['options'][(int) $data['answers'][$index]]), 'Choose a valid answer for every question.', 'answers');
-                if ((int) $data['answers'][$index] === (int) $question['correct']) $correct++;
+                if ((int) $data['answers'][$index] === (int) $question['correct']) {
+                    $correct++;
+                }
             }
             $score = (int) floor($correct * 100 / count($questions));
             EducationQuizAttempt::create(['education_quiz_id' => $quiz->id, 'course_enrollment_id' => $item->id, 'answers' => $data['answers'], 'score' => $score, 'passed' => $score >= $quiz->pass_percent, 'attempt_number' => $data['attempt_number']]);

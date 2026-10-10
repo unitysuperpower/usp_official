@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Models\ServiceRequest;
 use App\Models\User;
+use App\Support\AdminListing;
 use App\Support\ReactPage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,7 +25,7 @@ class ServiceRequestController extends Controller
         $query->when($filters['stage'] ?? null, fn ($q, $stage) => $q->where('lead_stage', $stage));
         $query->when($filters['assigned_to'] ?? null, fn ($q, $id) => $q->where('assigned_to', $id));
         $query->when($request->boolean('overdue'), fn ($q) => $q->whereNotIn('lead_stage', ['won', 'lost'])->whereDate('follow_up_on', '<', today()));
-        $requests = $query->latest()->paginate(20)->withQueryString();
+        $requests = $query->latest()->paginate(AdminListing::perPage($request))->withQueryString();
         $stats = [
             'open_leads' => ServiceRequest::whereNotIn('lead_stage', ['won', 'lost'])->count(),
             'qualified' => ServiceRequest::where('lead_stage', 'qualified')->count(),

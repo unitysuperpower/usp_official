@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Service;
 use App\Models\ServiceCategory;
 use App\Services\ImageOptimizationService;
+use App\Support\AdminListing;
 use App\Support\ReactPage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -20,7 +21,7 @@ class ServiceController extends Controller
             ->when($search !== '', fn ($query) => $query->where(fn ($match) => $match
                 ->where('title', 'like', "%{$search}%")
                 ->orWhereHas('category', fn ($category) => $category->where('name', 'like', "%{$search}%"))))
-            ->latest()->orderByDesc('id')->paginate(20)->withQueryString();
+            ->latest()->orderByDesc('id')->paginate(AdminListing::perPage($request))->withQueryString();
 
         return ReactPage::render('admin.services.index', compact('services', 'filters'));
     }

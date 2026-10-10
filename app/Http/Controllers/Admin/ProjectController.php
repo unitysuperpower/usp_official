@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Models\ProjectMilestone;
 use App\Models\User;
+use App\Support\AdminListing;
 use App\Support\ProjectWorkspace;
 use App\Support\ReactPage;
 use Illuminate\Http\Request;
@@ -25,7 +26,7 @@ class ProjectController extends Controller
         $query->when($filters['status'] ?? null, fn ($q, $status) => $q->where('status', $status));
         $query->when($filters['assigned_to'] ?? null, fn ($q, $id) => $q->where('assigned_to', $id));
         $query->when($request->boolean('overdue'), fn ($q) => $q->whereNotIn('status', ['completed', 'cancelled'])->whereDate('due_on', '<', today()));
-        $projects = $query->latest()->paginate(20)->withQueryString();
+        $projects = $query->latest()->paginate(AdminListing::perPage($request))->withQueryString();
         $projects->setCollection($projects->getCollection()->map(fn ($project) => ProjectWorkspace::summary($project, true)));
         $assignees = User::where('is_admin', true)->orderBy('name')->get(['id', 'name']);
         $stats = ['active_projects' => Project::whereIn('status', ['planning', 'active', 'on_hold'])->count(), 'overdue_projects' => Project::whereNotIn('status', ['completed', 'cancelled'])->whereDate('due_on', '<', today())->count(), 'awaiting_approval' => ProjectMilestone::where('status', 'awaiting_approval')->whereHas('project', fn ($q) => $q->whereNotIn('status', ['completed', 'cancelled']))->count(), 'completed_projects' => Project::where('status', 'completed')->count()];

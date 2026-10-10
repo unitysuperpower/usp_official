@@ -24,7 +24,9 @@ class EducationLearning
 
     public static function studentProps(CourseEnrollment $enrollment): array
     {
-        if (! in_array($enrollment->status, ['active', 'completed'], true)) return [];
+        if (! in_array($enrollment->status, ['active', 'completed'], true)) {
+            return [];
+        }
         $assignments = EducationAssignment::where('course_batch_id', $enrollment->course_batch_id)->where('is_published', true)->orderBy('due_at')->get();
         $quizzes = EducationQuiz::where('course_batch_id', $enrollment->course_batch_id)->where('is_published', true)->get();
 

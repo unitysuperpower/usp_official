@@ -6,19 +6,20 @@ use App\Events\NewChatMessage;
 use App\Http\Controllers\Controller;
 use App\Models\ChatConversation;
 use App\Models\ChatMessage;
+use App\Support\AdminListing;
 use App\Support\ReactPage;
 use Illuminate\Http\Request;
 
 class ChatController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $conversations = ChatConversation::with(['user', 'assignedTo', 'latestMessage'])
             ->withCount(['messages as unread_count' => function ($query) {
                 $query->where('is_admin', false)->where('is_read', false);
             }])
             ->orderByDesc('last_message_at')
-            ->paginate(20);
+            ->paginate(AdminListing::perPage($request))->withQueryString();
 
         $totalUnread = ChatMessage::fromUser()->unread()->count();
         $activeConversations = ChatConversation::active()->count();

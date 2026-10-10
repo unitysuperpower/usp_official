@@ -3,12 +3,13 @@
 namespace App\Services;
 
 use App\Models\CoursePayment;
+use App\Models\EducationSetting;
 
 class JazzCashService
 {
     public function setting(string $key): mixed
     {
-        return \App\Models\EducationSetting::gatewayConfig()[$key] ?? null;
+        return EducationSetting::gatewayConfig()[$key] ?? null;
     }
 
     public function configured(): bool

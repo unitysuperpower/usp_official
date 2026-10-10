@@ -232,7 +232,9 @@ verification in the target environment.
 Public courses are available at `/courses`; students manage applications and learning at `/learn`.
 Administrators manage courses, batches, lessons, students, and payments under `/admin/education`.
 The module supports online, in-person, and hybrid delivery, manual payment verification,
-JazzCash hosted wallet checkout, lesson progress, and printable completion certificates.
+JazzCash hosted wallet checkout, lesson progress, attendance, graded assignments, auto-scored quizzes,
+and printable completion certificates gated by course requirements. Payment instructions and encrypted
+merchant settings are managed at `/admin/education/settings`.
 
 See [EDUCATION_SETUP.md](EDUCATION_SETUP.md) for course setup, receiving instructions,
 merchant configuration, deployment requirements, and verified limitations.

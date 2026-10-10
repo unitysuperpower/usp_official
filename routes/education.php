@@ -2,16 +2,24 @@
 
 use App\Http\Controllers\Education\AdminCourseController;
 use App\Http\Controllers\Education\AdminEnrollmentController;
+use App\Http\Controllers\Education\AdminLearningController;
+use App\Http\Controllers\Education\CalendarController;
 use App\Http\Controllers\Education\CourseController;
 use App\Http\Controllers\Education\EnrollmentController;
+use App\Http\Controllers\Education\ExperienceController;
 use App\Http\Controllers\Education\JazzCashController;
+use App\Http\Controllers\Education\LearningController;
+use App\Http\Controllers\Education\PaymentSettingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('courses', [CourseController::class, 'index'])->name('education.courses.index');
 Route::get('courses/{slug}', [CourseController::class, 'show'])->name('education.courses.show');
 Route::middleware('auth')->name('education.')->group(function () {
+    Route::get('education/batches/{batch}/enroll', [CourseController::class, 'enroll'])->name('enroll');
     Route::post('education/batches/{batch}/apply', [CourseController::class, 'apply'])->middleware('throttle:10,1')->name('apply');
     Route::get('learn', [EnrollmentController::class, 'index'])->name('enrollments.index');
+    Route::get('learn/calendar', [CalendarController::class, 'index'])->name('calendar');
+    Route::get('learn/calendar/download', [CalendarController::class, 'download'])->name('calendar.download');
     Route::get('learn/{enrollment}', [EnrollmentController::class, 'show'])->name('enrollments.show');
     Route::post('learn/{enrollment}/cancel', [EnrollmentController::class, 'cancel'])->name('cancel');
     Route::post('learn/{enrollment}/payments', [EnrollmentController::class, 'payment'])->middleware('throttle:10,1')->name('payments.store');
@@ -42,21 +50,31 @@ Route::post('learn/{enrollment}/checkout', [JazzCashController::class, 'checkout
 Route::post('education/jazzcash/return', [JazzCashController::class, 'callback'])->middleware('throttle:120,1')->name('education.jazzcash.return');
 
 Route::middleware(['auth', 'admin'])->prefix('admin/education')->name('admin.education.')->group(function () {
-    Route::get('settings', [\App\Http\Controllers\Education\PaymentSettingsController::class, 'edit'])->name('settings');
-    Route::put('settings', [\App\Http\Controllers\Education\PaymentSettingsController::class, 'update'])->middleware('throttle:10,1')->name('settings.update');
-    Route::get('batches/{batch}/classroom', [\App\Http\Controllers\Education\AdminLearningController::class, 'show'])->name('classroom');
-    Route::patch('batches/{batch}/requirements', [\App\Http\Controllers\Education\AdminLearningController::class, 'requirements'])->name('requirements');
-    Route::post('batches/{batch}/sessions', [\App\Http\Controllers\Education\AdminLearningController::class, 'session'])->name('sessions.store');
-    Route::put('batches/{batch}/sessions/{session}', [\App\Http\Controllers\Education\AdminLearningController::class, 'session'])->name('sessions.update');
-    Route::post('batches/{batch}/sessions/{session}/attendance', [\App\Http\Controllers\Education\AdminLearningController::class, 'attendance'])->name('attendance');
-    Route::post('batches/{batch}/assignments', [\App\Http\Controllers\Education\AdminLearningController::class, 'assignment'])->name('assignments.store');
-    Route::put('batches/{batch}/assignments/{assignment}', [\App\Http\Controllers\Education\AdminLearningController::class, 'assignment'])->name('assignments.update');
-    Route::patch('submissions/{submission}', [\App\Http\Controllers\Education\AdminLearningController::class, 'grade'])->name('submissions.grade');
-    Route::post('batches/{batch}/quizzes', [\App\Http\Controllers\Education\AdminLearningController::class, 'quiz'])->name('quizzes.store');
-    Route::put('batches/{batch}/quizzes/{quiz}', [\App\Http\Controllers\Education\AdminLearningController::class, 'quiz'])->name('quizzes.update');
+    Route::get('settings', [PaymentSettingsController::class, 'edit'])->name('settings');
+    Route::put('settings', [PaymentSettingsController::class, 'update'])->middleware('throttle:10,1')->name('settings.update');
+    Route::get('batches/{batch}/classroom', [AdminLearningController::class, 'show'])->name('classroom');
+    Route::patch('batches/{batch}/requirements', [AdminLearningController::class, 'requirements'])->name('requirements');
+    Route::post('batches/{batch}/sessions', [AdminLearningController::class, 'session'])->name('sessions.store');
+    Route::put('batches/{batch}/sessions/{session}', [AdminLearningController::class, 'session'])->name('sessions.update');
+    Route::post('batches/{batch}/sessions/{session}/attendance', [AdminLearningController::class, 'attendance'])->name('attendance');
+    Route::post('batches/{batch}/assignments', [AdminLearningController::class, 'assignment'])->name('assignments.store');
+    Route::put('batches/{batch}/assignments/{assignment}', [AdminLearningController::class, 'assignment'])->name('assignments.update');
+    Route::patch('submissions/{submission}', [AdminLearningController::class, 'grade'])->name('submissions.grade');
+    Route::post('batches/{batch}/quizzes', [AdminLearningController::class, 'quiz'])->name('quizzes.store');
+    Route::put('batches/{batch}/quizzes/{quiz}', [AdminLearningController::class, 'quiz'])->name('quizzes.update');
 });
 Route::middleware('auth')->name('education.')->group(function () {
-    Route::post('learn/{enrollment}/assignments/{assignment}', [\App\Http\Controllers\Education\LearningController::class, 'submit'])->middleware('throttle:20,1')->name('assignments.submit');
-    Route::post('learn/{enrollment}/quizzes/{quiz}', [\App\Http\Controllers\Education\LearningController::class, 'quiz'])->middleware('throttle:10,1')->name('quizzes.submit');
-    Route::get('education/submissions/{submission}/file', [\App\Http\Controllers\Education\LearningController::class, 'file'])->name('submissions.file');
+    Route::post('learn/{enrollment}/assignments/{assignment}', [LearningController::class, 'submit'])->middleware('throttle:20,1')->name('assignments.submit');
+    Route::post('learn/{enrollment}/quizzes/{quiz}', [LearningController::class, 'quiz'])->middleware('throttle:10,1')->name('quizzes.submit');
+    Route::get('education/submissions/{submission}/file', [LearningController::class, 'file'])->name('submissions.file');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::put('learn/{enrollment}/lessons/{lesson}/note', [ExperienceController::class, 'note'])->middleware('throttle:30,1');
+    Route::get('education/payments/{payment}/receipt', [ExperienceController::class, 'receipt']);
+});
+Route::middleware(['auth', 'admin'])->prefix('admin/education')->group(function () {
+    Route::get('overview', [ExperienceController::class, 'overview']);
+    Route::post('batches/{batch}/announcements', [ExperienceController::class, 'announce']);
+    Route::delete('batches/{batch}/announcements/{announcement}', [ExperienceController::class, 'removeAnnouncement']);
 });

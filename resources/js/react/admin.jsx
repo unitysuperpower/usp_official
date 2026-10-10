@@ -13,6 +13,9 @@ import {
     Badge,
     Stats,
     Table,
+    Modal,
+    ModalErrors,
+    DeleteAction,
 } from "./ui";
 const resourceNames = {
     services: "Services",
@@ -20,64 +23,59 @@ const resourceNames = {
     categories: "Service categories",
     "blog-categories": "Blog categories",
 };
-export function AdminDashboard({ stats, recentRequests }) {
-    return (
-        <>
-            <Heading
-                eyebrow="BUSINESS OVERVIEW"
-                title={`Hello, ${context.user.name.split(" ")[0]}.`}
-                description="A clear view of what’s happening at USP Tech Solution."
-            >
-                <a className="button" href="/admin/services/create">
-                    Add a service ↗
-                </a>
-            </Heading>
-            <Stats stats={stats} />
-            <div className="panel">
-                <div className="panel-heading">
-                    <h2>Recent service requests</h2>
-                    <a href="/admin/requests" className="text-link">
-                        View all →
-                    </a>
-                </div>
-                <RequestsTable data={recentRequests} />
-            </div>
-            <div className="quick-links">
-                <a href="/admin/blogs/create">
-                    <h3>Share a fresh perspective ↗</h3>
-                    <p>Write your next journal article.</p>
-                </a>
-                <a href="/admin/chat">
-                    <h3>Keep conversations moving ↗</h3>
-                    <p>Help your customers take their next step.</p>
-                </a>
-            </div>
-        </>
-    );
-}
+export { default as AdminDashboard } from "./admin-overview";
 export function ResourceList({ kind, ...props }) {
     const data = props[kind === "blog-categories" ? "categories" : kind] || [];
     const categories = kind.includes("categories");
+    const [editing, setEditing] = useState(() => {
+        if (!categories || context.old._modal !== "category") return null;
+        const id = Number(context.old._form_action?.split("/").pop());
+        return id ? rows(data).find((item) => item.id === id) || null : {};
+    });
     return (
         <>
             <Heading
                 title={resourceNames[kind]}
                 description="Create, refine, and manage the content your customers see."
             >
-                <a className="button" href={`/admin/${kind}/create`}>
-                    Create{" "}
-                    {categories
-                        ? "category"
-                        : kind === "blogs"
-                          ? "article"
-                          : "service"}{" "}
-                    ↗
-                </a>
+                {categories ? (
+                    <button
+                        className="button"
+                        type="button"
+                        onClick={() => setEditing({})}
+                    >
+                        Create category +
+                    </button>
+                ) : (
+                    <a className="button" href={`/admin/${kind}/create`}>
+                        Create{" "}
+                        {categories
+                            ? "category"
+                            : kind === "blogs"
+                              ? "article"
+                              : "service"}{" "}
+                        ↗
+                    </a>
+                )}
             </Heading>
             <div className="panel">
-                <Form action={`/admin/${kind}`} method="GET" className="search-form" submit="Search">
-                    <Field name="search" type="search" title={`Search ${resourceNames[kind].toLowerCase()}`} value={props.filters?.search} maxLength={200} placeholder="Search by name or category…" />
-                    <a className="text-link" href={`/admin/${kind}`}>Reset</a>
+                <Form
+                    action={`/admin/${kind}`}
+                    method="GET"
+                    className="search-form"
+                    submit="Search"
+                >
+                    <Field
+                        name="search"
+                        type="search"
+                        title={`Search ${resourceNames[kind].toLowerCase()}`}
+                        value={props.filters?.search}
+                        maxLength={200}
+                        placeholder="Search by name or category…"
+                    />
+                    <a className="text-link" href={`/admin/${kind}`}>
+                        Reset
+                    </a>
                 </Form>
                 <p>{data.total || 0} results</p>
                 <Table
@@ -102,6 +100,18 @@ export function ResourceList({ kind, ...props }) {
                                   },
                               ]
                             : []),
+                        ...(categories
+                            ? [
+                                  {
+                                      title: "Items",
+                                      render: (r) =>
+                                          r.services_count ??
+                                          r.blogs_count ??
+                                          0,
+                                  },
+                              ]
+                            : []),
+                        { title: "Created", render: (r) => date(r.created_at) },
                         {
                             title: "Status",
                             render: (r) => (
@@ -128,28 +138,77 @@ export function ResourceList({ kind, ...props }) {
                             title: "Actions",
                             render: (r) => (
                                 <div className="table-actions">
-                                    <a href={`/admin/${kind}/${r.id}/edit`}>
-                                        Edit ↗
-                                    </a>
-                                    <Form
-                                        action={`/admin/${kind}/${r.id}`}
-                                        method="DELETE"
-                                        submit="Delete"
-                                        className="inline-form danger"
-                                        confirm={`Delete “${r.title || r.name}”? This cannot be undone.`}
+                                    {categories ? (
+                                        <button
+                                            type="button"
+                                            className="table-action"
+                                            onClick={() => setEditing(r)}
+                                            aria-label={"Edit " + r.name}
+                                        >
+                                            Edit
+                                        </button>
+                                    ) : (
+                                        <a
+                                            href={
+                                                "/admin/" +
+                                                kind +
+                                                "/" +
+                                                r.id +
+                                                "/edit"
+                                            }
+                                        >
+                                            Edit ↗
+                                        </a>
+                                    )}
+                                    {!categories &&
+                                        (kind === "blogs"
+                                            ? r.is_published
+                                            : r.is_active) && (
+                                            <a href={"/" + kind + "/" + r.slug}>
+                                                View ↗
+                                            </a>
+                                        )}
+                                    <DeleteAction
+                                        action={"/admin/" + kind + "/" + r.id}
+                                        name={r.title || r.name}
+                                        disabled={
+                                            categories &&
+                                            (r.services_count > 0 ||
+                                                r.blogs_count > 0)
+                                        }
                                     />
                                 </div>
                             ),
                         },
                     ]}
-                    empty={props.filters?.search ? "No matching results" : "Ready for something new?"}
+                    empty={
+                        props.filters?.search
+                            ? "No matching results"
+                            : "Ready for something new?"
+                    }
                 />
                 <Pagination data={data} />
             </div>
+            {editing && (
+                <Modal
+                    open={true}
+                    onClose={() => setEditing(null)}
+                    title={(editing.id ? "Edit" : "Create") + " category"}
+                >
+                    <ModalErrors />
+                    <ResourceEditor
+                        key={editing.id || "new"}
+                        kind={kind}
+                        category={editing}
+                        embedded
+                        onCancel={() => setEditing(null)}
+                    />
+                </Modal>
+            )}
         </>
     );
 }
-export function ResourceEditor({ kind, ...props }) {
+export function ResourceEditor({ kind, embedded = false, onCancel, ...props }) {
     const category = kind.includes("categories");
     const blog = kind === "blogs";
     const item =
@@ -160,20 +219,31 @@ export function ResourceEditor({ kind, ...props }) {
         {};
     const edit = Boolean(item.id);
     const [features, setFeatures] = useState(
-        Object.values(context.old.features || item.features || [""]),
+        Object.values(
+            (context.old._form_action ===
+            "/admin/" + kind + (item.id ? "/" + item.id : "")
+                ? context.old.features
+                : null) ||
+                item.features || [""],
+        ),
     );
     return (
         <>
-            <Heading
-                title={`${edit ? "Edit" : "Create"} ${category ? "category" : blog ? "article" : "service"}`}
-                description="Make every detail count."
-            />
+            {!embedded && (
+                <Heading
+                    title={`${edit ? "Edit" : "Create"} ${category ? "category" : blog ? "article" : "service"}`}
+                    description="Make every detail count."
+                />
+            )}
             <Form
                 action={`/admin/${kind}${edit ? `/${item.id}` : ""}`}
                 method={edit ? "PUT" : "POST"}
-                className="panel editor"
+                className={embedded ? "editor" : "panel editor"}
                 submit={edit ? "Save changes" : "Create"}
             >
+                {embedded && (
+                    <input type="hidden" name="_modal" value="category" />
+                )}
                 <div className="form-grid">
                     <Field
                         name={category ? "name" : "title"}
@@ -351,9 +421,19 @@ export function ResourceEditor({ kind, ...props }) {
                         />
                     </>
                 )}
-                <a className="text-link" href={`/admin/${kind}`}>
-                    Cancel
-                </a>
+                {embedded ? (
+                    <button
+                        className="button secondary"
+                        type="button"
+                        onClick={onCancel}
+                    >
+                        Cancel
+                    </button>
+                ) : (
+                    <a className="text-link" href={`/admin/${kind}`}>
+                        Cancel
+                    </a>
+                )}
             </Form>
         </>
     );
@@ -398,6 +478,15 @@ export function Contacts({
     repliedCount,
 }) {
     const q = new URLSearchParams(location.search);
+    const [editing, setEditing] = useState(() =>
+        context.old._modal === "contact"
+            ? rows(messages).find(
+                  (item) =>
+                      String(item.id) ===
+                      context.old._form_action?.split("/").pop(),
+              ) || null
+            : null,
+    );
     return (
         <>
             <Heading
@@ -502,6 +591,50 @@ export function Contacts({
                             ]}
                         />
                     </Form>
+                    {editing && (
+                        <Modal
+                            open={true}
+                            onClose={() => setEditing(null)}
+                            title={"Update message from " + editing.name}
+                        >
+                            <ModalErrors />
+                            <Form
+                                action={"/admin/contact-messages/" + editing.id}
+                                method="PUT"
+                                submit="Save message"
+                            >
+                                <input
+                                    type="hidden"
+                                    name="_modal"
+                                    value="contact"
+                                />
+                                <Field
+                                    name="status"
+                                    type="select"
+                                    value={editing.status}
+                                    options={[
+                                        "pending",
+                                        "read",
+                                        "replied",
+                                        "archived",
+                                    ]}
+                                />
+                                <Field
+                                    name="admin_notes"
+                                    title="Internal notes"
+                                    type="textarea"
+                                    value={editing.admin_notes}
+                                />
+                                <button
+                                    type="button"
+                                    className="button secondary"
+                                    onClick={() => setEditing(null)}
+                                >
+                                    Cancel
+                                </button>
+                            </Form>
+                        </Modal>
+                    )}
                     <div className="panel">
                         <Table
                             data={messages}
@@ -521,6 +654,35 @@ export function Contacts({
                                 {
                                     title: "Status",
                                     render: (r) => <Badge>{r.status}</Badge>,
+                                },
+                                {
+                                    title: "Actions",
+                                    render: (r) => (
+                                        <div className="table-actions">
+                                            <a
+                                                href={
+                                                    "/admin/contact-messages/" +
+                                                    r.id
+                                                }
+                                            >
+                                                Open
+                                            </a>
+                                            <button
+                                                type="button"
+                                                className="table-action"
+                                                onClick={() => setEditing(r)}
+                                            >
+                                                Update
+                                            </button>
+                                            <DeleteAction
+                                                action={
+                                                    "/admin/contact-messages/" +
+                                                    r.id
+                                                }
+                                                name={r.subject}
+                                            />
+                                        </div>
+                                    ),
                                 },
                                 {
                                     title: "Received",

@@ -58,3 +58,19 @@ Tests used fake mail/storage or an in-memory database. Browser preview used non-
 - Applied both education migrations successfully on the local MySQL database; fixed an index identifier that exceeded MySQL's length limit. No demo courses or credentials were added to the application database.
 - Verification: 107 tests passed (603 assertions), production build passed, and browser workflow passed admin authoring through student application/payment/progress/certificate at desktop and mobile widths without JavaScript errors. Gateway responses were simulated; merchant sandbox/live delivery still requires credentials and a public HTTPS callback.
 - Operating instructions and boundaries: `EDUCATION_SETUP.md`.
+
+## Classroom and payment settings completion — 29 September 2026
+
+- Connected student activity tabs and batch classroom administration for attendance, private assignments, feedback/revisions, and server-scored quizzes with attempt limits. Certificate issuance enforces required assessments and minimum attendance.
+- Polished course batch navigation and student overview with owned enrollment totals, lesson progress, and upcoming sessions. Added keyboard navigation for activity tabs.
+- Added administrator payment settings with password confirmation, encrypted credentials, hidden secret inputs, environment/URL validation, and pending-payment rotation protection. Checkout locks configuration while creating its payment record.
+- Applied the learning-tools migration to the local MySQL database; no real receiving accounts or merchant secrets were seeded. Live checkout remains disabled pending those details.
+- Verification: 117 tests passed (697 assertions), production build passed, and isolated browser workflow passed course authoring through manual payment, attendance, assignment grading, quiz completion, and certification. Desktop/mobile checks passed with no JavaScript errors or horizontal overflow.
+- External JazzCash sandbox/live transaction verification still requires merchant credentials and a reachable HTTPS callback.
+
+## Dashboard completion — 1 October 2026
+
+- Completed dashboard work queues, lead stage overview, upcoming project deadlines, and recent inquiries.
+- Standardized administrative pagination with validated page sizes, result ranges, and query preservation. Added explicit row actions, category dialogs, lead follow-up dialogs, and contact update dialogs.
+- Prevented category deletion from cascading into existing content. Modal validation failures retain input and reopen the form; keyboard focus and Escape behavior verified.
+- Verification: 133 tests passed (750 assertions); production build and browser checks passed. Deployed as 20261001-044928-dashboard using a separate website release; ERP directory/database untouched.

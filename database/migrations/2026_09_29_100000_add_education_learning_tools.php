@@ -92,7 +92,9 @@ return new class extends Migration
 
     public function down(): void
     {
-        foreach (['education_settings', 'education_quiz_attempts', 'education_quizzes', 'education_submissions', 'education_assignments', 'education_attendance', 'education_sessions'] as $table) Schema::dropIfExists($table);
+        foreach (['education_settings', 'education_quiz_attempts', 'education_quizzes', 'education_submissions', 'education_assignments', 'education_attendance', 'education_sessions'] as $table) {
+            Schema::dropIfExists($table);
+        }
         Schema::table('course_batches', fn (Blueprint $table) => $table->dropColumn('required_attendance_percent'));
     }
 };

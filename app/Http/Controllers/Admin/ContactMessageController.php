@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Mail\ContactReplyMail;
 use App\Models\ContactMessage;
+use App\Support\AdminListing;
 use App\Support\ReactPage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -13,7 +14,8 @@ class ContactMessageController extends Controller
 {
     public function index(Request $request)
     {
-        $query = ContactMessage::with('repliedBy')->latest();
+        $request->validate(['search' => 'nullable|string|max:200', 'status' => 'nullable|in:pending,read,replied,archived']);
+        $query = ContactMessage::with('repliedBy')->latest()->orderByDesc('id');
 
         // Filter by status
         if ($request->filled('status')) {
@@ -31,7 +33,7 @@ class ContactMessageController extends Controller
             });
         }
 
-        $messages = $query->paginate(20)->withQueryString();
+        $messages = $query->paginate(AdminListing::perPage($request))->withQueryString();
         $pendingCount = ContactMessage::pending()->count();
         $unreadCount = ContactMessage::unread()->count();
         $repliedCount = ContactMessage::where('status', 'replied')->count();

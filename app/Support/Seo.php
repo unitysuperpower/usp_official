@@ -137,7 +137,7 @@ class Seo
         if ($pageNumber > 1) {
             $canonical .= '?page='.$pageNumber;
         }
-        $indexable = config('seo.indexable') && ! request()->hasAny(['search', 'mode', 'level']);
+        $indexable = config('seo.indexable') && ! request()->hasAny(['search', 'mode', 'level', 'category', 'sort']);
         $breadcrumbs = [['name' => 'Home', 'url' => self::url()], ['name' => 'Courses', 'url' => self::url('/courses')]];
         if ($course) {
             $breadcrumbs[] = ['name' => $course['title'], 'url' => $canonical];

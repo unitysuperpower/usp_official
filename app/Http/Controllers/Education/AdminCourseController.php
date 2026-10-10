@@ -6,11 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\CourseBatch;
 use App\Models\CourseLesson;
+use App\Services\ImageOptimizationService;
+use App\Support\AdminListing;
 use App\Support\Education;
 use App\Support\ReactPage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class AdminCourseController extends Controller
@@ -18,7 +20,7 @@ class AdminCourseController extends Controller
     public function index(Request $request)
     {
         $filters = $request->validate(['search' => 'nullable|string|max:200']);
-        $courses = Course::withCount(['batches', 'lessons'])->when($filters['search'] ?? null, fn ($q, $s) => $q->where('title', 'like', "%{$s}%"))->latest()->paginate(20)->withQueryString();
+        $courses = Course::withCount(['batches', 'lessons'])->when($filters['search'] ?? null, fn ($q, $s) => $q->where('title', 'like', "%{$s}%"))->latest()->paginate(AdminListing::perPage($request))->withQueryString();
 
         return ReactPage::render('admin.education.courses', compact('courses', 'filters'));
     }
@@ -44,26 +46,70 @@ class AdminCourseController extends Controller
             'description' => 'required|string|max:30000', 'outcomes' => 'nullable|string|max:10000',
             'prerequisites' => 'nullable|string|max:5000', 'instructor' => 'required|string|max:255',
             'duration_hours' => 'required|integer|min:1|max:10000', 'fee' => 'required|numeric|min:0|max:10000000|decimal:0,2',
+            'preview_video_url' => 'nullable|url:https|max:2000', 'instructor_bio' => 'nullable|string|max:5000', 'faq' => 'nullable|string|max:10000',
             'is_published' => 'required|boolean',
+            'cover' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:8192|dimensions:max_width=4096,max_height=4096',
+            'remove_cover' => 'nullable|boolean', 'cover_alt' => 'nullable|string|max:255',
+            'visual_theme' => 'sometimes|required|in:mint,violet,amber,blue',
+            'is_featured' => 'sometimes|boolean', 'carousel_position' => 'sometimes|required|integer|min:1|max:1000',
         ]);
         $data['fee_minor'] = (int) round((float) $data['fee'] * 100);
         $data['currency'] = $course?->currency ?? config('education.currency');
         $data['is_published'] = $request->boolean('is_published');
-        unset($data['fee']);
+        unset($data['fee'], $data['cover'], $data['remove_cover']);
 
         return $data;
     }
 
+    private function saveCourse(Request $request, ?Course $course = null): Course
+    {
+        $data = $this->data($request, $course);
+        $path = null;
+        $oldPath = null;
+        $images = app(ImageOptimizationService::class);
+        if ($request->hasFile('cover')) {
+            $path = $images->processImage($request->file('cover'), 'education/covers', false);
+            abort_unless($path && Storage::disk('public')->exists($path), 503, 'The cover could not be stored.');
+            $data['cover_image'] = $path;
+        } elseif ($request->boolean('remove_cover')) {
+            $data['cover_image'] = null;
+        }
+        try {
+            $saved = DB::transaction(function () use ($course, $data, &$oldPath) {
+                if (! $course) {
+                    return Course::create($data);
+                }
+                $current = Course::whereKey($course->id)->lockForUpdate()->firstOrFail();
+                if (array_key_exists('cover_image', $data)) {
+                    $oldPath = $current->cover_image;
+                }
+                $current->update($data);
+
+                return $current;
+            });
+        } catch (\Throwable $error) {
+            if ($path) {
+                $images->deleteImage($path);
+            }
+            throw $error;
+        }
+        if ($oldPath && $oldPath !== $path) {
+            $images->deleteImage($oldPath);
+        }
+
+        return $saved;
+    }
+
     public function store(Request $request)
     {
-        $course = Course::create($this->data($request));
+        $course = $this->saveCourse($request);
 
         return redirect()->route('admin.education.courses.edit', $course)->with('success', 'Course created. Add batches and lessons below.');
     }
 
     public function update(Request $request, Course $course)
     {
-        $course->update($this->data($request, $course));
+        $this->saveCourse($request, $course);
 
         return back()->with('success', 'Course saved. Existing applications keep their original fee.');
     }

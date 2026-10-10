@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\BlogCategory;
+use App\Support\AdminListing;
 use App\Support\ReactPage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -18,7 +19,7 @@ class BlogCategoryController extends Controller
         $categories = BlogCategory::withCount('blogs')
             ->when($search !== '', fn ($query) => $query->where(fn ($match) => $match
                 ->where('name', 'like', "%{$search}%")))
-            ->latest()->orderByDesc('id')->paginate(20)->withQueryString();
+            ->latest()->orderByDesc('id')->paginate(AdminListing::perPage($request))->withQueryString();
 
         return ReactPage::render('admin.blog-categories.index', compact('categories', 'filters'));
     }
@@ -74,6 +75,10 @@ class BlogCategoryController extends Controller
 
     public function destroy(BlogCategory $blogCategory)
     {
+        if ($blogCategory->blogs()->exists()) {
+            return back()->withErrors(['category' => 'Move or remove the items in this category before deleting it.']);
+        }
+
         $blogCategory->delete();
 
         return redirect()->route('admin.blog-categories.index')

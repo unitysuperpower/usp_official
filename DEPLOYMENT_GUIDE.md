@@ -1,3 +1,5 @@
+> **Current hosting:** Use [HOSTING_DEPLOYMENT.md](HOSTING_DEPLOYMENT.md) for usp.com.pk. Its public_html contains a separate ERP project. Never delete or replace that directory.
+
 # 🚀 Laravel Application - cPanel Deployment Guide
 
 ## 📋 Pre-Deployment Checklist
@@ -142,9 +144,9 @@ You have two options:
 
 Via SSH:
 ```bash
-cd /home/username
-rm -rf public_html
-ln -s /home/username/laravel/public public_html
+# Only for a NEW, EMPTY document-root path; never replace an existing root.
+# For usp.com.pk, use HOSTING_DEPLOYMENT.md.
+ln -s /home/username/laravel/public /home/username/new_site_public
 ```
 
 ### Option B: Copy Public Contents + Update index.php

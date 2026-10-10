@@ -6,8 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\CourseEnrollment;
 use App\Models\CourseLesson;
 use App\Models\CoursePayment;
+use App\Models\EducationAssignment;
+use App\Models\EducationSession;
 use App\Services\JazzCashService;
 use App\Support\Education;
+use App\Support\EducationLearning;
 use App\Support\ReactPage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -23,12 +26,32 @@ class EnrollmentController extends Controller
 
     public function index(Request $request)
     {
-        $enrollments = CourseEnrollment::where('user_id', $request->user()->id)->with('batch.course')->latest()->paginate(12);
+        $filters = $request->validate(['search' => 'nullable|string|max:200', 'status' => 'nullable|in:active,accepted,completed,applied,rejected,cancelled']);
+        $enrollments = CourseEnrollment::where('user_id', $request->user()->id)->when($filters['status'] ?? null, fn ($q, $status) => $q->where('status', $status))->when($filters['search'] ?? null, fn ($q, $search) => $q->whereHas('batch.course', fn ($c) => $c->where('title', 'like', "%{$search}%")))->with(['batch.course' => fn ($q) => $q->withCount(['lessons as published_lessons_count' => fn ($q) => $q->where('is_published', true)])])->latest()->paginate(12)->withQueryString();
+        $progress = DB::table('course_lesson_progress')->join('course_lessons', 'course_lessons.id', '=', 'course_lesson_progress.course_lesson_id')->whereIn('course_enrollment_id', $enrollments->modelKeys())->where('course_lessons.is_published', true)->selectRaw('course_enrollment_id, count(*) as total')->groupBy('course_enrollment_id')->pluck('total', 'course_enrollment_id');
         foreach ($enrollments as $enrollment) {
+            $enrollment->completed_lessons_count = $progress[$enrollment->id] ?? 0;
             $enrollment->batch->makeHidden('meeting_url');
         }
 
-        return ReactPage::render('education.enrollments', compact('enrollments'));
+        $stats = CourseEnrollment::where('user_id', $request->user()->id)->selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status');
+
+        $active = CourseEnrollment::where('user_id', $request->user()->id)->where('status', 'active')->pluck('id', 'course_batch_id');
+        $nextClasses = EducationSession::whereIn('course_batch_id', $active->keys())->where('status', 'scheduled')->where('starts_at', '>=', now())->with('batch.course:id,title')->orderBy('starts_at')->limit(5)->get()->map(fn ($session) => ['id' => $session->id, 'title' => $session->title, 'starts_at' => $session->starts_at, 'course_title' => $session->batch->course->title, 'enrollment_id' => $active[$session->course_batch_id]]);
+
+        $deadlines = EducationAssignment::whereIn('course_batch_id', $active->keys())->where('is_published', true)->whereNotNull('due_at')->whereDoesntHave('submissions', fn ($q) => $q->whereIn('course_enrollment_id', $active->values())->whereIn('status', ['submitted', 'graded']))->with('batch.course:id,title')->orderBy('due_at')->limit(8)->get()->map(fn ($a) => ['id' => $a->id, 'title' => $a->title, 'due_at' => $a->due_at, 'course_title' => $a->batch->course->title, 'enrollment_id' => $active[$a->course_batch_id]]);
+
+        $resume = CourseEnrollment::where('user_id', $request->user()->id)->where('status', 'active')->whereHas('batch.course.lessons', fn ($q) => $q->where('is_published', true)->whereNotExists(fn ($p) => $p->selectRaw('1')->from('course_lesson_progress')->whereColumn('course_lesson_id', 'course_lessons.id')->whereColumn('course_enrollment_id', 'course_enrollments.id')))->with('batch.course')->latest('enrolled_at')->first();
+        $continueLearning = null;
+        if ($resume) {
+            $done = DB::table('course_lesson_progress')->where('course_enrollment_id', $resume->id)->pluck('course_lesson_id');
+            $next = $resume->batch->course->lessons()->where('is_published', true)->whereNotIn('id', $done)->first();
+            if ($next) {
+                $continueLearning = ['enrollment_id' => $resume->id, 'title' => $resume->batch->course->title, 'lesson_title' => $next->title, 'lesson_id' => $next->id, 'duration_minutes' => $next->duration_minutes, 'cover_image' => $resume->batch->course->cover_image, 'cover_alt' => $resume->batch->course->cover_alt, 'visual_theme' => $resume->batch->course->visual_theme];
+            }
+        }
+
+        return ReactPage::render('education.enrollments', compact('enrollments', 'stats', 'nextClasses', 'deadlines', 'filters', 'continueLearning'));
     }
 
     public function show(Request $request, CourseEnrollment $enrollment)
@@ -45,7 +68,9 @@ class EnrollmentController extends Controller
         return ReactPage::render('education.workspace', [
             'enrollment' => $enrollment, 'lessons' => $lessons, 'completed' => $completed,
             'paymentMethods' => Education::methods(),
-            'learning' => \App\Support\EducationLearning::studentProps($enrollment),
+            'learning' => EducationLearning::studentProps($enrollment),
+            'notes' => $canLearn ? DB::table('education_notes')->where('course_enrollment_id', $enrollment->id)->pluck('body', 'course_lesson_id') : [],
+            'announcements' => $canLearn ? DB::table('education_announcements')->where('course_batch_id', $enrollment->course_batch_id)->latest()->limit(20)->get() : [],
             'jazzcashEnabled' => app(JazzCashService::class)->configured(),
         ]);
     }

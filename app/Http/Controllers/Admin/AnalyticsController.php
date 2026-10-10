@@ -3,11 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\PageView;
 use App\Models\Blog;
+use App\Models\PageView;
 use App\Models\Service;
+use App\Support\ReactPage;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class AnalyticsController extends Controller
@@ -85,7 +86,7 @@ class AnalyticsController extends Controller
             ->limit(10)
             ->get();
 
-        return \App\Support\ReactPage::render('admin.analytics.index', compact(
+        return ReactPage::render('admin.analytics.index', compact(
             'totalViews',
             'viewsChange',
             'uniqueVisitors',
@@ -135,7 +136,7 @@ class AnalyticsController extends Controller
         // Average time on site (simplified)
         $avgPagesPerSession = $totalSessions > 0 ? PageView::count() / $totalSessions : 0;
 
-        return \App\Support\ReactPage::render('admin.analytics.seo', compact(
+        return ReactPage::render('admin.analytics.seo', compact(
             'totalPages',
             'avgPageViews',
             'mostViewedBlogs',

@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\CourseEnrollment;
 use App\Models\CoursePayment;
+use App\Support\AdminListing;
 use App\Support\Education;
+use App\Support\EducationLearning;
 use App\Support\ReactPage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +22,7 @@ class AdminEnrollmentController extends Controller
         $enrollments = CourseEnrollment::with(['student:id,name,email', 'batch.course'])
             ->when($filters['status'] ?? null, fn ($q, $s) => $q->where('status', $s))
             ->when($filters['search'] ?? null, fn ($q, $s) => $q->whereHas('student', fn ($q) => $q->where('name', 'like', "%{$s}%")->orWhere('email', 'like', "%{$s}%")))
-            ->latest()->paginate(20)->withQueryString();
+            ->latest()->paginate(AdminListing::perPage($request))->withQueryString();
         $stats = ['courses' => Course::count(), 'applications_to_review' => CourseEnrollment::where('status', 'applied')->count(), 'active_students' => CourseEnrollment::where('status', 'active')->count(), 'payments_to_verify' => CoursePayment::whereIn('status', ['pending', 'review_required'])->count()];
 
         return ReactPage::render('admin.education.enrollments', compact('enrollments', 'stats', 'filters'));
@@ -32,7 +34,7 @@ class AdminEnrollmentController extends Controller
         $lessons = $enrollment->batch->course->lessons()->where('is_published', true)->get(['id', 'title']);
         $completed = DB::table('course_lesson_progress')->where('course_enrollment_id', $enrollment->id)->pluck('course_lesson_id');
 
-        return ReactPage::render('admin.education.review', ['enrollment' => $enrollment, 'studentEmail' => $enrollment->student->email, 'lessons' => $lessons, 'completed' => $completed, 'learning' => \App\Support\EducationLearning::studentProps($enrollment)]);
+        return ReactPage::render('admin.education.review', ['enrollment' => $enrollment, 'studentEmail' => $enrollment->student->email, 'lessons' => $lessons, 'completed' => $completed, 'learning' => EducationLearning::studentProps($enrollment)]);
     }
 
     public function review(Request $request, CourseEnrollment $enrollment)
@@ -41,7 +43,7 @@ class AdminEnrollmentController extends Controller
         Education::locked($enrollment, function ($item, $batch) use ($data) {
             if ($data['decision'] === 'complete') {
                 Education::ensure($item->status === 'active', 'Only active enrollments can be completed.');
-                \App\Support\EducationLearning::requireCompletion($item);
+                EducationLearning::requireCompletion($item);
                 $lessonIds = $batch->course->lessons()->where('is_published', true)->pluck('id');
                 if ($batch->course->mode !== 'in_person') {
                     Education::ensure($lessonIds->isNotEmpty() && DB::table('course_lesson_progress')->where('course_enrollment_id', $item->id)->whereIn('course_lesson_id', $lessonIds)->count() === $lessonIds->count(), 'The student must finish all published lessons before certification.');
@@ -66,7 +68,7 @@ class AdminEnrollmentController extends Controller
     public function payments(Request $request)
     {
         $filters = $request->validate(['status' => 'nullable|in:pending,approved,rejected,review_required,resolved']);
-        $payments = CoursePayment::with(['enrollment.student:id,name', 'enrollment.batch.course'])->when($filters['status'] ?? null, fn ($q, $s) => $q->where('status', $s))->latest()->paginate(20)->withQueryString();
+        $payments = CoursePayment::with(['enrollment.student:id,name', 'enrollment.batch.course'])->when($filters['status'] ?? null, fn ($q, $s) => $q->where('status', $s))->latest()->paginate(AdminListing::perPage($request))->withQueryString();
 
         return ReactPage::render('admin.education.payments', compact('payments', 'filters'));
     }

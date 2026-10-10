@@ -511,6 +511,14 @@ export function ChatList({ conversations, totalUnread, activeConversations }) {
                             title: "Updated",
                             render: (r) => date(r.last_message_at),
                         },
+                        {
+                            title: "Actions",
+                            render: (r) => (
+                                <a href={"/admin/chat/" + r.id}>
+                                    Open conversation →
+                                </a>
+                            ),
+                        },
                     ]}
                 />
                 <Pagination data={conversations} />
