@@ -137,3 +137,8 @@ Course batch buttons now open a dedicated enrollment review page. Login returns 
 The student workspace shows Application → Payment/Approval → Learn → Complete, with actions based on actual status. Paid access remains locked until manual or gateway verification. Free courses unlock after acceptance. The completion checklist reflects published lessons, required assignments, quizzes, and attendance; certificates still require administrator confirmation. QR payment continues to require a receipt and verification.
 
 Validation: 151 tests / 862 assertions, including a full paid enrollment through receipt and certificate; browser checks for login return, application, gated access, active checklist, and mobile layout.
+
+### Learning calendar (10 October 2026)
+Students can open My learning → Learning calendar to see the next 90 days of scheduled classes and outstanding published assignment deadlines for their active enrollments. Filters switch between all events, classes, and assignments. Times display in the viewer's browser timezone. Each event links back to its classroom.
+
+Download calendar exports an authenticated .ics snapshot, with stable event IDs and UTC event times. It does not subscribe to later schedule changes. Classes mark only their start time; assignments mark their deadline. Meeting links and private notes are excluded. The view and download each include up to 300 classes and 300 assignments. Validation: 153 tests / 933 assertions plus desktop/mobile event-filter and download browser checks.

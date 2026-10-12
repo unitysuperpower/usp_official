@@ -75,3 +75,6 @@ Added selectable manual payment cards, total-due summary, transfer steps, QR dis
 
 LMS journey release: 20261010-052656-lms-journey (10 October 2026).
 Published dedicated enrollment review with login return, price reconfirmation, workspace journey tracker, next actions, and completion checklist. Also includes the previously pending student dashboard filters/spotlight and 7/30-day admin trends. No migrations or account/payment configuration changes. Previous release retained under releases; rollback path and ERP entry hash saved in backups/20261010-052656-lms-journey. Production route checks passed before atomic switch. ERP unchanged. Validation: 151 tests / 862 assertions plus isolated enrollment browser workflow and mobile checks.
+
+Learning calendar release: 20261010-115113-learning-calendar (10 October 2026).
+Published private student event view and .ics snapshot download for active enrollments. Production calendar/download routes passed before the atomic switch. Previous release retained; no database changes; ERP entry-file integrity unchanged. Validation: 153 tests / 933 assertions and desktop/mobile browser checks covering filters and authenticated download.

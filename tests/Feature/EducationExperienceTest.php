@@ -3,6 +3,7 @@
 use App\Models\Course;
 use App\Models\CourseEnrollment;
 use App\Models\EducationAssignment;
+use App\Models\EducationSession;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -72,7 +73,7 @@ test('student deadlines exclude other batches and drafts', function () {
 
 test('student dashboard filters only owned courses and highlights unfinished published lessons', function () {
     $other = User::factory()->withoutTwoFactor()->create();
-    CourseEnrollment::create(['user_id' => $other->id, 'motivation'=>'Learn', 'course_batch_id' => $this->batch->id, 'phone' => '03001234567', 'fee_minor' => 10000, 'currency' => 'PKR', 'status' => 'active']);
+    CourseEnrollment::create(['user_id' => $other->id, 'motivation' => 'Learn', 'course_batch_id' => $this->batch->id, 'phone' => '03001234567', 'fee_minor' => 10000, 'currency' => 'PKR', 'status' => 'active']);
     $this->actingAs($this->student)->get('/learn?status=active&search=Learning')->assertOk()->assertViewHas('props', fn ($p) => $p['enrollments']['total'] === 1 && $p['continueLearning']['lesson_id'] === $this->lesson->id);
     $this->get('/learn?status=completed')->assertViewHas('props', fn ($p) => $p['enrollments']['total'] === 0 && $p['stats']['active'] === 1);
     $this->get('/learn?search=nomatch')->assertViewHas('props', fn ($p) => $p['enrollments']['total'] === 0);
@@ -83,4 +84,30 @@ test('application trend fills missing days and uses Pakistan calendar dates', fu
     $this->travelTo(Carbon::parse('2026-10-09 01:00:00', 'Asia/Karachi'));
     $this->enrollment->forceFill(['created_at' => Carbon::parse('2026-10-08 20:30:00', 'UTC')])->save();
     $this->actingAs($this->admin)->get('/admin/education/overview')->assertOk()->assertViewHas('props', fn ($p) => count($p['trend']) === 30 && $p['trend']['2026-10-09'] === 1 && $p['trend']['2026-10-08'] === 0);
+});
+
+test('learning calendar only contains upcoming active course events', function () {
+    EducationSession::create(['course_batch_id' => $this->batch->id, 'title' => 'Upcoming class', 'starts_at' => now()->addDay(), 'status' => 'scheduled', 'notes' => 'PRIVATE_NOTES']);
+    EducationSession::create(['course_batch_id' => $this->batch->id, 'title' => 'Cancelled class', 'starts_at' => now()->addDay(), 'status' => 'cancelled']);
+    EducationSession::create(['course_batch_id' => $this->batch->id, 'title' => 'Old class', 'starts_at' => now()->subDay(), 'status' => 'scheduled']);
+    EducationAssignment::create(['course_batch_id' => $this->batch->id, 'title' => 'Upcoming assignment', 'instructions' => 'PRIVATE_ASSIGNMENT', 'due_at' => now()->addDays(2), 'is_published' => true, 'pass_percent' => 50]);
+    EducationAssignment::create(['course_batch_id' => $this->batch->id, 'title' => 'Draft assignment', 'instructions' => 'Draft', 'due_at' => now()->addDays(2), 'is_published' => false, 'pass_percent' => 50]);
+    $this->actingAs($this->student)->get('/learn/calendar')->assertOk()->assertViewHas('props', fn ($p) => count($p['events']) === 2)->assertDontSee('PRIVATE_NOTES')->assertDontSee('PRIVATE_ASSIGNMENT');
+    $this->actingAs(User::factory()->withoutTwoFactor()->create())->get('/learn/calendar')->assertViewHas('props', fn ($p) => count($p['events']) === 0);
+    $this->enrollment->update(['status' => 'accepted']);
+    $this->actingAs($this->student)->get('/learn/calendar')->assertViewHas('props', fn ($p) => count($p['events']) === 0);
+});
+test('calendar download is private escaped UTF8 and contains no meeting links', function () {
+    $this->batch->update(['meeting_url' => 'https://example.test/private-meeting']);
+    EducationSession::create(['course_batch_id' => $this->batch->id, 'title' => str_repeat('م', 80)."\nBEGIN:VEVENT;test,", 'starts_at' => now()->addDay(), 'status' => 'scheduled']);
+    $this->get('/learn/calendar/download')->assertRedirect('/login');
+    $response = $this->actingAs($this->student)->get('/learn/calendar/download')->assertOk()->assertHeader('Content-Type', 'text/calendar; charset=utf-8')->assertHeader('Cache-Control', 'no-store, private');
+    $content = $response->getContent();
+    expect($content)->toContain('BEGIN:VCALENDAR')->not->toContain('private-meeting');
+    expect(substr_count($content, "\r\nBEGIN:VEVENT\r\n"))->toBe(1);
+    foreach (explode("\r\n", $content) as $line) {
+        expect(strlen($line))->toBeLessThanOrEqual(75);
+        expect(mb_check_encoding($line, 'UTF-8'))->toBeTrue();
+    }
+    expect(str_replace("\r\n ", '', $content))->toContain('\nBEGIN:VEVENT\;test\,');
 });
