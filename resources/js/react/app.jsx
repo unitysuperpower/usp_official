@@ -2,6 +2,8 @@ import React, { useCallback, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Projects, ProjectDetail, Leads } from "./projects";
 import EducationPage from "./education";
+import StorePage from "./store";
+import "../../css/store.css";
 import Sidebar, { workspaceTitle } from "./sidebar";
 import UserDropdown from "./user-dropdown";
 import FloatingChat from "./floating-chat";
@@ -106,6 +108,7 @@ function Layout({ children }) {
                                     ["/", "Home"],
                                     ["/services", "Services"],
                                     ["/courses", "Courses"],
+                                    ["/products", "Products"],
                                     ["/#approach", "Our approach"],
                                     ["/blogs", "Insights"],
                                 ].map(([href, title]) => (
@@ -281,6 +284,7 @@ function Layout({ children }) {
 function Page() {
     const page = context.page,
         p = context.props;
+    if (page.startsWith("store.") || page.startsWith("admin.store.")) return <StorePage {...p} />;
     if (page.startsWith("education.") || page.startsWith("admin.education.")) return <EducationPage {...p} />;
     if (page === "home") return <Home {...p} />;
     if (page.startsWith("auth.")) return <Auth {...p} />;

@@ -175,3 +175,5 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/education.php';
+
+require __DIR__.'/store.php';

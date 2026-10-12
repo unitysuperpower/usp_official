@@ -1,0 +1,14 @@
+{
+  "source": "https://github.com/dr5hn/countries-states-cities-database",
+  "license": "ODbL-1.0",
+  "snapshot_date": "2026-10-12",
+  "countries": 250,
+  "regions": 5328,
+  "source_city_records": 152330,
+  "unique_city_choices": 149255,
+  "source_sha256": {
+    "usp-location-countries.json": "a12d03080595c22d4477ddc64383b7f795c156be3571bb3ebf969df9bbf75684",
+    "usp-location-states.json": "0571a4c91a073f648e4162074aa5bc87b7bcb0d92fb8a3839a14a0067a2b3de6",
+    "usp-location-cities.json.gz": "04d3f4df59725ac6181b3fbaddbc82fbf265802af042e36ac8073c9e38e45cd3"
+  }
+}

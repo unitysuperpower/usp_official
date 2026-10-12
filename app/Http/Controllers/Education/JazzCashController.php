@@ -44,6 +44,9 @@ class JazzCashController extends Controller
 
     public function callback(Request $request, JazzCashService $gateway)
     {
+        if (is_string($request->input('pp_BillReference')) && str_starts_with($request->input('pp_BillReference'), 'STORE')) {
+            return app(\App\Http\Controllers\Store\StoreGatewayController::class)->callback($request, $gateway, app(\App\Services\Store\Orders::class));
+        }
         abort_if(app()->isProduction() && $gateway->setting('environment') !== 'live', 503);
         $fields = $request->post();
         abort_unless($gateway->valid($fields), 400, 'Invalid payment signature.');

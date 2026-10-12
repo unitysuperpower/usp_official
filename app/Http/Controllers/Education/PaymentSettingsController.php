@@ -64,7 +64,7 @@ class PaymentSettingsController extends Controller
                     Education::ensure(! app()->isProduction() || $gateway['environment'] === 'live', 'Production requires live merchant credentials.', 'environment');
                 }
                 $changed = collect($gateway)->except('enabled')->all() != collect($previous)->except('enabled')->all();
-                Education::ensure(! $changed || ! CoursePayment::where('method', 'jazzcash_online')->whereIn('status', ['pending', 'review_required'])->exists(), 'Reconcile pending JazzCash transactions before changing merchant details or environment.', 'merchant_id');
+                Education::ensure(! $changed || (! CoursePayment::where('method', 'jazzcash_online')->whereIn('status', ['pending', 'review_required'])->exists() && ! \App\Models\ProductPayment::where('method', 'jazzcash_online')->whereIn('status', ['pending', 'review_required'])->exists()), 'Reconcile pending JazzCash transactions before changing merchant details or environment.', 'merchant_id');
                 $manual = config('education.payment_methods');
                 foreach ($manual as $key => &$method) {
                     $method['instructions'] = $data[$key] ?? '';

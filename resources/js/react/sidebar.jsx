@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { context } from "./ui";
 
 const groups = [
+    ["Product store", [["store/products", "Products & plans"], ["store/orders", "Orders & payments"], ["store/licenses", "Licenses"]]],
     [
         "Education",
         [
@@ -39,6 +40,9 @@ const groups = [
     ],
 ];
 const paths = {
+    "store/products": "M3 5h18v16H3z M3 10h18 M8 5V3h8v2",
+    "store/orders": "M3 5h18v14H3z M3 10h18 M7 15h3",
+    "store/licenses": "M15 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0 M11 11v10 M11 16h4 M11 20h3",
     "education/overview": "M4 3v18h17 M8 16v-5 M13 16V7 M18 16V4",
     "education/courses": "M3 4h7l2 2 2-2h7v16h-7l-2 2-2-2H3z M12 6v16",
     "education/enrollments":
@@ -78,6 +82,8 @@ export function NavIcon({ name }) {
 }
 const active = (path) => {
     const page = context.page
+        .replace("admin.store.editor", "admin.store.products")
+        .replace(/^admin\.store\.order$/, "admin.store.orders")
         .replace("admin.education.classroom", "admin.education.courses")
         .replace("admin.education.editor", "admin.education.courses")
         .replace("admin.education.review", "admin.education.enrollments");

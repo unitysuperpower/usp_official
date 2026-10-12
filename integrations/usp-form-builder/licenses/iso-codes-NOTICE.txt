@@ -1,0 +1,9 @@
+includes/countries.php adapts country and territory names and alpha-2 codes from
+iso-codes ISO 3166-1 data, installed in /usr/share/iso-codes/json/iso_3166-1.json.
+Source: https://salsa.debian.org/iso-codes-team/iso-codes
+Copyright 2001-2008 Alastair McKinstry
+Copyright 2004-2016 Christian Perrier
+Copyright 2005-2026 Dr. Tobias Quathamer
+Licensed under LGPL version 2.1 or later; see iso-codes-LGPL-2.1.txt.
+Changes: retained alpha-2 codes and common English names, sorted alphabetically,
+and converted the reference list to a PHP array. No runtime service is used.

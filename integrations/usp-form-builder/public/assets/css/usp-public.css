@@ -1,0 +1,1260 @@
+/**
+ * Premium Modern Public Form Styles for USP Form Builder.
+ * Crafted with clean typography, fluid responsive layout, and accessible states.
+ */
+
+:root {
+    --usp-primary: #4f46e5;
+    --usp-primary-hover: #4338ca;
+    --usp-primary-light: #eef2ff;
+    --usp-primary-ring: rgba(79, 70, 229, 0.16);
+    --usp-text-heading: #0f172a;
+    --usp-text-body: #1e293b;
+    --usp-text-muted: #64748b;
+    --usp-border-default: #cbd5e1;
+    --usp-border-hover: #94a3b8;
+    --usp-border-focus: #6366f1;
+    --usp-bg-card: #ffffff;
+    --usp-bg-input: #ffffff;
+    --usp-bg-input-focus: #ffffff;
+    --usp-radius-sm: 6px;
+    --usp-radius-md: 10px;
+    --usp-radius-lg: 16px;
+    --usp-shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+    --usp-shadow-input: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+    --usp-success-bg: #ecfdf5;
+    --usp-success-border: #a7f3d0;
+    --usp-success-text: #065f46;
+    --usp-error-bg: #fef2f2;
+    --usp-error-border: #fecaca;
+    --usp-error-text: #991b1b;
+}
+
+/* Base Container */
+.usp-form-container {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 680px;
+    margin: 24px auto;
+    padding: 32px;
+    background: var(--usp-bg-card);
+    border: 1px solid #e2e8f0;
+    border-radius: var(--usp-radius-lg);
+    box-shadow: var(--usp-shadow-card);
+    color: var(--usp-text-body);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    accent-color: var(--usp-primary);
+}
+
+.usp-form-container *,
+.usp-form-container *::before,
+.usp-form-container *::after {
+    box-sizing: border-box;
+}
+
+/* Heading */
+.usp-form-heading {
+    margin: 0 0 24px 0;
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: var(--usp-text-heading);
+    letter-spacing: -0.02em;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+/* Fields Grid */
+.usp-form-fields-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+/* Field Widths */
+.usp-field-wrap {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.usp-width-100 {
+    flex: 0 0 100%;
+    width: 100%;
+}
+
+.usp-width-50 {
+    flex: 0 0 calc(50% - 9px);
+    width: calc(50% - 9px);
+}
+
+.usp-width-33 {
+    flex: 0 0 calc(33.333% - 12px);
+    width: calc(33.333% - 12px);
+}
+
+@media (max-width: 640px) {
+    .usp-form-container {
+        padding: 20px 16px;
+        border-radius: var(--usp-radius-md);
+        box-shadow: none;
+    }
+    .usp-width-50,
+    .usp-width-33 {
+        flex: 0 0 100%;
+        width: 100%;
+    }
+}
+
+/* Section Note / HTML */
+.usp-field-html {
+    padding: 8px 0 4px 0;
+}
+
+.usp-html-title {
+    margin: 0 0 6px 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--usp-text-heading);
+    letter-spacing: -0.01em;
+}
+
+.usp-html-desc {
+    color: var(--usp-text-muted);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+/* Labels */
+.usp-field-label {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--usp-text-heading);
+    margin-bottom: 7px;
+}
+
+.usp-required-mark {
+    color: #ef4444;
+    margin-left: 3px;
+    font-weight: 700;
+}
+
+/* Inputs & Form Controls */
+.usp-input {
+    display: block;
+    width: 100%;
+    padding: 11px 14px;
+    font-size: 0.97rem;
+    font-family: inherit;
+    color: var(--usp-text-body);
+    background-color: var(--usp-bg-input);
+    border: 1.5px solid var(--usp-border-default);
+    border-radius: var(--usp-radius-sm);
+    box-shadow: var(--usp-shadow-input);
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.usp-input:hover {
+    border-color: var(--usp-border-hover);
+}
+
+.usp-input:focus {
+    outline: none;
+    border-color: var(--usp-border-focus);
+    box-shadow: 0 0 0 3px var(--usp-primary-ring);
+    background-color: var(--usp-bg-input-focus);
+}
+
+.usp-input::placeholder {
+    color: #94a3b8;
+    font-size: 0.93rem;
+}
+
+/* Textarea */
+.usp-textarea {
+    resize: vertical;
+    min-height: 110px;
+    line-height: 1.6;
+}
+
+/* Select Dropdown */
+.usp-select {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    background-position: right 12px center;
+    background-repeat: no-repeat;
+    background-size: 18px 18px;
+    padding-right: 38px;
+}
+
+/* Radios & Checkboxes */
+.usp-choice-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.usp-choice-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.94rem;
+    color: var(--usp-text-body);
+    cursor: pointer;
+    user-select: none;
+    padding: 4px 0;
+    transition: color 0.15s ease;
+}
+
+.usp-choice-label:hover {
+    color: var(--usp-text-heading);
+}
+
+.usp-choice-label input[type="radio"],
+.usp-choice-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    cursor: pointer;
+    border-radius: 4px;
+    border: 1.5px solid var(--usp-border-default);
+    transition: all 0.15s ease;
+}
+
+.usp-choice-label input[type="radio"] {
+    border-radius: 50%;
+}
+
+.usp-choice-label input[type="radio"]:focus-visible,
+.usp-choice-label input[type="checkbox"]:focus-visible {
+    outline: 2px solid var(--usp-primary);
+    outline-offset: 2px;
+}
+
+/* Help Text */
+.usp-field-help {
+    font-size: 0.83rem;
+    color: var(--usp-text-muted);
+    margin-top: 5px;
+    line-height: 1.4;
+}
+
+/* Validation States */
+.usp-field-wrap.has-error .usp-input {
+    border-color: #ef4444;
+    background-color: #fffbfa;
+}
+
+.usp-field-wrap.has-error .usp-input:focus {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.16);
+}
+
+.usp-field-error {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #dc2626;
+    font-size: 0.83rem;
+    font-weight: 500;
+    margin-top: 6px;
+    animation: usp-slide-in 0.2s ease-out;
+}
+
+@keyframes usp-slide-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Submit Actions */
+.usp-form-actions {
+    margin-top: 20px;
+}
+
+.usp-btn-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 30px;
+    font-size: 0.98rem;
+    font-weight: 600;
+    color: #ffffff;
+    background: linear-gradient(180deg, var(--usp-primary) 0%, var(--usp-primary-hover) 100%);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: var(--usp-radius-sm);
+    box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.usp-btn-submit:hover {
+    background: linear-gradient(180deg, #4338ca 0%, #3730a3 100%);
+    box-shadow: 0 4px 8px rgba(79, 70, 229, 0.28);
+    transform: translateY(-1px);
+}
+
+.usp-btn-submit:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.usp-btn-submit:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Spinner */
+.usp-spinner {
+    display: inline-block;
+    width: 17px;
+    height: 17px;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: usp-spin 0.75s linear infinite;
+}
+
+@keyframes usp-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Alerts / Notices */
+.usp-form-messages {
+    padding: 16px 20px;
+    border-radius: var(--usp-radius-sm);
+    margin-bottom: 22px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    animation: usp-fade-down 0.25s ease-out;
+}
+
+@keyframes usp-fade-down {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.usp-form-messages.usp-success {
+    background-color: var(--usp-success-bg);
+    border: 1px solid var(--usp-success-border);
+    color: var(--usp-success-text);
+}
+
+.usp-form-messages.usp-error {
+    background-color: var(--usp-error-bg);
+    border: 1px solid var(--usp-error-border);
+    color: var(--usp-error-text);
+}
+
+.usp-error-box {
+    background-color: #fffbeb;
+    border: 1px solid #fde68a;
+    color: #92400e;
+    padding: 14px 18px;
+    border-radius: var(--usp-radius-sm);
+    font-size: 0.95rem;
+}
+
+/* ==========================================================================
+   USP Theme Presets & Visual Customization System
+   ========================================================================== */
+
+/* 1. Minimalist Monochrome */
+.usp-form-container.usp-theme-minimal {
+    --usp-primary: #0f172a;
+    --usp-primary-hover: #1e293b;
+    --usp-primary-light: #f1f5f9;
+    --usp-border-default: #e2e8f0;
+    --usp-border-focus: #0f172a;
+    --usp-text-heading: #0f172a;
+    border-color: #e2e8f0;
+}
+
+/* 2. Midnight Dark Mode */
+.usp-form-container.usp-theme-dark {
+    --usp-primary: #38bdf8;
+    --usp-primary-hover: #0ea5e9;
+    --usp-primary-light: rgba(56, 189, 248, 0.12);
+    --usp-bg-card: #0f172a;
+    --usp-bg-input: #1e293b;
+    --usp-bg-input-focus: #1e293b;
+    --usp-text-heading: #f8fafc;
+    --usp-text-body: #e2e8f0;
+    --usp-text-muted: #94a3b8;
+    --usp-border-default: #334155;
+    --usp-border-hover: #475569;
+    --usp-border-focus: #38bdf8;
+    border-color: #1e293b;
+}
+
+.usp-form-container.usp-theme-dark .usp-form-heading {
+    border-bottom-color: #1e293b;
+}
+
+.usp-form-container.usp-theme-dark .usp-input,
+.usp-form-container.usp-theme-dark .usp-card-mock-input {
+    color: #f8fafc;
+}
+
+.usp-form-container.usp-theme-dark .usp-input::placeholder {
+    color: #64748b;
+}
+
+.usp-form-container.usp-theme-dark .usp-btn-submit {
+    color: #0f172a;
+    font-weight: 700;
+}
+
+/* 3. Emerald Eco */
+.usp-form-container.usp-theme-emerald {
+    --usp-primary: #059669;
+    --usp-primary-hover: #047857;
+    --usp-primary-light: #ecfdf5;
+    --usp-primary-ring: rgba(5, 150, 105, 0.16);
+    --usp-text-heading: #064e3b;
+    --usp-border-focus: #059669;
+    border-color: #a7f3d0;
+}
+
+/* 4. Sunset Crimson */
+.usp-form-container.usp-theme-sunset {
+    --usp-primary: #e11d48;
+    --usp-primary-hover: #be123c;
+    --usp-primary-light: #fff1f2;
+    --usp-primary-ring: rgba(225, 29, 72, 0.16);
+    --usp-text-heading: #881337;
+    --usp-border-focus: #e11d48;
+    border-color: #fecdd3;
+}
+
+/* 5. Royal Violet */
+.usp-form-container.usp-theme-violet {
+    --usp-primary: #7c3aed;
+    --usp-primary-hover: #6d28d9;
+    --usp-primary-light: #f5f3ff;
+    --usp-primary-ring: rgba(124, 58, 237, 0.16);
+    --usp-text-heading: #4c1d95;
+    --usp-border-focus: #7c3aed;
+    border-color: #ddd6fe;
+}
+
+/* --- Corner Radius Variations --- */
+.usp-form-container.usp-radius-sharp {
+    border-radius: 0px !important;
+}
+.usp-form-container.usp-radius-sharp .usp-input,
+.usp-form-container.usp-radius-sharp .usp-btn-submit {
+    border-radius: 0px !important;
+}
+
+.usp-form-container.usp-radius-slight {
+    border-radius: 6px !important;
+}
+.usp-form-container.usp-radius-slight .usp-input,
+.usp-form-container.usp-radius-slight .usp-btn-submit {
+    border-radius: 4px !important;
+}
+
+.usp-form-container.usp-radius-rounded {
+    border-radius: 12px !important;
+}
+.usp-form-container.usp-radius-rounded .usp-input,
+.usp-form-container.usp-radius-rounded .usp-btn-submit {
+    border-radius: 8px !important;
+}
+
+.usp-form-container.usp-radius-pill {
+    border-radius: 24px !important;
+}
+.usp-form-container.usp-radius-pill .usp-input {
+    border-radius: 12px !important;
+}
+.usp-form-container.usp-radius-pill .usp-btn-submit {
+    border-radius: 30px !important;
+}
+
+/* --- Box Shadow Variations --- */
+.usp-form-container.usp-shadow-none {
+    box-shadow: none !important;
+}
+.usp-form-container.usp-shadow-subtle {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
+}
+.usp-form-container.usp-shadow-medium {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.06), 0 8px 10px -6px rgba(0, 0, 0, 0.03) !important;
+}
+.usp-form-container.usp-shadow-elevated {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15) !important;
+}
+.usp-form-container.usp-shadow-outline {
+    box-shadow: none !important;
+    border-width: 2px !important;
+}
+
+/* --- Button Alignment --- */
+.usp-form-actions.usp-btn-align-left {
+    text-align: left;
+}
+.usp-form-actions.usp-btn-align-center {
+    text-align: center;
+}
+.usp-form-actions.usp-btn-align-right {
+    text-align: right;
+}
+.usp-form-actions.usp-btn-align-full .usp-btn-submit {
+    width: 100%;
+    display: flex;
+}
+
+/* ==========================================================================
+   Pro Fields & Security Widget Frontend Styles
+   ========================================================================== */
+
+/* 1. University Admission Block */
+.usp-pro-admission-panel {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--usp-radius-md);
+    padding: 20px;
+    margin-top: 6px;
+    width: 100%;
+}
+
+.usp-adm-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+.usp-adm-row:last-child {
+    margin-bottom: 0;
+}
+
+.usp-sublabel {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--usp-text-muted);
+    margin-bottom: 4px;
+}
+
+/* 2. Global Phone Number with Flags & Dynamic Limit Engine */
+.usp-intl-tel-control {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    align-items: flex-start;
+}
+
+.usp-dial-select-wrap {
+    flex: 0 0 100px;
+    max-width: 105px;
+    min-width: 95px;
+}
+
+.usp-dial-select {
+    width: 100%;
+    font-weight: 600;
+    font-size: 0.85rem;
+    background-color: var(--usp-bg-input);
+    border: 1.5px solid var(--usp-border-default);
+    border-radius: var(--usp-radius-sm);
+    padding: 10px 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.usp-dial-select:focus {
+    border-color: var(--usp-primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+
+.usp-tel-input-col {
+    flex: 1;
+    min-width: 0;
+}
+
+.usp-tel-input-box {
+    position: relative;
+    width: 100%;
+}
+
+.usp-tel-masked-input {
+    width: 100%;
+    min-width: 0;
+    font-family: inherit;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.5px;
+    padding-right: 36px;
+}
+
+.usp-tel-status-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.usp-phone-helper-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+    color: var(--usp-text-muted);
+    margin-top: 5px;
+    padding: 0 2px;
+    line-height: 1.3;
+    gap: 4px;
+}
+
+.usp-phone-format-hint {
+    color: #64748b;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.usp-phone-format-hint strong {
+    color: #334155;
+    font-family: monospace;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.usp-phone-digits-counter {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: #64748b;
+    padding: 2px 7px;
+    border-radius: 9999px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    font-size: 0.72rem;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.usp-phone-digits-counter.is-incomplete {
+    color: #d97706;
+    background: #fffbeb;
+    border-color: #fde68a;
+}
+
+.usp-phone-digits-counter.is-valid {
+    color: #059669;
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+}
+
+.usp-phone-digits-counter.is-max {
+    color: #047857;
+    background: #d1fae5;
+    border-color: #6ee7b7;
+    font-weight: 700;
+}
+
+.usp-phone-digits-counter.pulse-limit {
+    animation: uspCounterPulse 0.25s ease;
+    background: #fee2e2;
+    color: #dc2626;
+    border-color: #fca5a5;
+}
+
+@keyframes uspCounterPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+/* 3. Payment Gateway & Card Panel with Auto Brand Detection */
+.usp-payment-card-panel {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--usp-radius-md);
+    padding: 22px;
+    margin-top: 6px;
+    width: 100%;
+}
+
+.usp-pay-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.usp-pay-amount-box {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.usp-pay-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--usp-text-heading);
+}
+
+.usp-pay-amount {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--usp-primary);
+}
+
+.usp-pay-secure-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #059669;
+    background: #ecfdf5;
+    padding: 3px 9px;
+    border-radius: 9999px;
+    border: 1px solid #a7f3d0;
+}
+
+.usp-secure-lock-svg {
+    width: 13px;
+    height: 13px;
+    fill: currentColor;
+}
+
+/* Accepted Cards Brand Pills */
+.usp-accepted-cards-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    padding: 8px 12px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--usp-radius-sm);
+}
+
+.usp-accepted-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.usp-card-badges-list {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.usp-brand-badge {
+    display: inline-flex;
+    align-items: center;
+    opacity: 0.75;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+    padding: 2px;
+}
+
+.usp-brand-badge.is-dimmed {
+    opacity: 0.25;
+    filter: grayscale(80%);
+}
+
+.usp-brand-badge.is-active {
+    opacity: 1;
+    transform: scale(1.08);
+    box-shadow: 0 0 0 2px var(--usp-primary), 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.usp-brand-svg {
+    width: 32px;
+    height: 20px;
+    border-radius: 3px;
+    display: block;
+}
+
+.usp-pay-field-group {
+    margin-bottom: 12px;
+}
+
+.usp-card-number-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.usp-card-live-brand-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.usp-card-number-input {
+    width: 100%;
+    padding-left: 48px !important;
+    padding-right: 84px !important;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 1px;
+    font-weight: 600;
+    font-size: 0.98rem;
+}
+
+.usp-card-brand-detected-pill {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: #e2e8f0;
+    color: #475569;
+    letter-spacing: 0.4px;
+    transition: all 0.2s ease;
+    pointer-events: none;
+}
+
+.usp-card-brand-detected-pill.is-visa {
+    background: #e0e7ff;
+    color: #1e40af;
+}
+
+.usp-card-brand-detected-pill.is-mastercard {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.usp-card-brand-detected-pill.is-amex {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.usp-card-brand-detected-pill.is-discover {
+    background: #ffedd5;
+    color: #c2410c;
+}
+
+.usp-pay-split-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.usp-card-exp-input {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.8px;
+    font-weight: 600;
+}
+
+.usp-cvc-input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.usp-card-cvc-input {
+    width: 100%;
+    padding-right: 64px !important;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 1.5px;
+    font-weight: 600;
+}
+
+.usp-cvc-len-tag {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.7rem;
+    color: #94a3b8;
+    pointer-events: none;
+    font-weight: 500;
+}
+
+/* 4. Anti-Spam CAPTCHA Widget */
+.usp-captcha-box {
+    margin: 18px 0;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.usp-captcha-box .g-recaptcha,
+.usp-captcha-box .cf-turnstile {
+    transform-origin: 0 0;
+}
+
+/* 5. Multi-Step Form Wizard & Progress Stepper */
+.usp-steps-wrapper {
+    margin-bottom: 28px;
+    padding-bottom: 12px;
+}
+
+.usp-steps-progress-container {
+    width: 100%;
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 16px;
+    position: relative;
+}
+
+.usp-steps-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--usp-primary) 0%, var(--usp-border-focus) 100%);
+    border-radius: 999px;
+    transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.usp-steps-indicators-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    gap: 8px;
+}
+
+.usp-step-indicator-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+    transition: all 0.25s ease;
+}
+
+.usp-step-indicator-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #64748b;
+    border: 2px solid #cbd5e1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    transition: all 0.25s ease;
+}
+
+.usp-step-indicator-dot .usp-step-check-icon {
+    display: none;
+    font-size: 0.85rem;
+}
+
+.usp-step-indicator-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.25s ease;
+}
+
+.usp-step-indicator-item.is-active .usp-step-indicator-dot {
+    background: var(--usp-primary);
+    color: #ffffff;
+    border-color: var(--usp-primary);
+    box-shadow: 0 0 0 4px var(--usp-primary-ring);
+}
+
+.usp-step-indicator-item.is-active .usp-step-indicator-title {
+    color: var(--usp-text-heading);
+    font-weight: 700;
+}
+
+.usp-step-indicator-item.is-completed .usp-step-indicator-dot {
+    background: #10b981;
+    color: #ffffff;
+    border-color: #10b981;
+}
+
+.usp-step-indicator-item.is-completed .usp-step-indicator-dot .usp-step-num-text {
+    display: none;
+}
+
+.usp-step-indicator-item.is-completed .usp-step-indicator-dot .usp-step-check-icon {
+    display: inline-block;
+}
+
+.usp-step-indicator-item.is-completed .usp-step-indicator-title {
+    color: #059669;
+}
+
+.usp-step-nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 18px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.usp-btn-step-prev {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #475569;
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: var(--usp-radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.usp-btn-step-prev:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+    color: #1e293b;
+}
+
+.usp-btn-step-next {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 22px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #ffffff;
+    background: var(--usp-primary);
+    border: 1.5px solid var(--usp-primary);
+    border-radius: var(--usp-radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.usp-btn-step-next:hover {
+    background: var(--usp-primary-hover);
+    border-color: var(--usp-primary-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+}
+
+.usp-page-break-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 20px 0;
+    color: #94a3b8;
+}
+
+.usp-page-break-line {
+    flex: 1;
+    height: 1px;
+    background: #e2e8f0;
+}
+
+.usp-page-break-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 4px 12px;
+    background: #f1f5f9;
+    color: #475569;
+    border-radius: 999px;
+    border: 1px solid #e2e8f0;
+}
+
+/* 6. Digital Signature Pad */
+.usp-signature-pad-wrap {
+    background: #ffffff;
+    border: 1.5px solid var(--usp-border-default);
+    border-radius: var(--usp-radius-md);
+    padding: 12px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.usp-field-wrap:focus-within .usp-signature-pad-wrap {
+    border-color: var(--usp-border-focus);
+    box-shadow: 0 0 0 3px var(--usp-primary-ring);
+}
+
+.usp-signature-canvas-box {
+    position: relative;
+    width: 100%;
+    background: #ffffff;
+    border-radius: var(--usp-radius-sm);
+    border: 1px dashed #cbd5e1;
+    overflow: hidden;
+}
+
+.usp-signature-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: crosshair;
+    touch-action: none;
+}
+
+.usp-signature-guide-line {
+    position: absolute;
+    bottom: 24px;
+    left: 20px;
+    right: 20px;
+    border-bottom: 1px dashed #e2e8f0;
+    pointer-events: none;
+    text-align: right;
+}
+
+.usp-signature-guide-line span {
+    font-size: 0.68rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.usp-signature-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.usp-sig-clear-btn {
+    display: inline-flex;
+    align-items: center;
+    background: transparent;
+    border: 1px solid #e2e8f0;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.usp-sig-clear-btn:hover {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    color: #b91c1c;
+}
+
+.usp-sig-status-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 12px;
+}
+
+.usp-sig-status-badge.usp-sig-empty {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.usp-sig-status-badge.usp-sig-signed {
+    background: #ecfdf5;
+    color: #059669;
+    font-weight: 700;
+}
+
+/* 7. Mathematical Formula & Calculation Field */
+.usp-calculation-wrap {
+    width: 100%;
+}
+
+.usp-calculation-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background: #f8fafc;
+    border: 1.5px solid var(--usp-border-default);
+    border-radius: var(--usp-radius-md);
+    padding: 12px 18px;
+    box-shadow: var(--usp-shadow-input);
+    transition: all 0.2s ease;
+}
+
+.usp-calc-sigma-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--usp-primary-light);
+    color: var(--usp-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.usp-calc-display-val {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--usp-text-heading);
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Responsive Overrides */
+@media (max-width: 600px) {
+    .usp-adm-row {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+
+    .usp-intl-tel-control {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .usp-dial-select-wrap,
+    .usp-dial-select {
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+
+    .usp-captcha-box .g-recaptcha {
+        transform: scale(0.88);
+    }
+
+    .usp-steps-indicators-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .usp-step-indicator-item {
+        width: 100%;
+    }
+}
+
+
+
