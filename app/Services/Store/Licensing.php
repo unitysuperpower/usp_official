@@ -73,6 +73,8 @@ class Licensing
                         'site_url' => $site, 'site_hash' => hash('sha256', $site),
                         'token_secret' => bin2hex(random_bytes(32)), 'last_checked_at' => now(),
                     ]);
+                } elseif (! hash_equals($activation->token_secret, $data['token'] ?? '')) {
+                    return $failure('invalid_activation');
                 }
             } elseif (! $activation || ! hash_equals($activation->token_secret, $data['token'] ?? '')) {
                 return $failure('site_inactive');

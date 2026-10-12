@@ -35,14 +35,14 @@ class USP_Security {
             'license_status'             => 'inactive', // 'valid', 'inactive', 'expired'
             'license_expires'            => '',
             'pro_enabled'                => false,
-            'edd_item_id'                 => 0,
-            'edd_pricing_url'             => 'https://usp.com.pk/',
-            'edd_account_url'             => '',
+            'store_pricing_url'           => 'https://usp.com.pk/products/usp-form-builder',
+            'store_account_url'            => '',
             'license_last_checked'        => 0,
             'license_customer_email'      => '',
             'license_site_count'          => 0,
             'license_limit'               => 0,
             'license_error'               => '',
+            'license_activation_token'    => '',
 
             // Anti-Spam & Bot Shield
             'anti_spam_provider'         => 'none', // 'none', 'recaptcha_v2', 'recaptcha_v3', 'turnstile'
@@ -70,6 +70,12 @@ class USP_Security {
         $saved = get_option( self::OPTION_KEY, array() );
         if ( ! is_array( $saved ) ) {
             $saved = array();
+        }
+        if ( ! isset( $saved['store_pricing_url'] ) && isset( $saved['edd_pricing_url'] ) ) {
+            $saved['store_pricing_url'] = $saved['edd_pricing_url'];
+        }
+        if ( ! isset( $saved['store_account_url'] ) && isset( $saved['edd_account_url'] ) ) {
+            $saved['store_account_url'] = $saved['edd_account_url'];
         }
 
         return wp_parse_args( $saved, $defaults );
@@ -103,7 +109,7 @@ class USP_Security {
         }
         set_transient( 'usp_form_builder_license_check_lock', 1, HOUR_IN_SECONDS );
 
-        $response = self::request_edd_license_api( 'check_license', $settings['license_key'] );
+        $response = self::request_license_api( 'check_license', $settings['license_key'] );
         if ( is_wp_error( $response ) ) {
             $settings['license_error'] = $response->get_error_message();
             self::save_settings( $settings );
@@ -120,42 +126,50 @@ class USP_Security {
         $settings['license_customer_email'] = ! empty( $response['customer_email'] ) ? sanitize_email( $response['customer_email'] ) : '';
         $settings['license_site_count']     = isset( $response['site_count'] ) ? absint( $response['site_count'] ) : 0;
         $settings['license_limit']          = isset( $response['license_limit'] ) ? absint( $response['license_limit'] ) : 0;
+        if ( 'valid' === $settings['license_status'] && ! empty( $response['activation_token'] ) ) {
+            $settings['license_activation_token'] = sanitize_text_field( $response['activation_token'] );
+        }
         self::save_settings( $settings );
 
         return 'valid' === $settings['license_status'];
     }
 
     /**
-     * Send a license request to the Easy Digital Downloads Software Licensing API.
+     * Send a product-scoped license request to the USP product store.
      *
-     * @param string $action  EDD license action.
+     * @param string $action  Store license action.
      * @param string $license License key.
      * @return array|WP_Error
      */
-    private static function request_edd_license_api( $action, $license ) {
-        $settings  = self::get_settings();
-        $product_id = absint( $settings['edd_item_id'] );
-        if ( ! $product_id ) {
+    private static function request_license_api( $action, $license ) {
+        $settings = self::get_settings();
+        $product_slug = defined( 'USP_FORM_BUILDER_PRODUCT_SLUG' )
+            ? (string) USP_FORM_BUILDER_PRODUCT_SLUG
+            : 'usp-form-builder';
+        if ( strlen( $product_slug ) > 100 || ! preg_match( '/^[a-z0-9]+(?:-[a-z0-9]+)*$/', $product_slug ) ) {
             return new WP_Error(
                 'usp_license_product_not_configured',
-                __( 'Configure the EDD Software Licensing Download ID in the Pro & Security Hub first.', 'usp-form-builder' )
+                __( 'Configure a valid product slug in the Pro & Security Hub first.', 'usp-form-builder' )
             );
         }
 
-        $request_url = add_query_arg(
-            array(
-                'edd_action' => sanitize_key( $action ),
-                'item_id'    => $product_id,
-                'license'    => $license,
-                'url'        => home_url(),
-            ),
-            'https://usp.com.pk/'
+        $payload = array(
+            'action'  => sanitize_key( $action ),
+            'product' => $product_slug,
+            'license' => $license,
+            'url'     => home_url(),
         );
-        $response = wp_safe_remote_get( $request_url, array(
+        if ( ! empty( $settings['license_activation_token'] ) ) {
+            $payload['token'] = $settings['license_activation_token'];
+        }
+
+        $response = wp_safe_remote_post( 'https://usp.com.pk/api/licenses/v1', array(
             'timeout'             => 10,
             'redirection'         => 0,
             'limit_response_size'  => 16384,
             'reject_unsafe_urls'  => true,
+            'headers'             => array( 'Accept' => 'application/json', 'Content-Type' => 'application/json' ),
+            'body'                => wp_json_encode( $payload ),
         ) );
 
         if ( is_wp_error( $response ) ) {
@@ -185,7 +199,7 @@ class USP_Security {
         if ( ! is_array( $data ) || ! array_key_exists( 'success', $data ) ) {
             return new WP_Error(
                 'usp_license_invalid_response',
-                __( 'The license server returned an invalid response. Confirm Software Licensing is enabled on usp.com.pk.', 'usp-form-builder' )
+                __( 'The license server returned an invalid response. Check the product store configuration on usp.com.pk.', 'usp-form-builder' )
             );
         }
 
@@ -202,7 +216,7 @@ class USP_Security {
         if ( 'deactivate' === $action ) {
             $remote_result = true;
             if ( ! empty( $settings['license_key'] ) ) {
-                $remote_result = self::request_edd_license_api( 'deactivate_license', $settings['license_key'] );
+                $remote_result = self::request_license_api( 'deactivate_license', $settings['license_key'] );
             }
             $settings['license_key']    = '';
             $settings['license_status'] = 'inactive';
@@ -211,6 +225,7 @@ class USP_Security {
             $settings['license_last_checked'] = 0;
             $settings['license_customer_email'] = '';
             $settings['license_error'] = '';
+            $settings['license_activation_token'] = '';
             self::save_settings( $settings );
 
             if ( is_wp_error( $remote_result ) || ( is_array( $remote_result ) && empty( $remote_result['success'] ) ) ) {
@@ -230,7 +245,7 @@ class USP_Security {
             if ( empty( $settings['license_key'] ) ) {
                 return array( 'success' => false, 'message' => __( 'No license key is currently activated.', 'usp-form-builder' ) );
             }
-            $response = self::request_edd_license_api( 'check_license', $settings['license_key'] );
+            $response = self::request_license_api( 'check_license', $settings['license_key'] );
             if ( is_wp_error( $response ) ) {
                 $settings['license_error'] = $response->get_error_message();
                 self::save_settings( $settings );
@@ -247,6 +262,9 @@ class USP_Security {
             $settings['license_customer_email'] = ! empty( $response['customer_email'] ) ? sanitize_email( $response['customer_email'] ) : '';
             $settings['license_site_count']     = isset( $response['site_count'] ) ? absint( $response['site_count'] ) : 0;
             $settings['license_limit']          = isset( $response['license_limit'] ) ? absint( $response['license_limit'] ) : 0;
+            if ( 'valid' === $settings['license_status'] && ! empty( $response['activation_token'] ) ) {
+                $settings['license_activation_token'] = sanitize_text_field( $response['activation_token'] );
+            }
             self::save_settings( $settings );
             delete_transient( 'usp_form_builder_license_check_lock' );
 
@@ -277,7 +295,7 @@ class USP_Security {
             );
         }
 
-        $response = self::request_edd_license_api( 'activate_license', $key );
+        $response = self::request_license_api( 'activate_license', $key );
         if ( is_wp_error( $response ) ) {
             return array( 'success' => false, 'message' => $response->get_error_message() );
         }
@@ -286,7 +304,7 @@ class USP_Security {
             return array(
                 'success' => false,
                 'message' => sprintf(
-                    /* translators: %s: EDD license error code */
+                    /* translators: %s: store license error code */
                     __( 'License activation was rejected by usp.com.pk (%s). Check the key, product, expiry, and activation limit.', 'usp-form-builder' ),
                     $error
                 ),
@@ -299,6 +317,7 @@ class USP_Security {
         $settings['license_customer_email']  = ! empty( $response['customer_email'] ) ? sanitize_email( $response['customer_email'] ) : '';
         $settings['license_site_count']      = isset( $response['site_count'] ) ? absint( $response['site_count'] ) : 0;
         $settings['license_limit']           = isset( $response['license_limit'] ) ? absint( $response['license_limit'] ) : 0;
+        $settings['license_activation_token'] = ! empty( $response['activation_token'] ) ? sanitize_text_field( $response['activation_token'] ) : '';
         $settings['license_last_checked']    = time();
         $settings['license_error']           = '';
         $settings['pro_enabled']              = true;

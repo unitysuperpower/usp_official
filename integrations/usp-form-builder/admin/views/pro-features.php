@@ -172,25 +172,25 @@ $has_index    = file_exists( $sandbox_dir . '/index.php' );
                     <!-- License Form Box -->
                     <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:24px; margin-bottom:30px;">
                         <div style="margin-bottom:20px; padding-bottom:18px; border-bottom:1px solid #e2e8f0;">
-                            <label for="usp_edd_item_id" style="display:block; font-size:13px; font-weight:700; color:#334155; margin-bottom:6px;">
-                                <?php esc_html_e( 'EDD Pro Download ID', 'usp-form-builder' ); ?>
-                            </label>
+                            <span style="display:block; font-size:13px; font-weight:700; color:#334155; margin-bottom:6px;">
+                                <?php esc_html_e( 'Connected Store Product', 'usp-form-builder' ); ?>
+                            </span>
                             <div style="display:flex; gap:10px; align-items:center;">
-                                <input type="number" min="1" step="1" id="usp_edd_item_id" value="<?php echo esc_attr( absint( $sec_settings['edd_item_id'] ) ); ?>" style="max-width:220px; height:38px;">
+                                <code id="usp_product_slug"><?php echo esc_html( defined( 'USP_FORM_BUILDER_PRODUCT_SLUG' ) ? USP_FORM_BUILDER_PRODUCT_SLUG : 'usp-form-builder' ); ?></code>
                             </div>
                             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
                                 <div>
-                                    <label for="usp_edd_pricing_url" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;"><?php esc_html_e( 'Pricing Page URL', 'usp-form-builder' ); ?></label>
-                                    <input type="url" id="usp_edd_pricing_url" value="<?php echo esc_attr( $sec_settings['edd_pricing_url'] ); ?>" style="width:100%;">
+                                    <label for="usp_store_pricing_url" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;"><?php esc_html_e( 'Pricing Page URL', 'usp-form-builder' ); ?></label>
+                                    <input type="url" id="usp_store_pricing_url" value="<?php echo esc_attr( $sec_settings['store_pricing_url'] ); ?>" style="width:100%;">
                                 </div>
                                 <div>
-                                    <label for="usp_edd_account_url" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;"><?php esc_html_e( 'Customer Account URL', 'usp-form-builder' ); ?></label>
-                                    <input type="url" id="usp_edd_account_url" value="<?php echo esc_attr( $sec_settings['edd_account_url'] ); ?>" placeholder="https://usp.com.pk/your-account/" style="width:100%;">
+                                    <label for="usp_store_account_url" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;"><?php esc_html_e( 'Customer Account URL', 'usp-form-builder' ); ?></label>
+                                    <input type="url" id="usp_store_account_url" value="<?php echo esc_attr( $sec_settings['store_account_url'] ); ?>" placeholder="https://usp.com.pk/account/products" style="width:100%;">
                                 </div>
                             </div>
-                            <button type="button" class="button button-secondary" id="usp-save-edd-item-id-btn" style="margin-top:10px;"><?php esc_html_e( 'Save Store Settings', 'usp-form-builder' ); ?></button>
+                            <button type="button" class="button button-secondary" id="usp-save-store-product-btn" style="margin-top:10px;"><?php esc_html_e( 'Save Store Settings', 'usp-form-builder' ); ?></button>
                             <p style="font-size:12px; color:#64748b; margin:6px 0 0;">
-                                <?php esc_html_e( 'Use the numeric Download ID of the Pro product configured with EDD Software Licensing on usp.com.pk. The URLs connect the plugin dashboard to your published pricing and customer account pages.', 'usp-form-builder' ); ?>
+                                <?php esc_html_e( 'This identifier is fixed by this plugin build so licenses stay product-scoped. For another plugin product, set its product slug in that plugin build. The URLs below only control links shown to administrators.', 'usp-form-builder' ); ?>
                             </p>
                         </div>
                         <label for="usp_license_key_input" style="display:block; font-size:13px; font-weight:700; color:#334155; margin-bottom:8px;">
@@ -219,7 +219,7 @@ $has_index    = file_exists( $sandbox_dir . '/index.php' );
                         </div>
 
                         <p style="font-size:12px; color:#64748b; margin:10px 0 0;">
-                            <?php esc_html_e( 'License activation and status are verified by the EDD Software Licensing service at usp.com.pk.', 'usp-form-builder' ); ?>
+                            <?php esc_html_e( 'License keys, expiry, and website activations are verified by the USP product store at usp.com.pk.', 'usp-form-builder' ); ?>
                         </p>
                     </div>
 
@@ -656,30 +656,29 @@ jQuery(document).ready(function($) {
         });
     });
 
-    // Save the EDD Software Licensing product ID used by usp.com.pk.
-    $('#usp-save-edd-item-id-btn').on('click', function() {
+    // Save the product slug used by usp.com.pk's license API.
+    $('#usp-save-store-product-btn').on('click', function() {
         var $btn = $(this);
         $btn.prop('disabled', true);
         $.post(uspAdminData.ajax_url, {
-            action: 'usp_save_edd_item_id',
+            action: 'usp_save_store_product',
             nonce: uspAdminData.nonce,
-            edd_item_id: $('#usp_edd_item_id').val(),
-            edd_pricing_url: $('#usp_edd_pricing_url').val(),
-            edd_account_url: $('#usp_edd_account_url').val()
+            store_pricing_url: $('#usp_store_pricing_url').val(),
+            store_account_url: $('#usp_store_account_url').val()
         }, function(response) {
             $btn.prop('disabled', false);
             if (response.success) {
                 USPModal.toast(response.data.message, 'success');
             } else {
-                USPModal.toast(response.data && response.data.message ? response.data.message : 'Could not save the EDD product ID.', 'error');
+                USPModal.toast(response.data && response.data.message ? response.data.message : 'Could not save the store product settings.', 'error');
             }
         }).fail(function() {
             $btn.prop('disabled', false);
-            USPModal.toast('Network error while saving the EDD product ID.', 'error');
+            USPModal.toast('Network error while saving store product settings.', 'error');
         });
     });
 
-    // Recheck the current key against the EDD license service.
+    // Recheck the current key against the USP product store.
     $('#usp-check-license-btn').on('click', function() {
         var $btn = $(this);
         $btn.prop('disabled', true);

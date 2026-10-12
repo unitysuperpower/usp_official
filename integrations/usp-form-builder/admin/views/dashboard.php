@@ -163,8 +163,8 @@ foreach ( $forms as $form ) {
                     </div>
                 </div>
                 <a href="<?php echo esc_url( admin_url( 'profile.php' ) ); ?>"><?php esc_html_e( 'Manage WordPress profile', 'usp-form-builder' ); ?> &rarr;</a>
-                <?php if ( ! empty( $security_settings['edd_account_url'] ) ) : ?>
-                    <p><a href="<?php echo esc_url( $security_settings['edd_account_url'] ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Open USP customer account', 'usp-form-builder' ); ?> &rarr;</a></p>
+                <?php if ( ! empty( $security_settings['store_account_url'] ) ) : ?>
+                    <p><a href="<?php echo esc_url( $security_settings['store_account_url'] ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Open USP customer account', 'usp-form-builder' ); ?> &rarr;</a></p>
                 <?php endif; ?>
             </section>
 
@@ -172,7 +172,7 @@ foreach ( $forms as $form ) {
                 <span class="dashicons dashicons-star-filled" aria-hidden="true"></span>
                 <h2><?php esc_html_e( 'Plans & pricing', 'usp-form-builder' ); ?></h2>
                 <p><?php esc_html_e( 'Visit the USP website for current Pro plan details, pricing, and purchase options.', 'usp-form-builder' ); ?></p>
-                <a class="button" href="<?php echo esc_url( ! empty( $security_settings['edd_pricing_url'] ) ? $security_settings['edd_pricing_url'] : 'https://usp.com.pk/' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'View Pro plans', 'usp-form-builder' ); ?></a>
+                <a class="button" href="<?php echo esc_url( ! empty( $security_settings['store_pricing_url'] ) ? $security_settings['store_pricing_url'] : 'https://usp.com.pk/products/usp-form-builder' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'View Pro plans', 'usp-form-builder' ); ?></a>
             </section>
         </aside>
     </div>

@@ -21,6 +21,7 @@ define( 'USP_FORM_BUILDER_VERSION', '1.0.7' );
 define( 'USP_FORM_BUILDER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'USP_FORM_BUILDER_URL', plugin_dir_url( __FILE__ ) );
 define( 'USP_FORM_BUILDER_BASENAME', plugin_basename( __FILE__ ) );
+define( 'USP_FORM_BUILDER_PRODUCT_SLUG', 'usp-form-builder' );
 
 // Require Core Files
 require_once USP_FORM_BUILDER_DIR . 'includes/class-usp-activator.php';

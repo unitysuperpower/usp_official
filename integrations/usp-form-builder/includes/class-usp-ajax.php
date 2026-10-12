@@ -28,7 +28,7 @@ class USP_AJAX {
         add_action( 'admin_post_usp_export_entries', array( $this, 'export_entries_csv' ) );
         add_action( 'wp_ajax_usp_save_security_settings', array( $this, 'ajax_save_security_settings' ) );
         add_action( 'wp_ajax_usp_verify_license', array( $this, 'ajax_verify_license' ) );
-        add_action( 'wp_ajax_usp_save_edd_item_id', array( $this, 'ajax_save_edd_item_id' ) );
+        add_action( 'wp_ajax_usp_save_store_product', array( $this, 'ajax_save_store_product' ) );
         add_action( 'wp_ajax_usp_redeploy_shields', array( $this, 'ajax_redeploy_shields' ) );
         add_action( 'wp_ajax_usp_test_webhook', array( $this, 'ajax_test_webhook' ) );
         add_action( 'admin_post_usp_export_form_json', array( $this, 'export_form_json' ) );
@@ -1757,33 +1757,28 @@ class USP_AJAX {
     }
 
     /**
-     * Save the EDD Software Licensing product ID for this plugin.
+     * Save this plugin's product identity and customer-facing store links.
      */
-    public function ajax_save_edd_item_id() {
+    public function ajax_save_store_product() {
         check_ajax_referer( 'usp_admin_nonce', 'nonce' );
 
         if ( ! current_user_can( 'manage_options' ) ) {
             wp_send_json_error( array( 'message' => __( 'Permission denied.', 'usp-form-builder' ) ) );
         }
 
-        $item_id     = isset( $_POST['edd_item_id'] ) ? absint( $_POST['edd_item_id'] ) : 0;
-        $pricing_url = isset( $_POST['edd_pricing_url'] ) ? esc_url_raw( wp_unslash( $_POST['edd_pricing_url'] ), array( 'http', 'https' ) ) : '';
-        $account_url = isset( $_POST['edd_account_url'] ) ? esc_url_raw( wp_unslash( $_POST['edd_account_url'] ), array( 'http', 'https' ) ) : '';
-        if ( ! $item_id ) {
-            wp_send_json_error( array( 'message' => __( 'Enter the numeric EDD Download ID for the Pro product.', 'usp-form-builder' ) ) );
-        }
-        if ( ( ! empty( $_POST['edd_pricing_url'] ) && empty( $pricing_url ) ) || ( ! empty( $_POST['edd_account_url'] ) && empty( $account_url ) ) ) {
+        $pricing_url = isset( $_POST['store_pricing_url'] ) ? esc_url_raw( wp_unslash( $_POST['store_pricing_url'] ), array( 'http', 'https' ) ) : '';
+        $account_url = isset( $_POST['store_account_url'] ) ? esc_url_raw( wp_unslash( $_POST['store_account_url'] ), array( 'http', 'https' ) ) : '';
+        if ( ( ! empty( $_POST['store_pricing_url'] ) && empty( $pricing_url ) ) || ( ! empty( $_POST['store_account_url'] ) && empty( $account_url ) ) ) {
             wp_send_json_error( array( 'message' => __( 'Enter valid HTTP or HTTPS URLs for the pricing and customer account pages.', 'usp-form-builder' ) ) );
         }
 
         $settings                = USP_Security::get_settings();
-        $settings['edd_item_id'] = $item_id;
-        $settings['edd_pricing_url'] = $pricing_url ? $pricing_url : 'https://usp.com.pk/';
-        $settings['edd_account_url'] = $account_url;
+        $settings['store_pricing_url'] = $pricing_url ? $pricing_url : 'https://usp.com.pk/products/usp-form-builder';
+        $settings['store_account_url'] = $account_url;
         USP_Security::save_settings( $settings );
         delete_transient( 'usp_form_builder_license_check_lock' );
 
-        wp_send_json_success( array( 'message' => __( 'EDD product configuration saved.', 'usp-form-builder' ) ) );
+        wp_send_json_success( array( 'message' => __( 'Store product configuration saved.', 'usp-form-builder' ) ) );
     }
 
     /**

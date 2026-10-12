@@ -1,12 +1,13 @@
 <?php
 /**
- * Run with: php tests/edd-license-client.php.
- * Exercises the EDD license client using a local HTTP API stub.
+ * Run with: php tests/store-license-client.php.
+ * Exercises the USP product-store license client using a local HTTP API stub.
  */
 
 define( 'DAY_IN_SECONDS', 86400 );
 define( 'HOUR_IN_SECONDS', 3600 );
 define( 'ABSPATH', __DIR__ . '/' );
+define( 'USP_FORM_BUILDER_PRODUCT_SLUG', 'usp-form-builder' );
 
 class WP_Error {
     private $message;
@@ -26,10 +27,10 @@ $test_requests  = array();
 $test_api_reply = array(
     'success'         => true,
     'license'         => 'valid',
-    'expires'         => '2030-01-01 23:59:59',
-    'customer_email'  => 'buyer@example.test',
+    'expires'         => '2030-01-01T23:59:59+00:00',
     'site_count'      => 1,
     'license_limit'   => 3,
+    'activation_token'=> 'activation-token-1',
 );
 
 function __( $value, $domain = '' ) { return $value; }
@@ -48,10 +49,10 @@ function update_option( $key, $value ) {
     return true;
 }
 function home_url() { return 'https://customer.example.test'; }
-function add_query_arg( $args, $url ) { return $url . '?' . http_build_query( $args ); }
-function wp_safe_remote_get( $url, $args = array() ) {
+function wp_json_encode( $data ) { return json_encode( $data ); }
+function wp_safe_remote_post( $url, $args = array() ) {
     global $test_requests, $test_api_reply;
-    $test_requests[] = $url;
+    $test_requests[] = array( 'url' => $url, 'args' => $args );
     return array(
         'response' => array( 'code' => 200 ),
         'body'     => json_encode( $test_api_reply ),
@@ -81,16 +82,19 @@ function license_check( $condition, $message ) {
     }
 }
 
-USP_Security::save_settings( array( 'edd_item_id' => 456 ) );
 $activation = USP_Security::process_license_action( 'TEST-KEY-123456', 'activate' );
-license_check( ! empty( $activation['success'] ), 'Valid EDD response should activate the license.' );
+license_check( ! empty( $activation['success'] ), 'Valid store response should activate the license.' );
 license_check( USP_Security::is_pro_active(), 'Activated license should unlock Pro.' );
 license_check( count( $test_requests ) === 1, 'Freshly activated license should use its cached validation.' );
-parse_str( (string) parse_url( $test_requests[0], PHP_URL_QUERY ), $request_args );
-license_check( 'activate_license' === $request_args['edd_action'], 'Activation must call the EDD activation action.' );
-license_check( '456' === $request_args['item_id'], 'Activation must use the configured EDD Download ID.' );
+$request = $test_requests[0];
+$request_args = json_decode( $request['args']['body'], true );
+license_check( 'https://usp.com.pk/api/licenses/v1' === $request['url'], 'License requests must use the fixed HTTPS store endpoint.' );
+license_check( 'application/json' === $request['args']['headers']['Content-Type'], 'License requests must use JSON.' );
+license_check( 'activate_license' === $request_args['action'], 'Activation must use the store activation action.' );
+license_check( 'usp-form-builder' === $request_args['product'], 'Activation must be scoped to the configured product slug.' );
 license_check( 'TEST-KEY-123456' === $request_args['license'], 'Activation must send the submitted key.' );
 license_check( 'https://customer.example.test' === $request_args['url'], 'Activation must bind the license to this site URL.' );
+license_check( 'activation-token-1' === USP_Security::get_settings()['license_activation_token'], 'Activation token must be retained for authenticated follow-up checks.' );
 
 $settings = USP_Security::get_settings();
 $settings['license_last_checked'] = time() - DAY_IN_SECONDS - 1;
@@ -100,19 +104,20 @@ $test_api_reply = array(
     'license' => 'invalid',
     'error'   => 'expired',
 );
-license_check( ! USP_Security::is_pro_active(), 'An expired EDD license must disable Pro.' );
+license_check( ! USP_Security::is_pro_active(), 'An expired store license must disable Pro.' );
 license_check( 'expired' === USP_Security::get_settings()['license_status'], 'Expired status should be retained for the dashboard.' );
+$request_args = json_decode( end( $test_requests )['args']['body'], true );
+license_check( 'activation-token-1' === $request_args['token'], 'Status checks must prove control of the activation token.' );
 
 $deactivation = USP_Security::process_license_action( '', 'deactivate' );
 license_check( ! empty( $deactivation['success'] ), 'Local deactivation should complete.' );
 license_check( ! USP_Security::is_pro_active(), 'Deactivation should disable Pro.' );
-
-USP_Security::save_settings( array( 'edd_item_id' => 0 ) );
-$missing_product = USP_Security::process_license_action( 'TEST-KEY-123456', 'activate' );
-license_check( empty( $missing_product['success'] ), 'Activation must fail without a configured EDD product ID.' );
-license_check( false !== strpos( $missing_product['message'], 'Download ID' ), 'Missing product configuration should explain the required setting.' );
+$request_args = json_decode( end( $test_requests )['args']['body'], true );
+license_check( 'deactivate_license' === $request_args['action'], 'Deactivation must use the store deactivation action.' );
+license_check( 'activation-token-1' === $request_args['token'], 'Deactivation must prove control of the current activation.' );
+license_check( '' === USP_Security::get_settings()['license_activation_token'], 'Deactivation must erase the local activation token.' );
 
 $invalid_key = USP_Security::process_license_action( 'bad key', 'activate' );
 license_check( empty( $invalid_key['success'] ), 'Malformed keys must be rejected.' );
 
-echo "Passed EDD license activation, validation, expiry, deactivation, and configuration checks.\n";
+echo "Passed store license activation, product scoping, token validation, expiry, deactivation, and configuration checks.\n";
