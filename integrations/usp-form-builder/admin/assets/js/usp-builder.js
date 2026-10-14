@@ -8,6 +8,19 @@
 (function($) {
     'use strict';
 
+    function contentPreview(field) {
+        var escape = function(value) { return $('<div>').text(value || '').html(); };
+        var tag = ['h2','h3','h4','h5','h6'].indexOf(field.tag) >= 0 ? field.tag : 'h3';
+        var mode = field.content_mode || 'section';
+        var heading = '<' + tag + '>' + escape(field.label) + '</' + tag + '>';
+        if (mode === 'heading') return heading;
+        if (mode === 'bullets' || mode === 'numbered') {
+            var list = mode === 'numbered' ? 'ol' : 'ul';
+            return '<' + list + ' style="padding-left:1.5em;list-style-type:' + (list === 'ol' ? 'decimal' : 'disc') + '">' + String(field.content || '').split(/\r?\n/).filter(function(item) { return item.trim(); }).map(function(item) { return '<li>' + escape(item.trim()) + '</li>'; }).join('') + '</' + list + '>';
+        }
+        return (mode === 'section' ? heading : '') + '<div style="white-space:pre-line">' + escape(field.content) + '</div>';
+    }
+
     var USPBuilder = {
         fields: [],
         settings: {},
@@ -1047,6 +1060,8 @@
         addField: function(type) {
             this.flushPendingHistory();
             var builderData = window.uspBuilderData || {};
+            var contentMode = {content_heading:'heading',content_paragraph:'paragraph',content_bullets:'bullets',content_numbered:'numbered'}[type];
+            if (contentMode) type = 'html';
             var isNationality = type === 'nationality';
             if (isNationality) type = 'country';
             if (!builderData.is_pro && (builderData.pro_field_types || []).indexOf(type) !== -1) {
@@ -1056,6 +1071,7 @@
             var labels = (window.uspBuilderData || {}).i18n || {};
             var defaultLabels = {
                 text: 'Text Field',
+                cnic: 'CNIC / Form-B',
                 email: 'Email Address',
                 textarea: 'Message / Paragraph',
                 number: 'Number',
@@ -1151,6 +1167,8 @@
                 newField.help_text = 'Slide to select a value';
             }
 
+            if (type === 'cnic') newField.placeholder = '12345-1234567-1';
+
             if (type === 'url') {
                 newField.placeholder = 'https://example.com';
             }
@@ -1160,8 +1178,9 @@
             }
 
             if (type === 'html') {
+                newField.content_mode = contentMode || 'section';
                 newField.tag = 'h3';
-                newField.content = 'Write descriptive notes or section instructions here.';
+                newField.content = contentMode === 'bullets' || contentMode === 'numbered' ? 'First item\nSecond item' : 'Write descriptive notes or section instructions here.';
             }
 
             if (type === 'address') {
@@ -1355,6 +1374,7 @@
                 'radio': 'dashicons-marker',
                 'checkbox': 'dashicons-yes-alt',
                 'html': 'dashicons-heading',
+                'cnic': 'dashicons-id',
                 'address': 'dashicons-location-alt',
                 'admission': 'dashicons-welcome-learn-more',
                 'intl_tel': 'dashicons-translation',
@@ -1397,12 +1417,7 @@
 
                 // Field preview
                 if (field.type === 'html') {
-                    cardHtml += '<div class="usp-mock-section-block">';
-                    cardHtml += '  <' + (field.tag || 'h3') + ' class="usp-mock-section-title">' + (field.label || 'Heading') + '</' + (field.tag || 'h3') + '>';
-                    if (field.content) {
-                        cardHtml += '  <p class="usp-mock-section-desc">' + field.content + '</p>';
-                    }
-                    cardHtml += '</div>';
+                    cardHtml += '<div class="usp-mock-section-block">' + contentPreview(field) + '</div>';
                 } else if (field.type === 'hidden') {
                     cardHtml += '<div class="usp-mock-hidden-badge">';
                     cardHtml += '  <span class="dashicons dashicons-hidden"></span> ';
@@ -1667,10 +1682,15 @@
             }
 
             if (field.type === 'html') {
+                html += '<div class="usp-settings-form-group"><label>Content Type</label><select id="insp-content-mode">';
+                [['section','Heading + note (existing)'],['heading','Heading'],['paragraph','Paragraph'],['bullets','Bulleted list'],['numbered','Numbered list']].forEach(function(option) {
+                    html += '<option value="' + option[0] + '" ' + ((field.content_mode || 'section') === option[0] ? 'selected' : '') + '>' + option[1] + '</option>';
+                });
+                html += '</select><p>Use the label for headings. Enter one item per line for lists, or blank lines between paragraphs.</p></div>';
                 html += '<div class="usp-settings-form-group">';
                 html += '  <label>Heading Tag</label>';
                 html += '  <select id="insp-tag">';
-                ['h2', 'h3', 'h4', 'h5'].forEach(function(tag) {
+                ['h2', 'h3', 'h4', 'h5', 'h6'].forEach(function(tag) {
                     var sel = (field.tag === tag) ? 'selected' : '';
                     html += '<option value="' + tag + '" ' + sel + '>' + tag.toUpperCase() + '</option>';
                 });
@@ -1678,8 +1698,8 @@
                 html += '</div>';
 
                 html += '<div class="usp-settings-form-group">';
-                html += '  <label>Description Content</label>';
-                html += '  <textarea id="insp-content" rows="4">' + (field.content || '') + '</textarea>';
+                html += '  <label>Paragraph text / list items</label>';
+                html += '  <textarea id="insp-content" rows="4">' + $('<div>').text(field.content || '').html() + '</textarea>';
                 html += '</div>';
             }
 
@@ -1913,6 +1933,7 @@
             }
 
             if (field.type === 'html') {
+                field.content_mode = $('#insp-content-mode').val();
                 field.tag = $('#insp-tag').val();
                 field.content = $('#insp-content').val();
             }
@@ -2244,13 +2265,7 @@
                 var widthPct = f.width === '50' ? 'calc(50% - 10px)' : (f.width === '33' ? 'calc(33.333% - 14px)' : '100%');
 
                 if (f.type === 'html') {
-                    var tag = f.tag || 'h3';
-                    html += '<div style="width:100%; margin:8px 0 4px 0;">';
-                    html += '  <' + tag + ' style="margin:0 0 4px 0; color:#1e293b; font-weight:700;">' + $('<div>').text(f.label || '').html() + '</' + tag + '>';
-                    if (f.content) {
-                        html += '  <p style="margin:0; font-size:13px; color:#64748b; line-height:1.5;">' + $('<div>').text(f.content).html() + '</p>';
-                    }
-                    html += '</div>';
+                    html += '<div style="width:100%">' + contentPreview(f) + '</div>';
                     return;
                 }
 

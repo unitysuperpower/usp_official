@@ -39,7 +39,7 @@ def free(root):
     ajax=root/'includes/class-usp-ajax.php';s=ajax.read_text()
     a=s.index('    public function ajax_submit_form()')
     s=s[:a]+cut(s[a:],"            if ( 'address' === $type ) {",'            // Standard inputs')
-    s=cut(s,"            if ( 'country' === $type &&",'            // Sanitize by type')
+    s=cut(s,"            if ( 'country' === $type &&", "            if ( 'cnic' === $type ) {")
     s=cases(s.replace("                    case 'range':\n",''));ajax.write_text(s)
     public=root/'public/class-usp-public.php';s=public.read_text()
     s=cut(s,"        wp_enqueue_style( 'usp-country-css'",'        wp_enqueue_script(\n')
@@ -65,7 +65,7 @@ def free(root):
 Contributors: waseem
 Requires at least: 6.3
 Requires PHP: 7.4
-Stable tag: 1.1.1
+Stable tag: 1.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -87,11 +87,11 @@ def main():
                 subprocess.run(['php','-l',str(file)],stdout=subprocess.DEVNULL,check=True)
             for file in root.rglob('*.js'):
                 subprocess.run(['node','--check',str(file)],stdout=subprocess.DEVNULL,check=True)
-            name='usp-form-builder-1.1.1-'+edition+'.zip';target=out/name
+            name='usp-form-builder-1.1.2-'+edition+'.zip';target=out/name
             with zipfile.ZipFile(target,'w',zipfile.ZIP_DEFLATED) as archive:
                 for file in sorted(root.rglob('*')):
                     if file.is_file(): archive.write(file,file.relative_to(root.parent))
-            manifest.append({'file':name,'edition':edition,'version':'1.1.1','sha256':hashlib.sha256(target.read_bytes()).hexdigest(),'bytes':target.stat().st_size})
+            manifest.append({'file':name,'edition':edition,'version':'1.1.2','sha256':hashlib.sha256(target.read_bytes()).hexdigest(),'bytes':target.stat().st_size})
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     print(json.dumps(manifest,indent=2))
 if __name__=='__main__':main()

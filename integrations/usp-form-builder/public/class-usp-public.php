@@ -46,6 +46,8 @@ class USP_Public {
             true
         );
 
+        wp_enqueue_script( 'usp-cnic-js', USP_FORM_BUILDER_URL . 'public/assets/js/usp-cnic.js', array(), USP_FORM_BUILDER_VERSION, true );
+
         wp_localize_script( 'usp-public-js', 'uspPublicData', array(
             'ajax_url'    => admin_url( 'admin-ajax.php' ),
             'phone_rules' => USP_Form::get_country_phone_rules(),

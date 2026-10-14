@@ -200,6 +200,26 @@ $shortcode       = $is_edit ? '[usp_form id="' . $current_form_id . '"]' : '';
                 <div class="usp-fields-group">
                     <h4><?php esc_html_e( 'Structure', 'usp-form-builder' ); ?></h4>
                     <div class="usp-palette-grid">
+                        <button type="button" class="usp-palette-item" data-type="cnic">
+                            <span class="usp-palette-icon is-standard"><span class="dashicons dashicons-id"></span></span>
+                            <span class="title"><?php esc_html_e( 'CNIC / Form-B', 'usp-form-builder' ); ?></span>
+                        </button>
+                        <button type="button" class="usp-palette-item" data-type="content_heading">
+                            <span class="usp-palette-icon is-standard"><span class="dashicons dashicons-heading"></span></span>
+                            <span class="title"><?php esc_html_e( 'Heading', 'usp-form-builder' ); ?></span>
+                        </button>
+                        <button type="button" class="usp-palette-item" data-type="content_paragraph">
+                            <span class="usp-palette-icon is-standard"><span class="dashicons dashicons-editor-paragraph"></span></span>
+                            <span class="title"><?php esc_html_e( 'Paragraph', 'usp-form-builder' ); ?></span>
+                        </button>
+                        <button type="button" class="usp-palette-item" data-type="content_bullets">
+                            <span class="usp-palette-icon is-standard"><span class="dashicons dashicons-editor-ul"></span></span>
+                            <span class="title"><?php esc_html_e( 'Bulleted List', 'usp-form-builder' ); ?></span>
+                        </button>
+                        <button type="button" class="usp-palette-item" data-type="content_numbered">
+                            <span class="usp-palette-icon is-standard"><span class="dashicons dashicons-editor-ol"></span></span>
+                            <span class="title"><?php esc_html_e( 'Numbered List', 'usp-form-builder' ); ?></span>
+                        </button>
                         <button type="button" class="usp-palette-item" data-type="html">
                             <span class="usp-palette-icon is-structure"><span class="dashicons dashicons-heading"></span></span>
                             <span class="title"><?php esc_html_e( 'Section Note', 'usp-form-builder' ); ?></span>

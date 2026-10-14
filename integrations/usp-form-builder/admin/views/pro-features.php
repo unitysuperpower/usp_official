@@ -220,11 +220,10 @@ $has_index    = file_exists( $sandbox_dir . '/index.php' );
                                 <button type="button" class="button button-secondary" id="usp-deactivate-license-btn" style="height:42px; padding:0 20px; font-weight:600; color:#dc2626; border-color:#fca5a5; border-radius:6px;">
                                     <?php esc_html_e( 'Deactivate', 'usp-form-builder' ); ?>
                                 </button>
-                            <?php else : ?>
-                                <button type="button" class="button button-primary" id="usp-activate-license-btn" style="height:42px; padding:0 24px; font-weight:700; background:#4f46e5; border-color:#4338ca; border-radius:6px;">
-                                    <?php esc_html_e( 'Activate License', 'usp-form-builder' ); ?>
-                                </button>
                             <?php endif; ?>
+                                <button type="button" class="button button-primary" id="usp-activate-license-btn" style="height:42px; padding:0 24px; font-weight:700; background:#4f46e5; border-color:#4338ca; border-radius:6px;">
+                                    <?php echo esc_html( empty( $sec_settings['license_key'] ) ? __( 'Activate License', 'usp-form-builder' ) : __( 'Activate Entered Key', 'usp-form-builder' ) ); ?>
+                                </button>
                         </div>
 
                         <p style="font-size:12px; color:#64748b; margin:10px 0 0;">

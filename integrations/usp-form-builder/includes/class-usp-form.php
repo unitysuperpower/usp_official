@@ -12,6 +12,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class USP_Form {
 
+    /** Normalize a CNIC's format only; this does not verify identity with NADRA. */
+    public static function normalize_cnic( $value ) {
+        if ( ! is_string( $value ) ) { return false; }
+        $value = trim( $value );
+        if ( '' === $value ) { return ''; }
+        if ( ! preg_match( '/^(?:[0-9]{13}|[0-9]{5}-[0-9]{7}-[0-9])$/D', $value ) ) { return false; }
+        $digits = str_replace( '-', '', $value );
+        return substr( $digits, 0, 5 ) . '-' . substr( $digits, 5, 7 ) . '-' . substr( $digits, 12, 1 );
+    }
+
+
     /**
      * Get the bundled alphabetical country and territory list.
      */
@@ -74,6 +85,12 @@ class USP_Form {
                     'help_text'   => '',
                     'width'       => '100',
                 ),
+            ),
+            'cnic' => array(
+                'label' => __( 'CNIC / Form-B', 'usp-form-builder' ),
+                'icon' => 'dashicons-id',
+                'category' => 'standard',
+                'defaults' => array( 'label' => __( 'CNIC / Form-B', 'usp-form-builder' ), 'placeholder' => '12345-1234567-1', 'required' => false, 'width' => '100' ),
             ),
             'email' => array(
                 'label'       => __( 'Email Address', 'usp-form-builder' ),
@@ -250,7 +267,7 @@ class USP_Form {
                 ),
             ),
             'html' => array(
-                'label'       => __( 'Section Header / Note', 'usp-form-builder' ),
+                'label'       => __( 'Content: Heading, Paragraph & List', 'usp-form-builder' ),
                 'icon'        => 'dashicons-heading',
                 'category'    => 'layout',
                 'defaults'    => array(
@@ -1037,6 +1054,27 @@ class USP_Form {
         // Section note / HTML
         if ( 'html' === $type ) {
             $tag     = ! empty( $field['tag'] ) ? sanitize_key( $field['tag'] ) : 'h3';
+            $tag = in_array( $tag, array( 'h2', 'h3', 'h4', 'h5', 'h6' ), true ) ? $tag : 'h3';
+            $mode = $field['content_mode'] ?? 'section';
+            if ( in_array( $mode, array( 'heading', 'paragraph', 'bullets', 'numbered' ), true ) ) {
+                echo '<div class="usp-field-wrap usp-field-html usp-width-100" data-field-name="' . esc_attr( $name ) . '"' . $cond_attr . '>';
+                if ( 'heading' === $mode ) {
+                    echo '<' . $tag . ' class="usp-html-title">' . esc_html( $label ) . '</' . $tag . '>';
+                } elseif ( 'paragraph' === $mode ) {
+                    foreach ( preg_split( '/\R\s*\R/', (string) ( $field['content'] ?? '' ) ) as $paragraph ) {
+                        if ( '' !== trim( $paragraph ) ) { echo '<p style="white-space:pre-line">' . esc_html( $paragraph ) . '</p>'; }
+                    }
+                } else {
+                    $list_tag = 'numbered' === $mode ? 'ol' : 'ul';
+                    echo '<' . $list_tag . ' style="padding-left:1.5em;list-style-type:' . ( 'numbered' === $mode ? 'decimal' : 'disc' ) . '">';
+                    foreach ( preg_split( '/\R/', (string) ( $field['content'] ?? '' ) ) as $item ) {
+                        if ( '' !== trim( $item ) ) { echo '<li>' . esc_html( trim( $item ) ) . '</li>'; }
+                    }
+                    echo '</' . $list_tag . '>';
+                }
+                echo '</div>';
+                return;
+            }
             $content = ! empty( $field['content'] ) ? wp_kses_post( $field['content'] ) : '';
             ?>
             <div class="usp-field-wrap usp-field-html usp-width-100" data-field-name="<?php echo esc_attr( $name ); ?>"<?php echo $cond_attr; ?>>
@@ -1249,7 +1287,7 @@ class USP_Form {
                             <div class="usp-adm-row" style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:12px;">
                                 <div>
                                     <label class="usp-sublabel" style="display:block; font-size:12px; font-weight:600; color:#475569; margin-bottom:4px;"><?php esc_html_e( 'CNIC / Form-B / National ID', 'usp-form-builder' ); ?></label>
-                                    <input type="text" name="<?php echo esc_attr( $name ); ?>[cnic]" class="usp-input" placeholder="35201-XXXXXXX-X">
+                                    <input type="text" name="<?php echo esc_attr( $name ); ?>[cnic]" class="usp-input usp-input-cnic" inputmode="numeric" maxlength="15" pattern="[0-9]{5}-[0-9]{7}-[0-9]" placeholder="12345-1234567-1">
                                 </div>
                                 <div>
                                     <label class="usp-sublabel" style="display:block; font-size:12px; font-weight:600; color:#475569; margin-bottom:4px;"><?php esc_html_e( 'Desired Degree Program', 'usp-form-builder' ); ?></label>
@@ -1527,6 +1565,12 @@ class USP_Form {
                         $maxlength  = ( 'tel' === $type ) ? 'maxlength="18"' : '';
                         $pattern    = ( 'tel' === $type ) ? 'pattern="[0-9\+\-\s\(\)]{7,18}"' : '';
                         $extra_cls  = ( 'tel' === $type ) ? 'usp-input-tel-std' : '';
+                        if ( 'cnic' === $type ) {
+                            $maxlength = 'maxlength="15" inputmode="numeric"';
+                            $pattern = 'pattern="[0-9]{5}-[0-9]{7}-[0-9]" title="Use 12345-1234567-1"';
+                            $extra_cls = 'usp-input-cnic';
+                            $placeholder = $placeholder ?: '12345-1234567-1';
+                        }
                         ?>
                         <input 
                             type="<?php echo esc_attr( $input_type ); ?>" 

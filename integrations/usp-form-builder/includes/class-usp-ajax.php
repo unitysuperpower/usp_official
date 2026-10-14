@@ -148,6 +148,8 @@ class USP_AJAX {
             }
 
             if ( 'html' === $type ) {
+                $mode = $f['content_mode'] ?? 'section';
+                $field_item['content_mode'] = in_array( $mode, array( 'section', 'heading', 'paragraph', 'bullets', 'numbered' ), true ) ? $mode : 'section';
                 $field_item['content'] = isset( $f['content'] ) ? wp_kses_post( $f['content'] ) : '';
                 $field_item['tag']     = isset( $f['tag'] ) ? sanitize_key( $f['tag'] ) : 'h3';
             }
@@ -1286,6 +1288,12 @@ class USP_AJAX {
                     $adm_clean[ sanitize_key( $ak ) ] = sanitize_text_field( wp_unslash( $av ) );
                 }
 
+                $cnic = USP_Form::normalize_cnic( $adm_clean['cnic'] ?? '' );
+                if ( false === $cnic ) {
+                    $errors[ $name ] = __( 'Enter CNIC / Form-B as 12345-1234567-1 (13 digits).', 'usp-form-builder' );
+                    continue;
+                }
+                $adm_clean['cnic'] = $cnic;
                 if ( $required && empty( $adm_clean['student_name'] ) ) {
                     $errors[ $name ] = sprintf( __( '%s (Applicant Full Name) is required.', 'usp-form-builder' ), $label );
                     continue;
@@ -1466,6 +1474,16 @@ class USP_AJAX {
 
             if ( 'country' === $type && ! USP_Form::is_valid_country_value( wp_unslash( $raw_val ) ) ) {
                 $errors[ $name ] = __( 'Please select a valid country from the list.', 'usp-form-builder' );
+                continue;
+            }
+
+            if ( 'cnic' === $type ) {
+                $cnic = USP_Form::normalize_cnic( wp_unslash( $raw_val ?? '' ) );
+                if ( false === $cnic ) {
+                    $errors[ $name ] = __( 'Enter CNIC / Form-B as 12345-1234567-1 (13 digits).', 'usp-form-builder' );
+                } else {
+                    $submitted_entry[] = array( 'name' => $name, 'label' => $label, 'type' => $type, 'value' => $cnic );
+                }
                 continue;
             }
 

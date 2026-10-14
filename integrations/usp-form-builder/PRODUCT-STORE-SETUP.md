@@ -8,13 +8,13 @@ Run `python3 scripts/build-plugin.py` from the Laravel repository. PHP, Python, 
 
 Output under `dist/plugins/`:
 
-- `usp-form-builder-1.1.1-free.zip`: Free implementation, standard fields, shared builder UI, security and license/upgrade client. Premium field renderers and submission handlers, address/country datasets, and Pro frontend engines are excluded. The shared admin UI can still show upgrade prompts and recognize existing Pro field types.
-- `usp-form-builder-1.1.1-pro.zip`: Full plugin with Pro implementations and server-verified licensing. Keep this package private.
+- `usp-form-builder-1.1.2-free.zip`: Free implementation, standard fields, shared builder UI, security and license/upgrade client. Premium field renderers and submission handlers, address/country datasets, and Pro frontend engines are excluded. The shared admin UI can still show upgrade prompts and recognize existing Pro field types.
+- `usp-form-builder-1.1.2-pro.zip`: Full plugin with Pro implementations and server-verified licensing. Keep this package private.
 - `manifest.json`: SHA-256 checksums and edition/version metadata.
 
 Both ZIPs contain `usp-form-builder/usp-form-builder.php`. The same folder is intentional: the Pro upgrade replaces Free in place, preserves the WordPress database and settings, and avoids duplicate plugin classes. Do not install them under different folder names.
 
-In `/admin/store/products`, upload version `1.1.1` with the matching **Free** or **Pro** edition. The uploader checks folder structure, PHP version header, edition header, symbolic links, unsafe paths, duplicate entries, and archive size. It now reports the specific reason for rejection. The original `usp-form-builder-1.0.0.zip` is internally version `1.0.7` and contains premium implementations; do not publish it as the new Free distribution.
+In `/admin/store/products`, upload version `1.1.2` with the matching **Free** or **Pro** edition. The uploader checks folder structure, PHP version header, edition header, symbolic links, unsafe paths, duplicate entries, and archive size. It now reports the specific reason for rejection. The original `usp-form-builder-1.0.0.zip` is internally version `1.0.7` and contains premium implementations; do not publish it as the new Free distribution.
 
 ## Customer flow
 
@@ -48,3 +48,11 @@ php integrations/usp-form-builder/tests/installer-policy.php
 ```
 
 The approved prices are USD $5 / $10 / $150 per month for one / three / unlimited websites, and USD $48 / $96 / $1,440 for annual payment. Live checkout also needs the owner's USD-to-PKR conversion rate and receiving accounts or merchant configuration; do not invent these values.
+
+### Version 1.1.2: content and CNIC
+
+The Standard Fields palette now includes Heading, Paragraph, Bulleted List, Numbered List and CNIC / Form-B. Content blocks use the existing `html` schema with a validated `content_mode`; existing Section Notes keep their original behavior. Enter one item per line for lists and blank lines between paragraphs. New content modes render escaped text, not arbitrary HTML.
+
+CNIC accepts 13 ASCII digits or the `12345-1234567-1` format and stores the formatted value. Browser formatting assists entry; server validation also rejects malformed or array input. Optional blank CNIC fields remain optional. The admission block uses the same normalization. This is format validation, not identity verification.
+
+Both editions include these content blocks and the standalone CNIC field. Version 1.1.2 is published in the live store; local filesystem permissions prevented replacing the installed WordPress copy. Update using WordPress's plugin installer. Website database backup: `backups/content-1.1.2-before.sql`; no changes to ERP, pricing, orders or license records.

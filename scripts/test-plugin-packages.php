@@ -2,7 +2,7 @@
 // Exercise the actual generated edition, rather than only its source template.
 $edition=$argv[1] ?? 'free';
 $zip=new ZipArchive;
-if ($zip->open(__DIR__.'/../dist/plugins/usp-form-builder-1.1.1-'.$edition.'.zip')!==true) { throw new RuntimeException('Build plugin packages first.'); }
+if ($zip->open(__DIR__.'/../dist/plugins/usp-form-builder-1.1.2-'.$edition.'.zip')!==true) { throw new RuntimeException('Build plugin packages first.'); }
 $temp=sys_get_temp_dir().'/usp-package-test-'.bin2hex(random_bytes(8));
 mkdir($temp);$zip->extractTo($temp);$zip->close();
 register_shutdown_function(function () use ($temp) {
@@ -62,3 +62,22 @@ if($edition==='pro'){
     verify(!file_exists($root.'/includes/class-usp-address.php')&&!is_dir($root.'/assets/locations'),'Free includes Pro implementation/data');
 }
 echo "Verified generated $edition package fields, form rendering, locked Pro forms and edition separation.\n";
+
+foreach (['1234512345671'=>'12345-1234567-1','12345-1234567-1'=>'12345-1234567-1',''=>''] as $input=>$expected) {
+    verify(USP_Form::normalize_cnic((string)$input)===$expected, 'CNIC normalization failed');
+}
+foreach (['1234', '12345678901234', '12345-123456-12', '12345-1234567-A', ['1234512345671']] as $input) {
+    verify(USP_Form::normalize_cnic($input)===false, 'Invalid CNIC accepted');
+}
+foreach (['heading'=>'<h3', 'paragraph'=>'<p', 'bullets'=>'<ul', 'numbered'=>'<ol'] as $mode=>$tag) {
+    ob_start();$render->invoke(null,['type'=>'html','name'=>'notes','label'=>'Title','content_mode'=>$mode,'content'=>"First item\nSecond item <script>alert(1)</script>",'tag'=>'script'],1,0);$html=ob_get_clean();
+    verify(strpos($html,$tag)!==false, 'Missing content mode '.$mode);
+    verify(strpos($html,'<script>')===false, 'Unsafe content or heading tag rendered');
+    verify(strpos($html,'<input')===false, 'Content must not create an input');
+}
+ob_start();$render->invoke(null,['type'=>'cnic','name'=>'identity','label'=>'CNIC'],1,0);$html=ob_get_clean();
+verify(strpos($html,'usp-input-cnic')!==false && strpos($html,'pattern=')!==false, 'CNIC input constraints missing');
+echo "Passed content modes, safe rendering and CNIC format validation.\n";
+
+verify(strpos(file_get_contents($root.'/public/class-usp-public.php'), "'usp-cnic-js'")!==false, 'CNIC script must be enqueued in both editions');
+verify(strpos(file_get_contents($root.'/includes/class-usp-ajax.php'), "USP_Form::normalize_cnic( wp_unslash( \$raw_val ?? '' ) )")!==false, 'CNIC server validation must survive Free packaging');
