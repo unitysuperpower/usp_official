@@ -78,3 +78,21 @@ Published dedicated enrollment review with login return, price reconfirmation, w
 
 Learning calendar release: 20261010-115113-learning-calendar (10 October 2026).
 Published private student event view and .ics snapshot download for active enrollments. Production calendar/download routes passed before the atomic switch. Previous release retained; no database changes; ERP entry-file integrity unchanged. Validation: 153 tests / 933 assertions and desktop/mobile browser checks covering filters and authenticated download.
+
+## Product store deployment — 13 October 2026
+
+- Deployed GitHub `main` commit `8749c911aa764537064c9d554ab94f05736ab449` as `20261013-055033-product-store` using a verified source snapshot and freshly built assets. The server uses release directories, not an in-place Git checkout.
+- Backed up only `u558441138_usp_db` to the private `backups/20261013-055033-product-store/website-before.sql` before applying `2026_10_12_120000_create_product_store.php`.
+- Preserved production environment, encryption key, persistent storage, and prior release `20261010-115113-learning-calendar`. Configuration, routes, and views were cached before switching `current` atomically.
+- Validation: production build, 154 tests / 951 assertions, and the standalone WordPress store license-client tests passed. Production server-side checks returned 200 for homepage, courses, products, login, store administration, customer product library, and education payment settings. The license API rejected an invalid key as expected.
+- ERP directory and database were not modified. ERP entry-file SHA-256 remained `eba77cba39695b6bd091fe5211d481f7ebb2ce2d8d26230b5a609465d0a4aff9` before and after switching.
+- This deployment publishes the application code, not product records: the production store currently has zero products. No demo orders, licenses, receiving accounts, exchange rates, or merchant credentials were inserted.
+
+## Plugin licensing deployment — 14 October 2026
+
+- Activated website release `20261014-044147-plugin-licensing` from base `8749c911aa764537064c9d554ab94f05736ab449` plus tested source/build snapshot SHA-256 `450b3c91bf8d40fa208d8fc1a43d3b55d6c2eb0973f984a3da39e46fe9816157`. The exact snapshot is recorded in `DEPLOYED_SNAPSHOT`; the retained previous release is `20261013-055033-product-store`.
+- Backed up only the website database under `backups/20261014-044147-plugin-licensing/website-before.sql`. No migrations were needed. ERP files and database were not modified; its entry checksum remained unchanged.
+- Published Free and private Pro 1.1.1 packages for existing product `usp-form-builder`. Kept the separate unpublished `usp-forms-builder` draft and existing orders/releases. Set the approved six monthly/annual plans; existing order amounts remain unchanged.
+- Production has three manual payment methods and an exchange rate configured. JazzCash is not configured. Subscription renewal requires customer checkout; automatic recurring debits are not implemented.
+- Validated 166 website tests / 989 assertions, production assets, generated edition rendering/separation, license policy, installer metadata policy and Free builder history. Server-side public/account/admin routes returned 200; invalid license keys were rejected. A real paid WordPress upgrade has not been exercised against a customer license.
+- Installed the Free distribution locally in `/var/www/html/wp-content/plugins/usp-form-builder`, preserving the original files in `/home/usp/plugins/backups/usp-form-builder-20261014-094140`. No WordPress database changes.

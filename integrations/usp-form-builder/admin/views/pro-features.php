@@ -13,6 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $sec_settings = USP_Security::get_settings();
 $is_pro       = USP_Security::is_pro_active();
+$license_valid = USP_Security::license_valid();
 $upload_dir   = wp_upload_dir();
 $sandbox_dir  = $upload_dir['basedir'] . '/usp-form-builder';
 $has_htaccess = file_exists( $sandbox_dir . '/.htaccess' );
@@ -169,6 +170,14 @@ $has_index    = file_exists( $sandbox_dir . '/index.php' );
                         </div>
                     </div>
 
+                    <div style="background:#eef2ff;border:1px solid #c7d2fe;padding:20px;border-radius:12px;margin-bottom:20px;">
+                        <h3><?php esc_html_e( 'Free files now. Pro files after verification.', 'usp-form-builder' ); ?></h3>
+                        <p><?php esc_html_e( 'Activate your license below, then install the private Pro upgrade. It replaces the plugin files in place and preserves your forms and settings. Pro fields require an active subscription; renew before expiry to keep Pro forms accepting submissions.', 'usp-form-builder' ); ?></p>
+                        <?php if ( $license_valid ) : ?>
+                        <button type="button" class="button button-primary" id="usp-install-pro-btn"><?php echo esc_html( 'pro' === USP_FORM_BUILDER_EDITION ? __( 'Install latest Pro release', 'usp-form-builder' ) : __( 'Install Pro files', 'usp-form-builder' ) ); ?></button>
+                        <?php endif; ?>
+                        <a href="https://usp.com.pk/account/products" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'My licenses & downloads', 'usp-form-builder' ); ?></a>
+                    </div>
                     <!-- License Form Box -->
                     <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:24px; margin-bottom:30px;">
                         <div style="margin-bottom:20px; padding-bottom:18px; border-bottom:1px solid #e2e8f0;">
@@ -198,13 +207,13 @@ $has_index    = file_exists( $sandbox_dir . '/index.php' );
                         </label>
                         <div style="display:flex; gap:10px;">
                             <input 
-                                type="text" 
+                                type="password" autocomplete="off"
                                 id="usp_license_key_input" 
                                 value="<?php echo esc_attr( $sec_settings['license_key'] ); ?>" 
                                 placeholder="<?php esc_attr_e( 'Enter your purchased license key', 'usp-form-builder' ); ?>"
                                 style="flex:1; height:42px; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size:13.5px; padding:8px 14px; border-radius:6px; border:1.5px solid #cbd5e1; background:#ffffff;"
                             >
-                            <?php if ( $is_pro ) : ?>
+                            <?php if ( ! empty( $sec_settings['license_key'] ) ) : ?>
                                 <button type="button" class="button button-secondary" id="usp-check-license-btn" style="height:42px; padding:0 16px; font-weight:600; border-radius:6px;">
                                     <?php esc_html_e( 'Verify', 'usp-form-builder' ); ?>
                                 </button>
@@ -618,6 +627,24 @@ jQuery(document).ready(function($) {
             $spinner.removeClass('is-active');
             USPModal.toast('Network error saving settings.', 'error');
         });
+    });
+
+    $('#usp-install-pro-btn').on('click', function() {
+        var $btn = $(this);
+        $btn.prop('disabled', true).text('Installing verified Pro files…');
+        $.post(uspAdminData.ajax_url, {action: 'usp_install_pro', nonce: uspAdminData.nonce})
+            .done(function(response) {
+                if (response.success) {
+                    USPModal.toast(response.data.message, 'success');
+                    setTimeout(function() { window.location.reload(); }, 1200);
+                } else {
+                    USPModal.toast(response.data && response.data.message ? response.data.message : 'Upgrade failed. Please retry.', 'error');
+                    $btn.prop('disabled', false).text('Retry Pro installation');
+                }
+            }).fail(function() {
+                USPModal.toast('The upgrade response was interrupted. Reload and check the plugin edition before retrying.', 'error');
+                $btn.prop('disabled', false).text('Retry Pro installation');
+            });
     });
 
     // License Activation

@@ -4,6 +4,8 @@
  * Exercises the USP product-store license client using a local HTTP API stub.
  */
 
+define( 'USP_FORM_BUILDER_EDITION', getenv('USP_TEST_EDITION') ?: 'pro' );
+define( 'USP_FORM_BUILDER_VERSION', '1.1.1' );
 define( 'DAY_IN_SECONDS', 86400 );
 define( 'HOUR_IN_SECONDS', 3600 );
 define( 'ABSPATH', __DIR__ . '/' );
@@ -30,7 +32,7 @@ $test_api_reply = array(
     'expires'         => '2030-01-01T23:59:59+00:00',
     'site_count'      => 1,
     'license_limit'   => 3,
-    'activation_token'=> 'activation-token-1',
+    'activation_token'=> str_repeat( 'a', 64 ),
 );
 
 function __( $value, $domain = '' ) { return $value; }
@@ -48,11 +50,12 @@ function update_option( $key, $value ) {
     $test_options[ $key ] = $value;
     return true;
 }
-function home_url() { return 'https://customer.example.test'; }
+function home_url() { global $test_home; return $test_home ?? 'https://customer.example.test'; }
 function wp_json_encode( $data ) { return json_encode( $data ); }
 function wp_safe_remote_post( $url, $args = array() ) {
     global $test_requests, $test_api_reply;
     $test_requests[] = array( 'url' => $url, 'args' => $args );
+    if ( $test_api_reply instanceof WP_Error ) { return $test_api_reply; }
     return array(
         'response' => array( 'code' => 200 ),
         'body'     => json_encode( $test_api_reply ),
@@ -84,7 +87,8 @@ function license_check( $condition, $message ) {
 
 $activation = USP_Security::process_license_action( 'TEST-KEY-123456', 'activate' );
 license_check( ! empty( $activation['success'] ), 'Valid store response should activate the license.' );
-license_check( USP_Security::is_pro_active(), 'Activated license should unlock Pro.' );
+license_check( USP_Security::license_valid(), 'Activated license should have a valid entitlement.' );
+license_check( USP_Security::is_pro_active() === ( USP_FORM_BUILDER_EDITION === 'pro' ), 'Free must not unlock Pro code even with a paid key.' );
 license_check( count( $test_requests ) === 1, 'Freshly activated license should use its cached validation.' );
 $request = $test_requests[0];
 $request_args = json_decode( $request['args']['body'], true );
@@ -94,7 +98,27 @@ license_check( 'activate_license' === $request_args['action'], 'Activation must 
 license_check( 'usp-form-builder' === $request_args['product'], 'Activation must be scoped to the configured product slug.' );
 license_check( 'TEST-KEY-123456' === $request_args['license'], 'Activation must send the submitted key.' );
 license_check( 'https://customer.example.test' === $request_args['url'], 'Activation must bind the license to this site URL.' );
-license_check( 'activation-token-1' === USP_Security::get_settings()['license_activation_token'], 'Activation token must be retained for authenticated follow-up checks.' );
+license_check( str_repeat( 'a', 64 ) === USP_Security::get_settings()['license_activation_token'], 'Activation token must be retained for authenticated follow-up checks.' );
+
+// A copied database must not grant cached access to a new WordPress installation.
+$valid_reply = $test_api_reply;
+$test_home = 'https://cloned.example.test';
+$test_api_reply = new WP_Error( 'offline', 'Offline' );
+license_check( ! USP_Security::license_valid(), 'A cloned site must fail closed during an outage.' );
+$test_home = 'https://customer.example.test';
+$settings = USP_Security::get_settings();
+$settings['license_expires'] = gmdate( 'c', time() - 60 );
+USP_Security::save_settings( $settings );
+license_check( ! USP_Security::license_valid(), 'Cached status must not bypass an expired subscription.' );
+$settings['license_expires'] = $valid_reply['expires'];
+$settings['license_last_checked'] = time() - ( 2 * DAY_IN_SECONDS );
+USP_Security::save_settings( $settings );
+license_check( USP_Security::license_valid(), 'An unexpired same-site license may use bounded outage grace.' );
+$settings['license_last_checked'] = time() - ( 4 * DAY_IN_SECONDS );
+USP_Security::save_settings( $settings );
+license_check( ! USP_Security::license_valid(), 'Outage grace must stop after three days.' );
+$test_api_reply = $valid_reply;
+delete_transient( 'usp_form_builder_license_check_lock' );
 
 $settings = USP_Security::get_settings();
 $settings['license_last_checked'] = time() - DAY_IN_SECONDS - 1;
@@ -104,17 +128,17 @@ $test_api_reply = array(
     'license' => 'invalid',
     'error'   => 'expired',
 );
-license_check( ! USP_Security::is_pro_active(), 'An expired store license must disable Pro.' );
+license_check( ! USP_Security::license_valid(), 'An expired store license must disable Pro.' );
 license_check( 'expired' === USP_Security::get_settings()['license_status'], 'Expired status should be retained for the dashboard.' );
 $request_args = json_decode( end( $test_requests )['args']['body'], true );
-license_check( 'activation-token-1' === $request_args['token'], 'Status checks must prove control of the activation token.' );
+license_check( str_repeat( 'a', 64 ) === $request_args['token'], 'Status checks must prove control of the activation token.' );
 
 $deactivation = USP_Security::process_license_action( '', 'deactivate' );
 license_check( ! empty( $deactivation['success'] ), 'Local deactivation should complete.' );
 license_check( ! USP_Security::is_pro_active(), 'Deactivation should disable Pro.' );
 $request_args = json_decode( end( $test_requests )['args']['body'], true );
 license_check( 'deactivate_license' === $request_args['action'], 'Deactivation must use the store deactivation action.' );
-license_check( 'activation-token-1' === $request_args['token'], 'Deactivation must prove control of the current activation.' );
+license_check( str_repeat( 'a', 64 ) === $request_args['token'], 'Deactivation must prove control of the current activation.' );
 license_check( '' === USP_Security::get_settings()['license_activation_token'], 'Deactivation must erase the local activation token.' );
 
 $invalid_key = USP_Security::process_license_action( 'bad key', 'activate' );

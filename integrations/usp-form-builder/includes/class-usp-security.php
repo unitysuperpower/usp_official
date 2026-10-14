@@ -36,7 +36,8 @@ class USP_Security {
             'license_expires'            => '',
             'pro_enabled'                => false,
             'store_pricing_url'           => 'https://usp.com.pk/products/usp-form-builder',
-            'store_account_url'            => '',
+            'store_account_url'            => 'https://usp.com.pk/account/products',
+            'license_site'               => '',
             'license_last_checked'        => 0,
             'license_customer_email'      => '',
             'license_site_count'          => 0,
@@ -87,25 +88,42 @@ class USP_Security {
     public static function save_settings( $settings ) {
         $current = self::get_settings();
         $updated = array_merge( $current, $settings );
-        return update_option( self::OPTION_KEY, $updated );
+        return update_option( self::OPTION_KEY, $updated, false );
     }
 
     /**
      * Check if Pro version is active and licensed.
      */
     public static function is_pro_active() {
+        return defined( 'USP_FORM_BUILDER_EDITION' ) && 'pro' === USP_FORM_BUILDER_EDITION && self::license_valid();
+    }
+
+    public static function site_identity() {
+        $parts = parse_url( home_url() );
+        return strtolower( rtrim( $parts['host'] ?? '', '.' ) ) .
+            ( ! empty( $parts['port'] ) && ! in_array( $parts['port'], array( 80, 443 ), true ) ? ':' . $parts['port'] : '' ) .
+            rtrim( $parts['path'] ?? '', '/' );
+    }
+
+    public static function cached_license_valid( $settings ) {
+        return 'valid' === $settings['license_status'] && ! empty( $settings['license_activation_token'] ) &&
+            ! empty( $settings['license_expires'] ) && strtotime( $settings['license_expires'] ) > time() &&
+            hash_equals( (string) $settings['license_site'], self::site_identity() );
+    }
+
+    public static function license_valid() {
         $settings = self::get_settings();
         if ( empty( $settings['license_key'] ) || empty( $settings['pro_enabled'] ) ) {
             return false;
         }
 
         $last_checked = absint( $settings['license_last_checked'] );
-        if ( 'valid' === $settings['license_status'] && $last_checked > time() - DAY_IN_SECONDS ) {
+        if ( self::cached_license_valid( $settings ) && $last_checked > time() - DAY_IN_SECONDS ) {
             return true;
         }
 
         if ( get_transient( 'usp_form_builder_license_check_lock' ) ) {
-            return 'valid' === $settings['license_status'] && $last_checked > time() - ( 3 * DAY_IN_SECONDS );
+            return self::cached_license_valid( $settings ) && $last_checked > time() - ( 3 * DAY_IN_SECONDS );
         }
         set_transient( 'usp_form_builder_license_check_lock', 1, HOUR_IN_SECONDS );
 
@@ -113,7 +131,7 @@ class USP_Security {
         if ( is_wp_error( $response ) ) {
             $settings['license_error'] = $response->get_error_message();
             self::save_settings( $settings );
-            return 'valid' === $settings['license_status'] && $last_checked > time() - ( 3 * DAY_IN_SECONDS );
+            return self::cached_license_valid( $settings ) && $last_checked > time() - ( 3 * DAY_IN_SECONDS );
         }
 
         $settings['license_last_checked']   = time();
@@ -128,10 +146,11 @@ class USP_Security {
         $settings['license_limit']          = isset( $response['license_limit'] ) ? absint( $response['license_limit'] ) : 0;
         if ( 'valid' === $settings['license_status'] && ! empty( $response['activation_token'] ) ) {
             $settings['license_activation_token'] = sanitize_text_field( $response['activation_token'] );
+            $settings['license_site'] = self::site_identity();
         }
         self::save_settings( $settings );
 
-        return 'valid' === $settings['license_status'];
+        return self::cached_license_valid( $settings );
     }
 
     /**
@@ -141,7 +160,7 @@ class USP_Security {
      * @param string $license License key.
      * @return array|WP_Error
      */
-    private static function request_license_api( $action, $license ) {
+    public static function request_license_api( $action, $license ) {
         $settings = self::get_settings();
         $product_slug = defined( 'USP_FORM_BUILDER_PRODUCT_SLUG' )
             ? (string) USP_FORM_BUILDER_PRODUCT_SLUG
@@ -203,6 +222,11 @@ class USP_Security {
             );
         }
 
+        if ( ! empty( $data['success'] ) && 'deactivate_license' !== $action &&
+            ( 'valid' !== ( $data['license'] ?? '' ) || empty( $data['expires'] ) || strtotime( $data['expires'] ) <= time() ||
+              ! preg_match( '/^[a-f0-9]{64}$/', $data['activation_token'] ?? '' ) ) ) {
+            return new WP_Error( 'usp_invalid_entitlement', __( 'The store returned an invalid or expired license entitlement.', 'usp-form-builder' ) );
+        }
         return $data;
     }
 
@@ -264,6 +288,7 @@ class USP_Security {
             $settings['license_limit']          = isset( $response['license_limit'] ) ? absint( $response['license_limit'] ) : 0;
             if ( 'valid' === $settings['license_status'] && ! empty( $response['activation_token'] ) ) {
                 $settings['license_activation_token'] = sanitize_text_field( $response['activation_token'] );
+            $settings['license_site'] = self::site_identity();
             }
             self::save_settings( $settings );
             delete_transient( 'usp_form_builder_license_check_lock' );
@@ -318,6 +343,7 @@ class USP_Security {
         $settings['license_site_count']      = isset( $response['site_count'] ) ? absint( $response['site_count'] ) : 0;
         $settings['license_limit']           = isset( $response['license_limit'] ) ? absint( $response['license_limit'] ) : 0;
         $settings['license_activation_token'] = ! empty( $response['activation_token'] ) ? sanitize_text_field( $response['activation_token'] ) : '';
+        $settings['license_site']            = self::site_identity();
         $settings['license_last_checked']    = time();
         $settings['license_error']           = '';
         $settings['pro_enabled']              = true;

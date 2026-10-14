@@ -1,9 +1,13 @@
 <?php
 /**
- * Plugin Name:       USP Form Builder (Free)
+ * Plugin Name:       USP Form Builder Pro
  * Plugin URI:        https://usptechsolution.com/
  * Description:       A powerful drag-and-drop form builder with basic inputs, templates, and secure submissions.
- * Version:           1.0.7
+ * Version:           1.1.1
+ * Requires at least: 6.3
+ * Requires PHP:      7.4
+ * USP Edition:       pro
+ * Update URI:        https://usp.com.pk/products/usp-form-builder
  * Author:            Waseem
  * Author URI:        https://usptechsolution.com/
  * License:           GPL v2 or later
@@ -17,7 +21,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin Constants
-define( 'USP_FORM_BUILDER_VERSION', '1.0.7' );
+define( 'USP_FORM_BUILDER_EDITION', 'pro' );
+define( 'USP_FORM_BUILDER_VERSION', '1.1.1' );
 define( 'USP_FORM_BUILDER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'USP_FORM_BUILDER_URL', plugin_dir_url( __FILE__ ) );
 define( 'USP_FORM_BUILDER_BASENAME', plugin_basename( __FILE__ ) );
@@ -28,6 +33,7 @@ require_once USP_FORM_BUILDER_DIR . 'includes/class-usp-activator.php';
 require_once USP_FORM_BUILDER_DIR . 'includes/class-usp-deactivator.php';
 require_once USP_FORM_BUILDER_DIR . 'includes/class-usp-db.php';
 require_once USP_FORM_BUILDER_DIR . 'includes/class-usp-security.php';
+require_once USP_FORM_BUILDER_DIR . 'includes/class-usp-pro-installer.php';
 require_once USP_FORM_BUILDER_DIR . 'includes/class-usp-address.php';
 require_once USP_FORM_BUILDER_DIR . 'includes/class-usp-form.php';
 require_once USP_FORM_BUILDER_DIR . 'includes/class-usp-ajax.php';
@@ -137,3 +143,4 @@ function usp_form_builder() {
 
 // Kick off the plugin
 usp_form_builder();
+USP_Pro_Installer::init();

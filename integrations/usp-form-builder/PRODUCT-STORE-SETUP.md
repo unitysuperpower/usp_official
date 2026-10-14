@@ -1,28 +1,50 @@
-# USP Form Builder Pro: Product Store Setup
+# USP Form Builder distributions and licensing
 
-The Laravel product store at `https://usp.com.pk/` is the source of truth for products, plans, orders, license keys, website activations, and releases. Product identity is the immutable lowercase slug, so each plugin package must be configured to use the slug of its matching store product.
+The Laravel website is the source of truth for orders, subscriptions, license expiry, activations and downloads. The immutable product identifier is `usp-form-builder`.
 
-## Configure each product
+## Build and publish
 
-1. In the website admin, create a product with a unique slug (for example, `usp-form-builder`) and publish it.
-2. Add the product's free and Pro plans, set the per-license website limit and term, and publish them.
-3. Upload a ZIP for each release. It must contain only the product folder and its main plugin PHP file; packages are kept in private storage.
-4. Configure the exchange rate and payment methods before publishing plans for purchase.
+Run `python3 scripts/build-plugin.py` from the Laravel repository. PHP, Python, Node and the installed frontend development dependencies are required. The build lints PHP and JavaScript and checks that premium handlers are absent from Free.
 
-## Connect the WordPress plugin
+Output under `dist/plugins/`:
 
-1. In each WordPress site using USP Form Builder, open **USP Forms → Pro & Security**.
-2. Set `USP_FORM_BUILDER_PRODUCT_SLUG` in the plugin's main PHP file to exactly match the product slug created above. Do not make this customer-editable; build each separate plugin product with its own fixed slug.
-3. Enter the public pricing and customer account URLs and save the settings.
-4. Enter a key purchased from the website account and select **Activate License**.
-5. Use **Verify** to check status. The plugin stores the per-site activation token returned by the API and sends it for status checks and deactivation.
-6. Use **Deactivate** before moving a license to another site so the store can release the current activation.
+- `usp-form-builder-1.1.1-free.zip`: Free implementation, standard fields, shared builder UI, security and license/upgrade client. Premium field renderers and submission handlers, address/country datasets, and Pro frontend engines are excluded. The shared admin UI can still show upgrade prompts and recognize existing Pro field types.
+- `usp-form-builder-1.1.1-pro.zip`: Full plugin with Pro implementations and server-verified licensing. Keep this package private.
+- `manifest.json`: SHA-256 checksums and edition/version metadata.
 
-The plugin sends JSON POST requests to `https://usp.com.pk/api/licenses/v1` over HTTPS. Requests include the product slug, key, and WordPress home URL. The server hashes keys for lookup, checks that the product matches, applies the license expiry and activation limit, and requires the activation token for follow-up checks. The key alone is never treated as proof that an already-activated site owns its activation.
+Both ZIPs contain `usp-form-builder/usp-form-builder.php`. The same folder is intentional: the Pro upgrade replaces Free in place, preserves the WordPress database and settings, and avoids duplicate plugin classes. Do not install them under different folder names.
 
-## Scope and launch checks
+In `/admin/store/products`, upload version `1.1.1` with the matching **Free** or **Pro** edition. The uploader checks folder structure, PHP version header, edition header, symbolic links, unsafe paths, duplicate entries, and archive size. It now reports the specific reason for rejection. The original `usp-form-builder-1.0.0.zip` is internally version `1.0.7` and contains premium implementations; do not publish it as the new Free distribution.
 
-- The plugin continues to allow a short grace period after a temporary license API outage. Pro features can therefore remain active briefly after a server-side revocation if the plugin cannot reach the API.
-- Existing EDD-issued keys are not automatically imported into the Laravel store; migrate or reissue those licenses before switching existing customers to this API.
-- Automatic plugin updates are not included. The current client validates licenses; the API also provides signed package URLs for future updater integration.
-- Before selling, test distinct product slugs, activation-limit rejection, expiry, renewal, revocation, site deactivation, a mismatched product slug, and a temporary API outage on staging.
+## Customer flow
+
+1. Install the Free ZIP in WordPress.
+2. Register on usp.com.pk, choose a plan, and pay. Verified payment issues a license in **My products & licenses**. Transfers await admin review; configured JazzCash payments require a valid signed gateway response.
+3. In WordPress → USP Form Builder → Pro & Security Hub, paste the key and activate it.
+4. Click **Install Pro files**. The plugin requests a fresh server authorization, downloads only from the fixed HTTPS store host, verifies the SHA-256 checksum, and uses the WordPress plugin upgrader. It restores the active state after a successful upgrade.
+5. If the host requires FTP credentials or the site uses multisite, download the Pro ZIP from the authenticated account and use WordPress's normal upload/replace flow. Every licensed multisite installation must activate separately.
+6. After renewal, choose **Verify** in the plugin. Use **Install latest Pro release** to obtain a newer private release. There is no background automatic updater or automatic recurring charge in this release.
+
+Use WordPress 6.3+ for the core upgrader's temporary backup/rollback support. The updater refuses older releases, wrong products/editions, unexpected hosts and unverified package downloads. Neither license keys nor activation tokens are included in package URLs. Signed URLs expire after 30 minutes and recheck activation and entitlement when used.
+
+## Expiry and limits
+
+Pro field forms are unavailable once the subscription expires; ordinary Free forms continue working. No form data is deleted. A same-site, unexpired cached license can tolerate a temporary network outage for up to three days from the last successful check. Expiry and site identity are checked even during that grace period. Remote revocation is normally observed at the next daily check, or after the bounded grace period during an outage. Package downloads always require a live server check and never use offline grace.
+
+One-site, three-site and unlimited plans enforce their limits on the server. HTTP-to-HTTPS moves retain a seat; different subdomains and subdirectory installations consume separate seats. Customers can release sites from their account. A lost activation token requires releasing the old activation in the account before reactivating the same site.
+
+Paid PHP source cannot be made uncrackable on a customer-controlled server. This implementation keeps Pro code out of the Free distribution and protects the vendor-controlled downloads, updates, subscription records and activation limits. It does not promise DRM that a site owner cannot modify. GPL notices and third-party dataset licenses are retained.
+
+## Verification
+
+```
+php artisan test --compact
+python3 scripts/build-plugin.py
+php scripts/test-plugin-packages.php free
+php scripts/test-plugin-packages.php pro
+php integrations/usp-form-builder/tests/store-license-client.php
+USP_TEST_EDITION=free php integrations/usp-form-builder/tests/store-license-client.php
+php integrations/usp-form-builder/tests/installer-policy.php
+```
+
+The approved prices are USD $5 / $10 / $150 per month for one / three / unlimited websites, and USD $48 / $96 / $1,440 for annual payment. Live checkout also needs the owner's USD-to-PKR conversion rate and receiving accounts or merchant configuration; do not invent these values.

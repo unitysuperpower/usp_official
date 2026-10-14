@@ -31,8 +31,8 @@ function $(selector) {
 }
 const document = {getElementById(id) {return elements[id];}};
 const context = {jQuery:$, document, window:{uspBuilderData:{}}, setTimeout() {return 1;}, clearTimeout() {}};
-const src = fs.readFileSync('admin/assets/js/usp-builder.js','utf8')
-    .replace('    $(document).ready(function() {','    window.testBuilder = USPBuilder;\n    $(document).ready(function() {');
+const src = fs.readFileSync(process.env.USP_BUILDER_FILE || 'admin/assets/js/usp-builder.js','utf8')
+    .replace(/\$\(document\)\.ready\(function\s*\(\)\s*\{/, 'window.testBuilder = USPBuilder;\n$(document).ready(function() {');
 vm.runInNewContext(src,context);
 const builder = context.window.testBuilder;
 builder.fields = [{id:'a',type:'text',label:'Name'}];

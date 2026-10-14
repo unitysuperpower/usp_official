@@ -968,6 +968,13 @@
             this.flushPendingHistory();
             var tpl = this.templates[tplKey];
             if (!tpl) return;
+            var access = window.uspBuilderData || {};
+            if (!access.is_pro && tpl.fields.some(function(field) {
+                return (access.pro_field_types || []).indexOf(field.type) !== -1;
+            })) {
+                this.showToast('This template contains Pro fields. Activate your license and install Pro first.', 'error');
+                return;
+            }
 
             // Generate clean IDs for template fields
             var newFields = JSON.parse(JSON.stringify(tpl.fields));

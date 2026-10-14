@@ -90,3 +90,42 @@ test('license activations are product-scoped, token-bound, and limited by site c
         ->assertJsonPath('success', false)
         ->assertJsonPath('error', 'activation_limit_reached');
 });
+
+test('Pro downloads require an active license and a current signed activation URL', function () {
+    Illuminate\Support\Facades\Storage::fake('local');
+    Illuminate\Support\Facades\Storage::disk('local')->put('products/packages/pro.zip', 'private-code');
+    $release = $this->product->releases()->create([
+        'version'=>'1.0.8','edition'=>'pro','package_path'=>'products/packages/pro.zip',
+        'sha256'=>hash('sha256','private-code'),'published'=>true,
+    ]);
+    $payload = ['action'=>'activate_license','product'=>$this->product->slug,'license'=>$this->key,'url'=>'https://customer.example.test'];
+    $token = $this->postJson('/api/licenses/v1',$payload)->json('activation_token');
+    $update = $this->postJson('/api/licenses/v1',array_merge($payload,['action'=>'update','token'=>$token]));
+    $update->assertOk()->assertJsonPath('update.edition','pro')->assertJsonPath('update.sha256',hash('sha256','private-code'));
+    $url=$update->json('update.package');
+    $this->get($url)->assertOk()->assertDownload();
+    $this->get(str_replace('signature=', 'signature=bad', $url))->assertForbidden();
+    $this->get('/products/releases/'.$release->id.'/download')->assertForbidden();
+    $stranger=User::factory()->create();
+    $this->actingAs($stranger)->get('/products/releases/'.$release->id.'/download')->assertForbidden();
+    $this->actingAs($this->user)->get('/products/releases/'.$release->id.'/download')->assertOk()->assertDownload();
+    $this->license->update(['expires_at'=>now()->subSecond()]);
+    $this->get($url)->assertForbidden();
+    $this->get('/products/releases/'.$release->id.'/download')->assertForbidden();
+    $this->postJson('/api/licenses/v1',array_merge($payload,['action'=>'update','token'=>$token]))->assertJsonPath('error','expired');
+});
+
+test('revocation and releasing a website invalidate previously issued download URLs', function () {
+    Illuminate\Support\Facades\Storage::fake('local');
+    Illuminate\Support\Facades\Storage::disk('local')->put('pro.zip','private');
+    $this->product->releases()->create(['version'=>'1.0.8','edition'=>'pro','package_path'=>'pro.zip','sha256'=>hash('sha256','private'),'published'=>true]);
+    $data=['action'=>'activate_license','product'=>$this->product->slug,'license'=>$this->key,'url'=>'https://customer.example.test'];
+    $token=$this->postJson('/api/licenses/v1',$data)->json('activation_token');
+    $url=$this->postJson('/api/licenses/v1',array_merge($data,['action'=>'update','token'=>$token]))->json('update.package');
+    $this->license->update(['status'=>'revoked']);
+    $this->get($url)->assertForbidden();
+    $this->license->update(['status'=>'active']);
+    $this->postJson('/api/licenses/v1',array_merge($data,['action'=>'deactivate_license','token'=>$token]))->assertJsonPath('success',true);
+    $this->get($url)->assertNotFound();
+    $this->postJson('/api/licenses/v1',array_merge($data,['action'=>'check_license','token'=>$token]))->assertJsonPath('success',false);
+});

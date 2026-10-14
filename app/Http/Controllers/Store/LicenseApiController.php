@@ -26,6 +26,7 @@ class LicenseApiController extends Controller
                 ->where('published', true)->where('edition', 'pro')->latest('id')->first();
             $result['update'] = $release ? [
                 'version' => $release->version, 'slug' => $data['product'],
+                'edition' => 'pro', 'sha256' => $release->sha256,
                 'url' => url('/products/'.$data['product']), 'changelog' => $release->changelog,
                 'package' => URL::temporarySignedRoute('store.package', now()->addMinutes(30), ['release' => $release->id, 'activation' => $result['activation_id']]),
             ] : null;
