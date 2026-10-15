@@ -1,0 +1,13 @@
+.tsfs-address-control [hidden] { display: none !important; }
+.tsfs-address-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.tsfs-address-wide { grid-column: 1 / -1; }
+.tsfs-address-part { min-width: 0; display: grid; align-content: start; gap: 7px; }
+.tsfs-address-part > label { font-size: 12px; font-weight: 500; color: inherit; }
+.tsfs-address-part .tsfs-input { width: 100%; min-height: 48px; box-sizing: border-box; }
+.tsfs-address-part select:disabled { opacity: .65; cursor: not-allowed; }
+.tsfs-address-status { margin: 12px 0 0; font-size: 12px; line-height: 1.5; }
+.tsfs-address-status:empty { display: none; }
+.tsfs-address-retry { margin-top: 8px; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 7px; cursor: pointer; background: transparent; color: inherit; }
+.tsfs-address-attribution { display: block; margin-top: 10px; font-size: 10px; color: inherit; opacity: .7; }
+.tsfs-address-attribution a { color: inherit; }
+@media (max-width: 540px) { .tsfs-address-grid { grid-template-columns: minmax(0, 1fr); } }

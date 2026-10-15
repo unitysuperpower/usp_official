@@ -1,0 +1,833 @@
+/**
+ * Premium Modern Public Form Styles for TechSolution Form Studio.
+ * Crafted with clean typography, fluid responsive layout, and accessible states.
+ */
+
+:root {
+    --tsfs-primary: #4f46e5;
+    --tsfs-primary-hover: #4338ca;
+    --tsfs-primary-light: #eef2ff;
+    --tsfs-primary-ring: rgba(79, 70, 229, 0.16);
+    --tsfs-text-heading: #0f172a;
+    --tsfs-text-body: #1e293b;
+    --tsfs-text-muted: #64748b;
+    --tsfs-border-default: #cbd5e1;
+    --tsfs-border-hover: #94a3b8;
+    --tsfs-border-focus: #6366f1;
+    --tsfs-bg-card: #ffffff;
+    --tsfs-bg-input: #ffffff;
+    --tsfs-bg-input-focus: #ffffff;
+    --tsfs-radius-sm: 6px;
+    --tsfs-radius-md: 10px;
+    --tsfs-radius-lg: 16px;
+    --tsfs-shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+    --tsfs-shadow-input: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+    --tsfs-success-bg: #ecfdf5;
+    --tsfs-success-border: #a7f3d0;
+    --tsfs-success-text: #065f46;
+    --tsfs-error-bg: #fef2f2;
+    --tsfs-error-border: #fecaca;
+    --tsfs-error-text: #991b1b;
+}
+
+/* Base Container */
+.tsfs-form-container {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 680px;
+    margin: 24px auto;
+    padding: 32px;
+    background: var(--tsfs-bg-card);
+    border: 1px solid #e2e8f0;
+    border-radius: var(--tsfs-radius-lg);
+    box-shadow: var(--tsfs-shadow-card);
+    color: var(--tsfs-text-body);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    accent-color: var(--tsfs-primary);
+}
+
+.tsfs-form-container *,
+.tsfs-form-container *::before,
+.tsfs-form-container *::after {
+    box-sizing: border-box;
+}
+
+/* Heading */
+.tsfs-form-heading {
+    margin: 0 0 24px 0;
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: var(--tsfs-text-heading);
+    letter-spacing: -0.02em;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+/* Fields Grid */
+.tsfs-form-fields-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+/* Field Widths */
+.tsfs-field-wrap {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.tsfs-width-100 {
+    flex: 0 0 100%;
+    width: 100%;
+}
+
+.tsfs-width-50 {
+    flex: 0 0 calc(50% - 9px);
+    width: calc(50% - 9px);
+}
+
+.tsfs-width-33 {
+    flex: 0 0 calc(33.333% - 12px);
+    width: calc(33.333% - 12px);
+}
+
+@media (max-width: 640px) {
+    .tsfs-form-container {
+        padding: 20px 16px;
+        border-radius: var(--tsfs-radius-md);
+        box-shadow: none;
+    }
+    .tsfs-width-50,
+    .tsfs-width-33 {
+        flex: 0 0 100%;
+        width: 100%;
+    }
+}
+
+/* Section Note / HTML */
+.tsfs-field-html {
+    padding: 8px 0 4px 0;
+}
+
+.tsfs-html-title {
+    margin: 0 0 6px 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--tsfs-text-heading);
+    letter-spacing: -0.01em;
+}
+
+.tsfs-html-desc {
+    color: var(--tsfs-text-muted);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+/* Labels */
+.tsfs-field-label {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--tsfs-text-heading);
+    margin-bottom: 7px;
+}
+
+.tsfs-required-mark {
+    color: #ef4444;
+    margin-left: 3px;
+    font-weight: 700;
+}
+
+/* Inputs & Form Controls */
+.tsfs-input {
+    display: block;
+    width: 100%;
+    padding: 11px 14px;
+    font-size: 0.97rem;
+    font-family: inherit;
+    color: var(--tsfs-text-body);
+    background-color: var(--tsfs-bg-input);
+    border: 1.5px solid var(--tsfs-border-default);
+    border-radius: var(--tsfs-radius-sm);
+    box-shadow: var(--tsfs-shadow-input);
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.tsfs-input:hover {
+    border-color: var(--tsfs-border-hover);
+}
+
+.tsfs-input:focus {
+    outline: none;
+    border-color: var(--tsfs-border-focus);
+    box-shadow: 0 0 0 3px var(--tsfs-primary-ring);
+    background-color: var(--tsfs-bg-input-focus);
+}
+
+.tsfs-input::placeholder {
+    color: #94a3b8;
+    font-size: 0.93rem;
+}
+
+/* Textarea */
+.tsfs-textarea {
+    resize: vertical;
+    min-height: 110px;
+    line-height: 1.6;
+}
+
+/* Select Dropdown */
+.tsfs-select {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    background-position: right 12px center;
+    background-repeat: no-repeat;
+    background-size: 18px 18px;
+    padding-right: 38px;
+}
+
+/* Radios & Checkboxes */
+.tsfs-choice-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.tsfs-choice-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.94rem;
+    color: var(--tsfs-text-body);
+    cursor: pointer;
+    user-select: none;
+    padding: 4px 0;
+    transition: color 0.15s ease;
+}
+
+.tsfs-choice-label:hover {
+    color: var(--tsfs-text-heading);
+}
+
+.tsfs-choice-label input[type="radio"],
+.tsfs-choice-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    cursor: pointer;
+    border-radius: 4px;
+    border: 1.5px solid var(--tsfs-border-default);
+    transition: all 0.15s ease;
+}
+
+.tsfs-choice-label input[type="radio"] {
+    border-radius: 50%;
+}
+
+.tsfs-choice-label input[type="radio"]:focus-visible,
+.tsfs-choice-label input[type="checkbox"]:focus-visible {
+    outline: 2px solid var(--tsfs-primary);
+    outline-offset: 2px;
+}
+
+/* Help Text */
+.tsfs-field-help {
+    font-size: 0.83rem;
+    color: var(--tsfs-text-muted);
+    margin-top: 5px;
+    line-height: 1.4;
+}
+
+/* Validation States */
+.tsfs-field-wrap.has-error .tsfs-input {
+    border-color: #ef4444;
+    background-color: #fffbfa;
+}
+
+.tsfs-field-wrap.has-error .tsfs-input:focus {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.16);
+}
+
+.tsfs-field-error {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #dc2626;
+    font-size: 0.83rem;
+    font-weight: 500;
+    margin-top: 6px;
+    animation: tsfs-slide-in 0.2s ease-out;
+}
+
+@keyframes tsfs-slide-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Submit Actions */
+.tsfs-form-actions {
+    margin-top: 20px;
+}
+
+.tsfs-btn-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 30px;
+    font-size: 0.98rem;
+    font-weight: 600;
+    color: #ffffff;
+    background: linear-gradient(180deg, var(--tsfs-primary) 0%, var(--tsfs-primary-hover) 100%);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: var(--tsfs-radius-sm);
+    box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tsfs-btn-submit:hover {
+    background: linear-gradient(180deg, #4338ca 0%, #3730a3 100%);
+    box-shadow: 0 4px 8px rgba(79, 70, 229, 0.28);
+    transform: translateY(-1px);
+}
+
+.tsfs-btn-submit:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.tsfs-btn-submit:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Spinner */
+.tsfs-spinner {
+    display: inline-block;
+    width: 17px;
+    height: 17px;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: tsfs-spin 0.75s linear infinite;
+}
+
+@keyframes tsfs-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Alerts / Notices */
+.tsfs-form-messages {
+    padding: 16px 20px;
+    border-radius: var(--tsfs-radius-sm);
+    margin-bottom: 22px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    animation: tsfs-fade-down 0.25s ease-out;
+}
+
+@keyframes tsfs-fade-down {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.tsfs-form-messages.tsfs-success {
+    background-color: var(--tsfs-success-bg);
+    border: 1px solid var(--tsfs-success-border);
+    color: var(--tsfs-success-text);
+}
+
+.tsfs-form-messages.tsfs-error {
+    background-color: var(--tsfs-error-bg);
+    border: 1px solid var(--tsfs-error-border);
+    color: var(--tsfs-error-text);
+}
+
+.tsfs-error-box {
+    background-color: #fffbeb;
+    border: 1px solid #fde68a;
+    color: #92400e;
+    padding: 14px 18px;
+    border-radius: var(--tsfs-radius-sm);
+    font-size: 0.95rem;
+}
+
+/* ==========================================================================
+   Theme Presets & Visual Customization System
+   ========================================================================== */
+
+/* 1. Minimalist Monochrome */
+.tsfs-form-container.tsfs-theme-minimal {
+    --tsfs-primary: #0f172a;
+    --tsfs-primary-hover: #1e293b;
+    --tsfs-primary-light: #f1f5f9;
+    --tsfs-border-default: #e2e8f0;
+    --tsfs-border-focus: #0f172a;
+    --tsfs-text-heading: #0f172a;
+    border-color: #e2e8f0;
+}
+
+/* 2. Midnight Dark Mode */
+.tsfs-form-container.tsfs-theme-dark {
+    --tsfs-primary: #38bdf8;
+    --tsfs-primary-hover: #0ea5e9;
+    --tsfs-primary-light: rgba(56, 189, 248, 0.12);
+    --tsfs-bg-card: #0f172a;
+    --tsfs-bg-input: #1e293b;
+    --tsfs-bg-input-focus: #1e293b;
+    --tsfs-text-heading: #f8fafc;
+    --tsfs-text-body: #e2e8f0;
+    --tsfs-text-muted: #94a3b8;
+    --tsfs-border-default: #334155;
+    --tsfs-border-hover: #475569;
+    --tsfs-border-focus: #38bdf8;
+    border-color: #1e293b;
+}
+
+.tsfs-form-container.tsfs-theme-dark .tsfs-form-heading {
+    border-bottom-color: #1e293b;
+}
+
+.tsfs-form-container.tsfs-theme-dark .tsfs-input,
+.tsfs-form-container.tsfs-theme-dark .tsfs-card-mock-input {
+    color: #f8fafc;
+}
+
+.tsfs-form-container.tsfs-theme-dark .tsfs-input::placeholder {
+    color: #64748b;
+}
+
+.tsfs-form-container.tsfs-theme-dark .tsfs-btn-submit {
+    color: #0f172a;
+    font-weight: 700;
+}
+
+/* 3. Emerald Eco */
+.tsfs-form-container.tsfs-theme-emerald {
+    --tsfs-primary: #059669;
+    --tsfs-primary-hover: #047857;
+    --tsfs-primary-light: #ecfdf5;
+    --tsfs-primary-ring: rgba(5, 150, 105, 0.16);
+    --tsfs-text-heading: #064e3b;
+    --tsfs-border-focus: #059669;
+    border-color: #a7f3d0;
+}
+
+/* 4. Sunset Crimson */
+.tsfs-form-container.tsfs-theme-sunset {
+    --tsfs-primary: #e11d48;
+    --tsfs-primary-hover: #be123c;
+    --tsfs-primary-light: #fff1f2;
+    --tsfs-primary-ring: rgba(225, 29, 72, 0.16);
+    --tsfs-text-heading: #881337;
+    --tsfs-border-focus: #e11d48;
+    border-color: #fecdd3;
+}
+
+/* 5. Royal Violet */
+.tsfs-form-container.tsfs-theme-violet {
+    --tsfs-primary: #7c3aed;
+    --tsfs-primary-hover: #6d28d9;
+    --tsfs-primary-light: #f5f3ff;
+    --tsfs-primary-ring: rgba(124, 58, 237, 0.16);
+    --tsfs-text-heading: #4c1d95;
+    --tsfs-border-focus: #7c3aed;
+    border-color: #ddd6fe;
+}
+
+/* --- Corner Radius Variations --- */
+.tsfs-form-container.tsfs-radius-sharp {
+    border-radius: 0px !important;
+}
+.tsfs-form-container.tsfs-radius-sharp .tsfs-input,
+.tsfs-form-container.tsfs-radius-sharp .tsfs-btn-submit {
+    border-radius: 0px !important;
+}
+
+.tsfs-form-container.tsfs-radius-slight {
+    border-radius: 6px !important;
+}
+.tsfs-form-container.tsfs-radius-slight .tsfs-input,
+.tsfs-form-container.tsfs-radius-slight .tsfs-btn-submit {
+    border-radius: 4px !important;
+}
+
+.tsfs-form-container.tsfs-radius-rounded {
+    border-radius: 12px !important;
+}
+.tsfs-form-container.tsfs-radius-rounded .tsfs-input,
+.tsfs-form-container.tsfs-radius-rounded .tsfs-btn-submit {
+    border-radius: 8px !important;
+}
+
+.tsfs-form-container.tsfs-radius-pill {
+    border-radius: 24px !important;
+}
+.tsfs-form-container.tsfs-radius-pill .tsfs-input {
+    border-radius: 12px !important;
+}
+.tsfs-form-container.tsfs-radius-pill .tsfs-btn-submit {
+    border-radius: 30px !important;
+}
+
+/* --- Box Shadow Variations --- */
+.tsfs-form-container.tsfs-shadow-none {
+    box-shadow: none !important;
+}
+.tsfs-form-container.tsfs-shadow-subtle {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
+}
+.tsfs-form-container.tsfs-shadow-medium {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.06), 0 8px 10px -6px rgba(0, 0, 0, 0.03) !important;
+}
+.tsfs-form-container.tsfs-shadow-elevated {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15) !important;
+}
+.tsfs-form-container.tsfs-shadow-outline {
+    box-shadow: none !important;
+    border-width: 2px !important;
+}
+
+/* --- Button Alignment --- */
+.tsfs-form-actions.tsfs-btn-align-left {
+    text-align: left;
+}
+.tsfs-form-actions.tsfs-btn-align-center {
+    text-align: center;
+}
+.tsfs-form-actions.tsfs-btn-align-right {
+    text-align: right;
+}
+.tsfs-form-actions.tsfs-btn-align-full .tsfs-btn-submit {
+    width: 100%;
+    display: flex;
+}
+
+.tsfs-sublabel {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--tsfs-text-muted);
+    margin-bottom: 4px;
+}
+
+@keyframes tsfsCounterPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+.tsfs-secure-lock-svg {
+    width: 13px;
+    height: 13px;
+    fill: currentColor;
+}
+
+/* 4. Anti-Spam CAPTCHA Widget */
+.tsfs-captcha-box {
+    margin: 18px 0;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.tsfs-captcha-box .g-recaptcha,
+.tsfs-captcha-box .cf-turnstile {
+    transform-origin: 0 0;
+}
+
+/* 5. Multi-Step Form Wizard & Progress Stepper */
+.tsfs-steps-wrapper {
+    margin-bottom: 28px;
+    padding-bottom: 12px;
+}
+
+.tsfs-steps-progress-container {
+    width: 100%;
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 16px;
+    position: relative;
+}
+
+.tsfs-steps-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--tsfs-primary) 0%, var(--tsfs-border-focus) 100%);
+    border-radius: 999px;
+    transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tsfs-steps-indicators-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    gap: 8px;
+}
+
+.tsfs-step-indicator-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+    transition: all 0.25s ease;
+}
+
+.tsfs-step-indicator-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #64748b;
+    border: 2px solid #cbd5e1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    transition: all 0.25s ease;
+}
+
+.tsfs-step-indicator-dot .tsfs-step-check-icon {
+    display: none;
+    font-size: 0.85rem;
+}
+
+.tsfs-step-indicator-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.25s ease;
+}
+
+.tsfs-step-indicator-item.is-active .tsfs-step-indicator-dot {
+    background: var(--tsfs-primary);
+    color: #ffffff;
+    border-color: var(--tsfs-primary);
+    box-shadow: 0 0 0 4px var(--tsfs-primary-ring);
+}
+
+.tsfs-step-indicator-item.is-active .tsfs-step-indicator-title {
+    color: var(--tsfs-text-heading);
+    font-weight: 700;
+}
+
+.tsfs-step-indicator-item.is-completed .tsfs-step-indicator-dot {
+    background: #10b981;
+    color: #ffffff;
+    border-color: #10b981;
+}
+
+.tsfs-step-indicator-item.is-completed .tsfs-step-indicator-dot .tsfs-step-num-text {
+    display: none;
+}
+
+.tsfs-step-indicator-item.is-completed .tsfs-step-indicator-dot .tsfs-step-check-icon {
+    display: inline-block;
+}
+
+.tsfs-step-indicator-item.is-completed .tsfs-step-indicator-title {
+    color: #059669;
+}
+
+.tsfs-step-nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 18px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.tsfs-btn-step-prev {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #475569;
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: var(--tsfs-radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tsfs-btn-step-prev:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+    color: #1e293b;
+}
+
+.tsfs-btn-step-next {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 22px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #ffffff;
+    background: var(--tsfs-primary);
+    border: 1.5px solid var(--tsfs-primary);
+    border-radius: var(--tsfs-radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tsfs-btn-step-next:hover {
+    background: var(--tsfs-primary-hover);
+    border-color: var(--tsfs-primary-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+}
+
+.tsfs-page-break-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 20px 0;
+    color: #94a3b8;
+}
+
+.tsfs-page-break-line {
+    flex: 1;
+    height: 1px;
+    background: #e2e8f0;
+}
+
+.tsfs-page-break-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 4px 12px;
+    background: #f1f5f9;
+    color: #475569;
+    border-radius: 999px;
+    border: 1px solid #e2e8f0;
+}
+
+/* Responsive Overrides */
+@media (max-width: 600px) {
+    .tsfs-captcha-box .g-recaptcha {
+        transform: scale(0.88);
+    }
+
+    .tsfs-steps-indicators-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .tsfs-step-indicator-item {
+        width: 100%;
+    }
+}
+
+
+
+
+/* Per-form layout controls. Minimum heights preserve content and error messages. */
+.tsfs-form-container {
+    max-width: min(100%, var(--tsfs-form-max-width, 680px));
+    min-height: var(--tsfs-form-min-height, 0px);
+    padding: var(--tsfs-form-padding, 32px);
+}
+.tsfs-form-container .tsfs-form-fields-grid { gap: var(--tsfs-field-gap, 18px); }
+.tsfs-form-container .tsfs-width-50 { flex-basis: calc(50% - var(--tsfs-field-gap, 18px) / 2); width: calc(50% - var(--tsfs-field-gap, 18px) / 2); }
+.tsfs-form-container .tsfs-width-33 { flex-basis: calc(33.333% - var(--tsfs-field-gap, 18px) * 2 / 3); width: calc(33.333% - var(--tsfs-field-gap, 18px) * 2 / 3); }
+.tsfs-form-container input.tsfs-input:not([type="checkbox"]):not([type="radio"]),
+.tsfs-form-container select.tsfs-input { min-height: var(--tsfs-input-height, 44px); }
+.tsfs-form-container .tsfs-btn-submit {
+    width: var(--tsfs-button-width, auto);
+    max-width: 100%; min-height: var(--tsfs-button-height, 46px);
+    padding-left: var(--tsfs-button-padding, 30px); padding-right: var(--tsfs-button-padding, 30px);
+    white-space: normal; overflow-wrap: anywhere;
+}
+.tsfs-form-container .tsfs-btn-align-full .tsfs-btn-submit { width: 100%; }
+.tsfs-form-container .tsfs-consent-checkbox {
+    appearance: auto; -webkit-appearance: checkbox;
+    flex: 0 0 20px; width: 20px; height: 20px; min-width: 20px;
+    margin: 3px 0 0; cursor: pointer; accent-color: var(--tsfs-primary);
+}
+.tsfs-form-container .tsfs-consent-checkbox:focus-visible { outline: 2px solid var(--tsfs-primary); outline-offset: 3px; }
+.tsfs-form-container .tsfs-consent-text { min-width: 0; overflow-wrap: anywhere; line-height: 1.6; }
+@media (max-width: 600px) {
+    .tsfs-form-container { padding: min(var(--tsfs-form-padding, 32px), 20px); }
+    .tsfs-form-container .tsfs-width-50, .tsfs-form-container .tsfs-width-33 { flex-basis: 100%; width: 100%; }
+}
+
+/* Component styles take precedence over common theme button/link resets.
+   Change these through the per-form controls; variables remain configurable. */
+.tsfs-form-container .tsfs-form { font-size: var(--tsfs-text-size, 16px); }
+.tsfs-form-container .tsfs-field-label { font-size: var(--tsfs-label-size, 15px); }
+.tsfs-form-container .tsfs-form button.tsfs-btn-submit {
+    appearance: none !important;
+    display: inline-flex !important;
+    align-items: center; justify-content: center;
+    height: auto !important;
+    min-height: var(--tsfs-button-height, 46px) !important;
+    width: var(--tsfs-button-width, auto) !important;
+    max-width: 100% !important;
+    padding: var(--tsfs-button-vertical-padding, 12px) var(--tsfs-button-padding, 30px) !important;
+    background: var(--tsfs-button-bg, var(--tsfs-primary)) !important;
+    color: var(--tsfs-btn-color, #fff) !important;
+    border: 1px solid transparent !important;
+    border-radius: var(--tsfs-button-radius, 8px) !important;
+    font-family: inherit !important;
+    font-size: var(--tsfs-button-font-size, 16px) !important;
+    font-weight: 600 !important;
+    line-height: 1.4 !important;
+    text-decoration: none !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+}
+.tsfs-form-container .tsfs-form .tsfs-btn-align-full button.tsfs-btn-submit { width: 100% !important; }
+.tsfs-form-container .tsfs-form button.tsfs-btn-submit .tsfs-btn-text {
+    color: inherit !important; font: inherit !important; text-decoration: none !important;
+}
+.tsfs-form-container .tsfs-form button.tsfs-btn-submit:hover { background: var(--tsfs-button-hover, #4338ca) !important; }
+.tsfs-form-container .tsfs-form button.tsfs-btn-submit:focus-visible { outline: 3px solid var(--tsfs-primary); outline-offset: 3px; }
+.tsfs-form-container .tsfs-form button.tsfs-btn-submit:disabled { opacity: .65; cursor: wait; }
+.tsfs-form-container .tsfs-consent-control {
+    background: var(--tsfs-consent-bg, #f8fafc);
+    border: 1px solid var(--tsfs-consent-border, #e2e8f0);
+    border-radius: 8px; padding: var(--tsfs-consent-padding, 14px);
+}
+.tsfs-form-container label.tsfs-consent-label {
+    display: flex; align-items: flex-start; gap: 12px; cursor: pointer;
+    margin: 0; text-transform: none; letter-spacing: normal;
+    color: var(--tsfs-consent-color, #334155);
+    font-size: var(--tsfs-consent-size, 14px); line-height: 1.6;
+}
+.tsfs-form-container .tsfs-consent-text { white-space: pre-line; }
+.tsfs-form-container .tsfs-consent-checkbox {
+    flex-basis: var(--tsfs-checkbox-size, 20px);
+    width: var(--tsfs-checkbox-size, 20px); height: var(--tsfs-checkbox-size, 20px);
+    min-width: var(--tsfs-checkbox-size, 20px);
+}
+
+.tsfs-form-container .tsfs-input, .tsfs-form-container .tsfs-html-desc { font-size: var(--tsfs-text-size, 16px); }

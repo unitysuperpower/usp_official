@@ -1,0 +1,500 @@
+/* TechSolution Form Studio Pro: frontend styles for Pro fields. */
+/* ==========================================================================
+   Pro Fields & Security Widget Frontend Styles
+   ========================================================================== */
+
+/* 1. University Admission Block */
+.tsfs-pro-admission-panel {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--tsfs-radius-md);
+    padding: 20px;
+    margin-top: 6px;
+    width: 100%;
+}
+.tsfs-adm-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+.tsfs-adm-row:last-child {
+    margin-bottom: 0;
+}
+/* 2. Global Phone Number with Flags & Dynamic Limit Engine */
+.tsfs-intl-tel-control {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    align-items: flex-start;
+}
+.tsfs-dial-select-wrap {
+    flex: 0 0 100px;
+    max-width: 105px;
+    min-width: 95px;
+}
+.tsfs-dial-select {
+    width: 100%;
+    font-weight: 600;
+    font-size: 0.85rem;
+    background-color: var(--tsfs-bg-input);
+    border: 1.5px solid var(--tsfs-border-default);
+    border-radius: var(--tsfs-radius-sm);
+    padding: 10px 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.tsfs-dial-select:focus {
+    border-color: var(--tsfs-primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+.tsfs-tel-input-col {
+    flex: 1;
+    min-width: 0;
+}
+.tsfs-tel-input-box {
+    position: relative;
+    width: 100%;
+}
+.tsfs-tel-masked-input {
+    width: 100%;
+    min-width: 0;
+    font-family: inherit;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.5px;
+    padding-right: 36px;
+}
+.tsfs-tel-status-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+.tsfs-phone-helper-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+    color: var(--tsfs-text-muted);
+    margin-top: 5px;
+    padding: 0 2px;
+    line-height: 1.3;
+    gap: 4px;
+}
+.tsfs-phone-format-hint {
+    color: #64748b;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.tsfs-phone-format-hint strong {
+    color: #334155;
+    font-family: monospace;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+.tsfs-phone-digits-counter {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: #64748b;
+    padding: 2px 7px;
+    border-radius: 9999px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    font-size: 0.72rem;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.tsfs-phone-digits-counter.is-incomplete {
+    color: #d97706;
+    background: #fffbeb;
+    border-color: #fde68a;
+}
+.tsfs-phone-digits-counter.is-valid {
+    color: #059669;
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+}
+.tsfs-phone-digits-counter.is-max {
+    color: #047857;
+    background: #d1fae5;
+    border-color: #6ee7b7;
+    font-weight: 700;
+}
+.tsfs-phone-digits-counter.pulse-limit {
+    animation: tsfsCounterPulse 0.25s ease;
+    background: #fee2e2;
+    color: #dc2626;
+    border-color: #fca5a5;
+}
+/* 3. Payment Gateway & Card Panel with Auto Brand Detection */
+.tsfs-payment-card-panel {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--tsfs-radius-md);
+    padding: 22px;
+    margin-top: 6px;
+    width: 100%;
+}
+.tsfs-pay-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e2e8f0;
+}
+.tsfs-pay-amount-box {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+.tsfs-pay-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--tsfs-text-heading);
+}
+.tsfs-pay-amount {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--tsfs-primary);
+}
+.tsfs-pay-secure-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #059669;
+    background: #ecfdf5;
+    padding: 3px 9px;
+    border-radius: 9999px;
+    border: 1px solid #a7f3d0;
+}
+/* Accepted Cards Brand Pills */
+.tsfs-accepted-cards-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    padding: 8px 12px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--tsfs-radius-sm);
+}
+.tsfs-accepted-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.tsfs-card-badges-list {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.tsfs-brand-badge {
+    display: inline-flex;
+    align-items: center;
+    opacity: 0.75;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+    padding: 2px;
+}
+.tsfs-brand-badge.is-dimmed {
+    opacity: 0.25;
+    filter: grayscale(80%);
+}
+.tsfs-brand-badge.is-active {
+    opacity: 1;
+    transform: scale(1.08);
+    box-shadow: 0 0 0 2px var(--tsfs-primary), 0 2px 4px rgba(0,0,0,0.1);
+}
+.tsfs-brand-svg {
+    width: 32px;
+    height: 20px;
+    border-radius: 3px;
+    display: block;
+}
+.tsfs-pay-field-group {
+    margin-bottom: 12px;
+}
+.tsfs-card-number-wrapper {
+    position: relative;
+    width: 100%;
+}
+.tsfs-card-live-brand-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+.tsfs-card-number-input {
+    width: 100%;
+    padding-left: 48px !important;
+    padding-right: 84px !important;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 1px;
+    font-weight: 600;
+    font-size: 0.98rem;
+}
+.tsfs-card-brand-detected-pill {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: #e2e8f0;
+    color: #475569;
+    letter-spacing: 0.4px;
+    transition: all 0.2s ease;
+    pointer-events: none;
+}
+.tsfs-card-brand-detected-pill.is-visa {
+    background: #e0e7ff;
+    color: #1e40af;
+}
+.tsfs-card-brand-detected-pill.is-mastercard {
+    background: #fef3c7;
+    color: #b45309;
+}
+.tsfs-card-brand-detected-pill.is-amex {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+.tsfs-card-brand-detected-pill.is-discover {
+    background: #ffedd5;
+    color: #c2410c;
+}
+.tsfs-pay-split-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+.tsfs-card-exp-input {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.8px;
+    font-weight: 600;
+}
+.tsfs-cvc-input-wrapper {
+    position: relative;
+    width: 100%;
+}
+.tsfs-card-cvc-input {
+    width: 100%;
+    padding-right: 64px !important;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 1.5px;
+    font-weight: 600;
+}
+.tsfs-cvc-len-tag {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.7rem;
+    color: #94a3b8;
+    pointer-events: none;
+    font-weight: 500;
+}
+/* 6. Digital Signature Pad */
+.tsfs-signature-pad-wrap {
+    background: #ffffff;
+    border: 1.5px solid var(--tsfs-border-default);
+    border-radius: var(--tsfs-radius-md);
+    padding: 12px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.tsfs-field-wrap:focus-within .tsfs-signature-pad-wrap {
+    border-color: var(--tsfs-border-focus);
+    box-shadow: 0 0 0 3px var(--tsfs-primary-ring);
+}
+.tsfs-signature-canvas-box {
+    position: relative;
+    width: 100%;
+    background: #ffffff;
+    border-radius: var(--tsfs-radius-sm);
+    border: 1px dashed #cbd5e1;
+    overflow: hidden;
+}
+.tsfs-signature-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: crosshair;
+    touch-action: none;
+}
+.tsfs-signature-guide-line {
+    position: absolute;
+    bottom: 24px;
+    left: 20px;
+    right: 20px;
+    border-bottom: 1px dashed #e2e8f0;
+    pointer-events: none;
+    text-align: right;
+}
+.tsfs-signature-guide-line span {
+    font-size: 0.68rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.tsfs-signature-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid #f1f5f9;
+}
+.tsfs-sig-clear-btn {
+    display: inline-flex;
+    align-items: center;
+    background: transparent;
+    border: 1px solid #e2e8f0;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.tsfs-sig-clear-btn:hover {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    color: #b91c1c;
+}
+.tsfs-sig-status-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 12px;
+}
+.tsfs-sig-status-badge.tsfs-sig-empty {
+    background: #f1f5f9;
+    color: #64748b;
+}
+.tsfs-sig-status-badge.tsfs-sig-signed {
+    background: #ecfdf5;
+    color: #059669;
+    font-weight: 700;
+}
+/* 7. Mathematical Formula & Calculation Field */
+.tsfs-calculation-wrap {
+    width: 100%;
+}
+.tsfs-calculation-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background: #f8fafc;
+    border: 1.5px solid var(--tsfs-border-default);
+    border-radius: var(--tsfs-radius-md);
+    padding: 12px 18px;
+    box-shadow: var(--tsfs-shadow-input);
+    transition: all 0.2s ease;
+}
+.tsfs-calc-sigma-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--tsfs-primary-light);
+    color: var(--tsfs-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+.tsfs-calc-display-val {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--tsfs-text-heading);
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 600px) {
+    .tsfs-adm-row {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+
+    .tsfs-intl-tel-control {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .tsfs-dial-select-wrap,
+    .tsfs-dial-select {
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+}
+
+/* Admission application grid */
+.tsfs-pro-admission-panel .tsfs-adm-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+.tsfs-pro-admission-panel .tsfs-sublabel,
+.tsfs-payment-card-panel .tsfs-sublabel {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 4px;
+}
+.tsfs-pay-notice {
+    margin: 0 0 12px;
+    font-size: 12px;
+    color: #64748b;
+}
+.tsfs-intl-tel-control {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+.tsfs-tel-input-col {
+    flex: 1;
+    min-width: 0;
+}
+.tsfs-tel-input-box {
+    position: relative;
+    width: 100%;
+}
+.tsfs-phone-helper-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: #64748b;
+    margin-top: 5px;
+    gap: 4px;
+}
+@media (max-width: 600px) {
+    .tsfs-pro-admission-panel .tsfs-adm-row {
+        grid-template-columns: 1fr;
+    }
+}
