@@ -11,6 +11,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class USP_Form {
+    /** Bounded pixel values, including imported forms. Height is a minimum to avoid clipping. */
+    public static function layout_settings( $settings ) {
+        $result = array();
+        foreach ( array('form_max_width'=>array(680,280,1600),'form_min_height'=>array(0,0,1600),'form_padding'=>array(32,0,80),'field_gap'=>array(18,0,64),'input_height'=>array(44,32,100),'button_width'=>array(0,0,1000),'button_height'=>array(46,32,120),'button_padding'=>array(30,0,80)) as $key => $rule ) {
+            $value = $settings[$key] ?? $rule[0];
+            $result[$key] = is_numeric( $value ) ? max( $rule[1], min( $rule[2], (int) $value ) ) : $rule[0];
+        }
+        return $result;
+    }
+
+    public static function consent_accepted( $value ) {
+        return '1' === $value;
+    }
+
 
     /** Normalize a CNIC's format only; this does not verify identity with NADRA. */
     public static function normalize_cnic( $value ) {
@@ -810,6 +824,9 @@ class USP_Form {
         } elseif ( 'transparent' === strtolower( $container_bg ) ) {
             $css_vars[] = '--usp-bg-card: transparent;';
         }
+        foreach ( self::layout_settings( $settings ) as $key => $value ) {
+            $css_vars[] = '--usp-' . str_replace( '_', '-', $key ) . ': ' . ( 'button_width' === $key && 0 === $value ? 'auto' : $value . 'px' ) . ';';
+        }
         $inline_style = ! empty( $css_vars ) ? 'style="' . esc_attr( implode( ' ', $css_vars ) ) . '"' : '';
 
         // Multi-Step Wizard Partitioning
@@ -1395,7 +1412,7 @@ class USP_Form {
                                 <span class="usp-accepted-title"><?php esc_html_e( 'Accepted Cards:', 'usp-form-builder' ); ?></span>
                                 <div class="usp-card-badges-list">
                                     <span class="usp-brand-badge usp-badge-visa" data-brand="visa" title="Visa">
-                                        <svg viewBox="0 0 36 22" class="usp-brand-svg"><rect width="36" height="22" rx="3" fill="#1434CB"/><path d="M14.5 15.5l2.4-9h2.5l-2.4 9h-2.5zm8.9-8.8c-.5-.2-1.3-.4-2.3-.4-2.5 0-4.3 1.3-4.3 3.3 0 1.4 1.3 2.2 2.2 2.7.9.5 1.3.8 1.3 1.2 0 .6-.8.9-1.5.9-.9 0-1.5-.2-2.3-.5l-.3-.1-.3 2c.6.3 1.7.5 2.8.5 2.7 0 4.5-1.3 4.5-3.4 0-1.1-.7-2-2.3-2.7-.9-.5-1.5-.8-1.5-1.3 0-.4.5-.9 1.5-.9.8 0 1.4.2 1.9.4l.2.1.3-1.8zm6.6 5.8l1-4.8-1.5 4.8h.5zm2.3-6h-1.9c-.6 0-1.1.2-1.3.7l-3.8 8.3h2.6l.5-1.3h3.2l.3 1.3h2.3l-1.9-9zm-15.6 0l-2.4 6-.3-1.2c-.5-1.5-2-3.1-3.7-3.9l2.4 7.9h2.6l3.9-8.8h-2.5z" fill="#fff"/></svg>
+                                        <svg viewBox="0 0 36 22" class="usp-brand-svg"><rect width="36" height="22" rx="3" fill="#1434CB"/><path d="M14.5 15.5l2.4-9h2.5l-2.4 9h-2.5zm8.9-8.8c-.5-.2-1.3-.4-2.3-.4-2.5 0-4.3 1.3-4.3 3.3 0 1.4 1.3 2.2 2.2 2.7.9.5 1.3.8 1.3 1.2 0 .6-.8.9-1.5.9-.9 0-1.5-.2-2.3-.5l-.3-.1-.3 2c.6.3 1.7.5 2.8.5 2.7 0 4.5-1.3 4.5-3.4 0-1.1-.7-2-2.3-2.7-.9-.5-1.5-.8-1.5-1.3 0-.4.5-.9 1.5-.9.8 0 1.4.2 1.9.4l.2.1.3-1.8zm6.6 5.8l1-4.8-1.5 4.8h.5zm2.3-6h-1.9c-.6 0-1.1.3-1.3.7l-3.8 8.3h2.6l.5-1.3h3.2l.3 1.3h2.3l-1.9-9zm-15.6 0l-2.4 6-.3-1.2c-.5-1.5-2-3.1-3.7-3.9l2.4 7.9h2.6l3.9-8.8h-2.5z" fill="#fff"/></svg>
                                     </span>
                                     <span class="usp-brand-badge usp-badge-mastercard" data-brand="mastercard" title="Mastercard">
                                         <svg viewBox="0 0 36 22" class="usp-brand-svg"><rect width="36" height="22" rx="3" fill="#252525"/><circle cx="14" cy="11" r="6.5" fill="#EB001B"/><circle cx="22" cy="11" r="6.5" fill="#F79E1B"/><path d="M18 6.5a6.47 6.47 0 00-2.4 4.5 6.47 6.47 0 002.4 4.5 6.47 6.47 0 002.4-4.5A6.47 6.47 0 0018 6.5z" fill="#FF5F00"/></svg>

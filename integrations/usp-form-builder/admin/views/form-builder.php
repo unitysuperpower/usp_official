@@ -626,6 +626,42 @@ $shortcode       = $is_edit ? '[usp_form id="' . $current_form_id . '"]' : '';
 
                 <hr style="margin: 20px 0; border: 0; border-top: 1px solid var(--usp-adm-slate-200);">
 
+                <h4>Form size &amp; spacing</h4>
+                <p class="description">Sizes are in pixels. The form stays within the screen width and grows to fit its content.</p>
+                <?php $layout_values = USP_Form::layout_settings( $form['settings'] ?? array() ); ?>
+                <div class="usp-settings-form-group">
+                    <label for="usp-layout-form_max_width">Form maximum width</label>
+                    <input type="number" id="usp-layout-form_max_width" data-layout-setting="form_max_width" min="280" max="1600" step="1" value="<?php echo esc_attr( $layout_values['form_max_width'] ); ?>">
+                </div>
+                <div class="usp-settings-form-group">
+                    <label for="usp-layout-form_min_height">Form minimum height (0 = automatic)</label>
+                    <input type="number" id="usp-layout-form_min_height" data-layout-setting="form_min_height" min="0" max="1600" step="1" value="<?php echo esc_attr( $layout_values['form_min_height'] ); ?>">
+                </div>
+                <div class="usp-settings-form-group">
+                    <label for="usp-layout-form_padding">Form inner padding</label>
+                    <input type="number" id="usp-layout-form_padding" data-layout-setting="form_padding" min="0" max="80" step="1" value="<?php echo esc_attr( $layout_values['form_padding'] ); ?>">
+                </div>
+                <div class="usp-settings-form-group">
+                    <label for="usp-layout-field_gap">Space between fields</label>
+                    <input type="number" id="usp-layout-field_gap" data-layout-setting="field_gap" min="0" max="64" step="1" value="<?php echo esc_attr( $layout_values['field_gap'] ); ?>">
+                </div>
+                <div class="usp-settings-form-group">
+                    <label for="usp-layout-input_height">Input minimum height</label>
+                    <input type="number" id="usp-layout-input_height" data-layout-setting="input_height" min="32" max="100" step="1" value="<?php echo esc_attr( $layout_values['input_height'] ); ?>">
+                </div>
+                <div class="usp-settings-form-group">
+                    <label for="usp-layout-button_width">Button width (0 = automatic)</label>
+                    <input type="number" id="usp-layout-button_width" data-layout-setting="button_width" min="0" max="1000" step="1" value="<?php echo esc_attr( $layout_values['button_width'] ); ?>">
+                </div>
+                <div class="usp-settings-form-group">
+                    <label for="usp-layout-button_height">Button minimum height</label>
+                    <input type="number" id="usp-layout-button_height" data-layout-setting="button_height" min="32" max="120" step="1" value="<?php echo esc_attr( $layout_values['button_height'] ); ?>">
+                </div>
+                <div class="usp-settings-form-group">
+                    <label for="usp-layout-button_padding">Button horizontal padding</label>
+                    <input type="number" id="usp-layout-button_padding" data-layout-setting="button_padding" min="0" max="80" step="1" value="<?php echo esc_attr( $layout_values['button_padding'] ); ?>">
+                </div>
+
                 <h4 style="margin:0 0 12px 0; font-size:14px;"><?php esc_html_e( 'Form Shape & Corners', 'usp-form-builder' ); ?></h4>
 
                 <div class="usp-settings-form-group">

@@ -180,7 +180,7 @@ class USP_AJAX {
             $sanitized_fields[] = $field_item;
         }
 
-        $sanitized_settings = array(
+        $sanitized_settings = USP_Form::layout_settings( $settings ) + array(
             'submit_button_text'    => isset( $settings['submit_button_text'] ) ? sanitize_text_field( $settings['submit_button_text'] ) : __( 'Submit', 'usp-form-builder' ),
             'success_message'       => isset( $settings['success_message'] ) ? sanitize_textarea_field( $settings['success_message'] ) : __( 'Thank you! Your submission has been received.', 'usp-form-builder' ),
             'redirect_url'          => isset( $settings['redirect_url'] ) ? esc_url_raw( $settings['redirect_url'] ) : '',
@@ -1483,6 +1483,16 @@ class USP_AJAX {
                     $errors[ $name ] = __( 'Enter CNIC / Form-B as 12345-1234567-1 (13 digits).', 'usp-form-builder' );
                 } else {
                     $submitted_entry[] = array( 'name' => $name, 'label' => $label, 'type' => $type, 'value' => $cnic );
+                }
+                continue;
+            }
+
+            if ( 'consent' === $type ) {
+                $accepted = USP_Form::consent_accepted( $raw_val );
+                if ( is_array( $raw_val ) || ( $required && ! $accepted ) || ( ! $is_empty && ! $accepted ) ) {
+                    $errors[ $name ] = __( 'Please check the consent box to continue.', 'usp-form-builder' );
+                } else {
+                    $submitted_entry[] = array( 'name' => $name, 'label' => $label, 'type' => $type, 'value' => $accepted ? __( 'Agreed & Accepted', 'usp-form-builder' ) : '' );
                 }
                 continue;
             }

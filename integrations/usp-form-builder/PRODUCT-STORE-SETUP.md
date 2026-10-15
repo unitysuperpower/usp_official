@@ -8,13 +8,13 @@ Run `python3 scripts/build-plugin.py` from the Laravel repository. PHP, Python, 
 
 Output under `dist/plugins/`:
 
-- `usp-form-builder-1.1.2-free.zip`: Free implementation, standard fields, shared builder UI, security and license/upgrade client. Premium field renderers and submission handlers, address/country datasets, and Pro frontend engines are excluded. The shared admin UI can still show upgrade prompts and recognize existing Pro field types.
-- `usp-form-builder-1.1.2-pro.zip`: Full plugin with Pro implementations and server-verified licensing. Keep this package private.
+- `usp-form-builder-1.1.3-free.zip`: Free implementation, standard fields, shared builder UI, security and license/upgrade client. Premium field renderers and submission handlers, address/country datasets, and Pro frontend engines are excluded. The shared admin UI can still show upgrade prompts and recognize existing Pro field types.
+- `usp-form-builder-1.1.3-pro.zip`: Full plugin with Pro implementations and server-verified licensing. Keep this package private.
 - `manifest.json`: SHA-256 checksums and edition/version metadata.
 
 Both ZIPs contain `usp-form-builder/usp-form-builder.php`. The same folder is intentional: the Pro upgrade replaces Free in place, preserves the WordPress database and settings, and avoids duplicate plugin classes. Do not install them under different folder names.
 
-In `/admin/store/products`, upload version `1.1.2` with the matching **Free** or **Pro** edition. The uploader checks folder structure, PHP version header, edition header, symbolic links, unsafe paths, duplicate entries, and archive size. It now reports the specific reason for rejection. The original `usp-form-builder-1.0.0.zip` is internally version `1.0.7` and contains premium implementations; do not publish it as the new Free distribution.
+In `/admin/store/products`, upload version `1.1.3` with the matching **Free** or **Pro** edition. The uploader checks folder structure, PHP version header, edition header, symbolic links, unsafe paths, duplicate entries, and archive size. It now reports the specific reason for rejection. The original `usp-form-builder-1.0.0.zip` is internally version `1.0.7` and contains premium implementations; do not publish it as the new Free distribution.
 
 ## Customer flow
 
@@ -56,3 +56,14 @@ The Standard Fields palette now includes Heading, Paragraph, Bulleted List, Numb
 CNIC accepts 13 ASCII digits or the `12345-1234567-1` format and stores the formatted value. Browser formatting assists entry; server validation also rejects malformed or array input. Optional blank CNIC fields remain optional. The admission block uses the same normalization. This is format validation, not identity verification.
 
 Both editions include these content blocks and the standalone CNIC field. Version 1.1.2 is published in the live store; local filesystem permissions prevented replacing the installed WordPress copy. Update using WordPress's plugin installer. Website database backup: `backups/content-1.1.2-before.sql`; no changes to ERP, pricing, orders or license records.
+
+
+### Version 1.1.3: consent and layout controls
+
+Fixed the Pro frontend validator treating required consent as a missing text input even when the checkbox was checked. The server accepts only the checkbox value `1`; malformed or array values are rejected. Optional consent remains optional.
+
+In **Theme & Style → Form size & spacing**, configure maximum form width, minimum form height, padding, field spacing, input minimum height, button width (0 = automatic), button minimum height, and horizontal button padding. Existing alignment controls include full-width buttons. Values are bounded on save and render; heights are minimums to prevent clipping. Narrow screens stack columns and cap padding. The canvas and simulator reflect dimensions; the simulator also reflects field spacing and input height. Heading, paragraph, list and CNIC fields from 1.1.2 remain available.
+
+Verification: both generated packages passed rendering, edition separation, CNIC, consent-value and layout-bound checks. The actual production JavaScript validator passed checked, unchecked, optional and disabled consent cases. Chrome fixtures using production PHP-rendered forms, CSS and JavaScript passed at 1200px and 500px viewport widths with mocked AJAX: required unchecked consent blocked, checked consent reached the submission handler with `privacy=1`, CNIC was normalized, a 240×60px button rendered, and no horizontal overflow occurred. These fixtures do not submit to a customer's database.
+
+Install the 1.1.3 Pro ZIP through WordPress or use **Install latest Pro release** with an active license. Uploading the same plugin replaces its files; keep a backup first. Publishing a store release does not automatically update customer installations.

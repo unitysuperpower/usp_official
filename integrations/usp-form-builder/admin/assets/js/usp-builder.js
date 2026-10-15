@@ -8,6 +8,12 @@
 (function($) {
     'use strict';
 
+    function layoutNumber(key, fallback, min, max) {
+        var raw = $('#usp-layout-' + key).val();
+        var value = raw === '' || raw == null ? fallback : Number(raw);
+        return Number.isFinite(value) ? Math.max(min, Math.min(max, Math.round(value))) : fallback;
+    }
+
     function contentPreview(field) {
         var escape = function(value) { return $('<div>').text(value || '').html(); };
         var tag = ['h2','h3','h4','h5','h6'].indexOf(field.tag) >= 0 ? field.tag : 'h3';
@@ -875,6 +881,7 @@
             });
 
             $('.usp-inspector-sidebar').on('input change', '#usp-panel-form-settings input, #usp-panel-form-settings textarea, #usp-panel-form-settings select, #usp-panel-theme-style input, #usp-panel-theme-style textarea, #usp-panel-theme-style select', function() {
+                if ($(this).is('[data-layout-setting]')) self.applyThemeLive();
                 self.scheduleHistorySnapshot('Edit form settings or style');
             });
 
@@ -2010,6 +2017,10 @@
             var $canvas = $('#usp-canvas-container');
             if (!$canvas.length) return;
 
+            var sizes = this.collectSettings();
+            $canvas.css({ 'max-width': sizes.form_max_width + 'px', width:'100%', 'min-height':sizes.form_min_height + 'px', padding:sizes.form_padding + 'px' });
+            $('#usp-canvas-submit-preview').css({width:align === 'full' ? '100%' : (sizes.button_width ? sizes.button_width + 'px' : 'auto'), 'max-width':'100%', 'min-height':sizes.button_height + 'px', 'padding-left':sizes.button_padding + 'px', 'padding-right':sizes.button_padding + 'px'});
+
             // 1. Remove theme preset classes and add the current one
             $canvas.removeClass('usp-theme-minimal usp-theme-dark usp-theme-emerald usp-theme-sunset usp-theme-violet');
             if (preset !== 'default') {
@@ -2089,6 +2100,15 @@
                 send_user_auto_reply: $('#usp-setting-user-autoreply').is(':checked'),
                 auto_reply_subject: $('#usp-setting-autoreply-subj').val() || '',
                 auto_reply_message: $('#usp-setting-autoreply-msg').val() || '',
+
+                form_max_width: layoutNumber('form_max_width',680,280,1600),
+                form_min_height: layoutNumber('form_min_height',0,0,1600),
+                form_padding: layoutNumber('form_padding',32,0,80),
+                field_gap: layoutNumber('field_gap',18,0,64),
+                input_height: layoutNumber('input_height',44,32,100),
+                button_width: layoutNumber('button_width',0,0,1000),
+                button_height: layoutNumber('button_height',46,32,120),
+                button_padding: layoutNumber('button_padding',30,0,80),
 
                 // Theme & Styling Options
                 theme_preset: $('#usp-theme-preset-val').val() || 'default',
@@ -2249,6 +2269,7 @@
             var btnRadius = radiusMap[radius] || '8px';
 
             var html = '';
+            var sizes = this.collectSettings();
             var previewLabels = (window.uspBuilderData || {}).i18n || {};
             html += '<div class="usp-preview-notice"><div><span class="usp-preview-notice-title">' + $('<div>').text(previewLabels.preview_title || 'Form preview').html() + '</span>';
             html += '<p>' + $('<div>').text(previewLabels.preview_description || 'Test your form before publishing. Preview submissions are not saved.').html() + '</p></div>';
@@ -2259,10 +2280,10 @@
             html += '  <h2 style="font-size:22px; font-weight:800; color:#0f172a; margin:0 0 28px 0; line-height:1.3;">' + $('<div>').text(formTitle).html() + '</h2>';
 
             html += '  <form id="usp-live-simulation-form" onsubmit="event.preventDefault(); USPModal.toast(\'Form simulation validated successfully!\', \'success\');">';
-            html += '    <div style="display:flex; flex-wrap:wrap; gap:24px 20px;">';
+            html += '    <div style="display:flex; flex-wrap:wrap; gap:' + sizes.field_gap + 'px;">';
 
             this.fields.forEach(function(f) {
-                var widthPct = f.width === '50' ? 'calc(50% - 10px)' : (f.width === '33' ? 'calc(33.333% - 14px)' : '100%');
+                var widthPct = f.width === '50' ? 'calc(50% - ' + (sizes.field_gap / 2) + 'px)' : (f.width === '33' ? 'calc(33.333% - ' + (sizes.field_gap * 2 / 3) + 'px)' : '100%');
 
                 if (f.type === 'html') {
                     html += '<div style="width:100%">' + contentPreview(f) + '</div>';
@@ -2389,6 +2410,10 @@
             html += '</div>';
 
             $('#usp-live-preview-viewport').html(html);
+            var $preview = $('#usp-live-preview-viewport');
+            $preview.find('.usp-preview-form-box').css({width:'100%', 'max-width':sizes.form_max_width + 'px', 'min-height':sizes.form_min_height + 'px', padding:sizes.form_padding + 'px', margin:'0 auto', 'box-sizing':'border-box'});
+            $preview.find('input:not([type=checkbox]):not([type=radio]):not([type=hidden]), select').css('min-height',sizes.input_height + 'px');
+            $preview.find('button[type=submit]').css({width:align === 'full' ? '100%' : (sizes.button_width ? sizes.button_width + 'px' : 'auto'), 'max-width':'100%', 'min-height':sizes.button_height + 'px', 'padding-left':sizes.button_padding + 'px', 'padding-right':sizes.button_padding + 'px', 'white-space':'normal'});
             if (window.USPCountry) window.USPCountry.init(document.getElementById('usp-live-preview-viewport'));
             if (window.USPAddress) window.USPAddress.init(document.getElementById('usp-live-preview-viewport'));
 

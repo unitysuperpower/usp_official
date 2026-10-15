@@ -5,7 +5,7 @@
  */
 
 define( 'USP_FORM_BUILDER_EDITION', getenv('USP_TEST_EDITION') ?: 'pro' );
-define( 'USP_FORM_BUILDER_VERSION', '1.1.2' );
+define( 'USP_FORM_BUILDER_VERSION', '1.1.3' );
 define( 'DAY_IN_SECONDS', 86400 );
 define( 'HOUR_IN_SECONDS', 3600 );
 define( 'ABSPATH', __DIR__ . '/' );

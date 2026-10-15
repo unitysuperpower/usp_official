@@ -512,6 +512,16 @@
                     return;
                 }
 
+                // Consent is a checkbox, not a text input. Checked consent must not
+                // fall through to the generic .usp-input required check.
+                if ($wrap.hasClass('usp-field-consent')) {
+                    if (isRequired && !$wrap.find('input.usp-consent-checkbox').is(':checked')) {
+                        markFieldError($wrap, 'Please check the consent box to continue.');
+                        hasErrors = true;
+                    }
+                    return;
+                }
+
                 // Required check
                 if (isRequired) {
                     if ($wrap.hasClass('usp-field-radio')) {

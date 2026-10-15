@@ -1258,3 +1258,33 @@
 
 
 
+
+/* Per-form layout controls. Minimum heights preserve content and error messages. */
+.usp-form-container {
+    max-width: min(100%, var(--usp-form-max-width, 680px));
+    min-height: var(--usp-form-min-height, 0px);
+    padding: var(--usp-form-padding, 32px);
+}
+.usp-form-container .usp-form-fields-grid { gap: var(--usp-field-gap, 18px); }
+.usp-form-container .usp-width-50 { flex-basis: calc(50% - var(--usp-field-gap, 18px) / 2); width: calc(50% - var(--usp-field-gap, 18px) / 2); }
+.usp-form-container .usp-width-33 { flex-basis: calc(33.333% - var(--usp-field-gap, 18px) * 2 / 3); width: calc(33.333% - var(--usp-field-gap, 18px) * 2 / 3); }
+.usp-form-container input.usp-input:not([type="checkbox"]):not([type="radio"]),
+.usp-form-container select.usp-input { min-height: var(--usp-input-height, 44px); }
+.usp-form-container .usp-btn-submit {
+    width: var(--usp-button-width, auto);
+    max-width: 100%; min-height: var(--usp-button-height, 46px);
+    padding-left: var(--usp-button-padding, 30px); padding-right: var(--usp-button-padding, 30px);
+    white-space: normal; overflow-wrap: anywhere;
+}
+.usp-form-container .usp-btn-align-full .usp-btn-submit { width: 100%; }
+.usp-form-container .usp-consent-checkbox {
+    appearance: auto; -webkit-appearance: checkbox;
+    flex: 0 0 20px; width: 20px; height: 20px; min-width: 20px;
+    margin: 3px 0 0; cursor: pointer; accent-color: var(--usp-primary);
+}
+.usp-form-container .usp-consent-checkbox:focus-visible { outline: 2px solid var(--usp-primary); outline-offset: 3px; }
+.usp-form-container .usp-consent-text { min-width: 0; overflow-wrap: anywhere; line-height: 1.6; }
+@media (max-width: 600px) {
+    .usp-form-container { padding: min(var(--usp-form-padding, 32px), 20px); }
+    .usp-form-container .usp-width-50, .usp-form-container .usp-width-33 { flex-basis: 100%; width: 100%; }
+}
