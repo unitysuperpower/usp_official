@@ -38,5 +38,6 @@ class Education
     {
         self::ensure($enrollment->status === 'accepted', 'This enrollment is no longer awaiting payment.');
         $enrollment->update(['status' => 'active', 'enrolled_at' => now()]);
+        SiteNotifications::enrollmentConfirmed($enrollment);
     }
 }

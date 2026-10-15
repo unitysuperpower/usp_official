@@ -11,4 +11,6 @@ class DigitalProduct extends Model
     protected $hidden = ['image_path'];
     public function plans() { return $this->hasMany(ProductPlan::class); }
     public function releases() { return $this->hasMany(ProductRelease::class); }
+    public function orders() { return $this->hasMany(ProductOrder::class); }
+    public function licenses() { return $this->hasMany(ProductLicense::class); }
 }

@@ -86,6 +86,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         'contact-messages' => 'message',
     ]);
     Route::post('contact-messages/{message}/reply', [ContactMessageController::class, 'reply'])->name('contact-messages.reply');
+    Route::get('settings/email', [App\Http\Controllers\Admin\MailSettingsController::class, 'show'])->name('settings.email');
+    Route::put('settings/email', [App\Http\Controllers\Admin\MailSettingsController::class, 'update'])->middleware('throttle:10,1')->name('settings.email.update');
+    Route::post('settings/email/test', [App\Http\Controllers\Admin\MailSettingsController::class, 'test'])->middleware('throttle:5,1')->name('settings.email.test');
 
     // Live Chat
     Route::get('chat', [App\Http\Controllers\Admin\ChatController::class, 'index'])->name('chat.index');

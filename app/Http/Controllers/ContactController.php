@@ -38,7 +38,8 @@ class ContactController extends Controller
 
         $validated['user_id'] = $request->user()?->id;
 
-        ServiceRequest::create($validated);
+        $serviceRequest = ServiceRequest::create($validated);
+        \App\Support\SiteNotifications::serviceRequestReceived($serviceRequest);
 
         return back()->with('success', 'Your request has been submitted successfully. We will contact you soon.');
     }
@@ -54,6 +55,7 @@ class ContactController extends Controller
         ]);
 
         $contactMessage = ContactMessage::create($validated);
+        \App\Support\SiteNotifications::contactReceived($contactMessage);
 
         // Broadcast the new contact message to admins
         broadcast(new NewContactMessageEvent($contactMessage));

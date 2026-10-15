@@ -221,7 +221,7 @@ export function ModalErrors() {
         </div>
     ) : null;
 }
-export function DeleteAction({ action, name, disabled = false }) {
+export function DeleteAction({ action, name, disabled = false, reason, message, label: buttonLabel = "Delete" }) {
     const [open, setOpen] = useState(false);
     return (
         <>
@@ -231,13 +231,13 @@ export function DeleteAction({ action, name, disabled = false }) {
                 disabled={disabled}
                 title={
                     disabled
-                        ? "Move the items in this category before deleting it"
+                        ? reason || "Move the items in this category before deleting it"
                         : undefined
                 }
                 onClick={() => setOpen(true)}
                 aria-label={"Delete " + name}
             >
-                Delete
+                {buttonLabel}
             </button>
             <Modal
                 open={open}
@@ -245,8 +245,8 @@ export function DeleteAction({ action, name, disabled = false }) {
                 title={"Delete " + name + "?"}
             >
                 <p>
-                    This permanently deletes this item. This action cannot be
-                    undone.
+                    {message ||
+                        "This permanently deletes this item. This action cannot be undone."}
                 </p>
                 <Form
                     action={action}

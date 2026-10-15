@@ -96,10 +96,11 @@ class StoreController extends Controller
         try {
             $orders->locked($order, function ($fresh) use ($orders, $data, $path) {
                 $orders->payable($fresh);
-                $fresh->payments()->create([
+                $payment = $fresh->payments()->create([
                     'method' => $data['method'], 'transaction_reference' => $data['transaction_reference'],
                     'proof_path' => $path, 'reference' => 'M'.strtoupper(bin2hex(random_bytes(12))),
                 ]);
+                \App\Support\SiteNotifications::paymentReceived($fresh, $payment);
             });
         } catch (\Throwable $e) { Storage::disk('local')->delete($path); throw $e; }
         return back()->with('success', 'Payment submitted. Your license will appear after verification.');

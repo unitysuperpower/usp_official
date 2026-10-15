@@ -19,6 +19,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // SMTP settings saved in Admin → Settings → Email override the .env mail settings.
+        \App\Support\SiteMail::apply();
+
         \App\Models\ChatMessage::created(function ($message) {
             if (app(\App\Services\ChatPushService::class)->configured()) {
                 \App\Jobs\SendChatPush::dispatch($message->id)->afterCommit();

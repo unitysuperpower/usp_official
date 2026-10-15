@@ -24,10 +24,55 @@ class AdminStoreController extends Controller
     {
         $search = mb_substr((string) $request->query('search'), 0, 100);
         return ReactPage::render('admin.store.products', [
-            'products' => DigitalProduct::withCount('plans','releases')->when($search, fn ($q) => $q->where('name','like','%'.$search.'%'))->latest()->paginate(20)->withQueryString(),
+            'products' => DigitalProduct::withCount('plans','releases','orders')->when($search, fn ($q) => $q->where('name','like','%'.$search.'%'))->latest()->paginate(20)->withQueryString(),
             'stats' => ['products' => DigitalProduct::count(), 'activeLicenses' => ProductLicense::where('status','active')->where('expires_at','>',now())->count(), 'pendingPayments' => ProductPayment::whereIn('status',['pending','review_required'])->count(), 'paidOrders' => ProductOrder::where('status','paid')->count()],
             'rate' => StoreSetting::find(1)?->usd_pkr_rate,
         ]);
+    }
+
+    public function show(DigitalProduct $product)
+    {
+        $product->load(['plans' => fn ($q) => $q->orderBy('price_minor'), 'releases' => fn ($q) => $q->latest('id')])->loadCount('orders', 'licenses');
+        return ReactPage::render('admin.store.product', [
+            'product' => $product,
+            'stats' => [
+                'paidOrders' => $product->orders()->where('status', 'paid')->count(),
+                'pendingOrders' => $product->orders()->where('status', 'pending')->count(),
+                'activeLicenses' => $product->licenses()->where('status', 'active')->where('expires_at', '>', now())->count(),
+                'revenuePkr' => (int) $product->orders()->where('status', 'paid')->sum('amount_minor'),
+            ],
+            'orders' => $product->orders()->with('user')->latest()->take(10)->get(),
+        ]);
+    }
+
+    /** Products with orders keep their sales and license history: unpublish them instead. */
+    public function destroy(DigitalProduct $product)
+    {
+        Education::ensure(! $product->orders()->exists() && ! $product->licenses()->exists(), 'This product has orders or licenses, so it cannot be deleted. Unpublish it instead to hide it from the store.', 'product');
+        $paths = $product->releases()->pluck('package_path')->all();
+        DB::transaction(function () use ($product) {
+            $product->releases()->delete();
+            $product->plans()->delete();
+            $product->delete();
+        });
+        \Illuminate\Support\Facades\Storage::disk('local')->delete($paths);
+        return redirect('/admin/store/products')->with('success', 'Product "'.$product->name.'" deleted.');
+    }
+
+    public function destroyPlan(DigitalProduct $product, ProductPlan $plan)
+    {
+        abort_if($plan->digital_product_id !== $product->id, 404);
+        Education::ensure(! ProductOrder::where('product_plan_id', $plan->id)->exists(), 'Customers have ordered this plan, so it cannot be deleted. Edit it and turn off "Available for purchase" instead.', 'plan');
+        $plan->delete();
+        return back()->with('success', 'Plan deleted.');
+    }
+
+    public function destroyRelease(ProductRelease $release)
+    {
+        $path = $release->package_path;
+        $release->delete();
+        \Illuminate\Support\Facades\Storage::disk('local')->delete($path);
+        return back()->with('success', 'Release '.$release->version.' deleted.');
     }
 
     public function edit(?DigitalProduct $product = null)
@@ -112,7 +157,10 @@ class AdminStoreController extends Controller
             Education::ensure($payment->method !== 'jazzcash_online' || $data['status'] !== 'rejected', 'For JazzCash, reconcile in the merchant portal and mark resolved if no payment was received.');
             $review=$data+['reviewed_by'=>$request->user()->id,'reviewed_at'=>now()];
             if ($data['status']==='approved') { $orders->approve($order,$payment,$review); }
-            else { $payment->update($review); }
+            else {
+                $payment->update($review);
+                if ($data['status']==='rejected') { \App\Support\SiteNotifications::paymentRejected($order,$payment->fresh()); }
+            }
         });
         return back()->with('success','Payment reviewed. Approved orders receive their license automatically.');
     }

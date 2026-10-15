@@ -38,6 +38,7 @@ const groups = [
             ["chat", "Conversations"],
         ],
     ],
+    ["Settings", [["settings/email", "Email delivery"]]],
 ];
 const paths = {
     "store/products": "M3 5h18v16H3z M3 10h18 M8 5V3h8v2",
@@ -58,6 +59,7 @@ const paths = {
     projects: "M3 5h7l2 3h9v13H3z M7 13h10 M7 17h6",
     requests: "M8 5H5v16h14V5h-3 M8 3h8v4H8z M8 12h8 M8 16h5",
     "contact-messages": "M3 5h18v14H3z M3 6l9 7 9-7",
+    "settings/email": "M3 5h18v14H3z M3 6l9 7 9-7 M16 15l2 2 4-4",
     chat: "M21 11a8 8 0 0 1-8 8H7l-4 3V11a9 9 0 0 1 18 0z M7 11h.01 M12 11h.01 M17 11h.01",
     external: "M14 3h7v7 M21 3l-11 11 M10 3H3v18h18v-7",
     collapse: "M3 3h18v18H3z M9 3v18 M16 9l-3 3 3 3",

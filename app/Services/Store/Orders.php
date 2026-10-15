@@ -61,5 +61,6 @@ class Orders
         $order->update(['status' => 'paid', 'paid_at' => now()]);
         app(Licensing::class)->issue($order);
         $payment->update(array_merge($review, ['status' => 'approved', 'reviewed_at' => now()]));
+        \App\Support\SiteNotifications::orderConfirmed($order->fresh());
     }
 }

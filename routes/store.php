@@ -26,7 +26,11 @@ Route::middleware(['auth','admin',PrivateStoreResponse::class])->prefix('admin/s
     Route::get('products',[Admin::class,'index']);
     Route::get('products/create',[Admin::class,'edit']);
     Route::post('products',[Admin::class,'save']);
+    Route::get('products/{product}',[Admin::class,'show'])->whereNumber('product');
     Route::get('products/{product}/edit',[Admin::class,'edit']);
+    Route::delete('products/{product}',[Admin::class,'destroy']);
+    Route::delete('products/{product}/plans/{plan}',[Admin::class,'destroyPlan']);
+    Route::delete('releases/{release}',[Admin::class,'destroyRelease']);
     Route::put('products/{product}',[Admin::class,'save']);
     Route::post('products/{product}/plans',[Admin::class,'plan']);
     Route::put('products/{product}/plans/{plan}',[Admin::class,'plan']);
