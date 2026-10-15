@@ -1,7 +1,7 @@
 <?php
 /**
  * Pro field types for TechSolution Form Studio, registered through the core plugin's extension hooks:
- * address, admission, intl_tel, payment, signature and calculation.
+ * address, admission, intl_tel, payment, signature, calculation and rich_text (formatted content block).
  *
  * @package TechSolution_Form_Studio_Pro
  */
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class TSFS_Pro_Fields {
 
-    const TYPES = array( 'address', 'admission', 'intl_tel', 'payment', 'signature', 'calculation' );
+    const TYPES = array( 'address', 'admission', 'intl_tel', 'payment', 'signature', 'calculation', 'rich_text' );
 
     public static function init() {
         add_filter( 'tsfs_field_types', array( __CLASS__, 'register_types' ) );
@@ -72,7 +72,59 @@ class TSFS_Pro_Fields {
             'category' => 'pro',
             'defaults' => array( 'label' => __( 'Total', 'techsolution-form-studio-pro' ), 'width' => '100', 'formula' => '', 'calc_prefix' => '$', 'calc_suffix' => '', 'decimals' => '2' ),
         );
+        $types['rich_text'] = array(
+            'label'    => __( 'Rich Content', 'techsolution-form-studio-pro' ),
+            'icon'     => 'dashicons-editor-paste-text',
+            'category' => 'pro',
+            'defaults' => array(
+                'label'      => __( 'Content block', 'techsolution-form-studio-pro' ),
+                'content'    => '<p>' . __( 'Write your content here.', 'techsolution-form-studio-pro' ) . '</p>',
+                'width'      => '100',
+                'font_size'  => '16',
+                'line_height'=> '1.6',
+                'text_color' => '',
+                'bg_color'   => '',
+                'border_color' => '',
+                'padding'    => '0',
+                'radius'     => '0',
+                'ul_style'   => 'disc',
+                'ol_style'   => 'decimal',
+            ),
+        );
         return $types;
+    }
+
+    /** Widths available to the Rich Content block, in percent of the form row. */
+    public static function rich_widths() {
+        return array( '100', '75', '66', '50', '33', '25' );
+    }
+
+    public static function list_styles() {
+        return array(
+            'ul' => array( 'disc', 'circle', 'square', 'none' ),
+            'ol' => array( 'decimal', 'decimal-leading-zero', 'lower-alpha', 'upper-alpha', 'lower-roman', 'upper-roman', 'lower-greek', 'none' ),
+        );
+    }
+
+    /**
+     * HTML allowed in Rich Content blocks. Inline styles are filtered by WordPress (safecss_filter_attr),
+     * which keeps formatting such as color, background-color, font-size and text-align and drops anything else.
+     */
+    public static function rich_allowed_html() {
+        $common = array( 'style' => true, 'class' => true );
+        $allowed = array();
+        foreach ( array( 'p', 'div', 'span', 'strong', 'b', 'em', 'i', 'u', 's', 'del', 'ins', 'sub', 'sup', 'small', 'mark', 'code', 'blockquote', 'pre', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'li' ) as $tag ) {
+            $allowed[ $tag ] = $common;
+        }
+        $allowed['ol'] = $common + array( 'start' => true, 'type' => true, 'reversed' => true );
+        $allowed['a']  = $common + array( 'href' => true, 'target' => true, 'rel' => true, 'title' => true );
+        $allowed['br'] = array();
+        $allowed['hr'] = $common;
+        return $allowed;
+    }
+
+    public static function sanitize_rich_html( $html ) {
+        return wp_kses( (string) $html, self::rich_allowed_html(), array( 'http', 'https', 'mailto', 'tel' ) );
     }
 
     /**
@@ -104,6 +156,31 @@ class TSFS_Pro_Fields {
                 $item['canvas_height'] = isset( $raw['canvas_height'] ) ? (string) max( 100, min( 400, absint( $raw['canvas_height'] ) ) ) : '160';
                 $item['pen_color']     = $color ? $color : '#0f172a';
                 break;
+            case 'rich_text':
+                $styles              = self::list_styles();
+                $width               = isset( $raw['width'] ) ? (string) $raw['width'] : '100';
+                $number              = function ( $key, $min, $max, $default ) use ( $raw ) {
+                    return isset( $raw[ $key ] ) && is_numeric( $raw[ $key ] ) ? (string) max( $min, min( $max, 0 + $raw[ $key ] ) ) : $default;
+                };
+                $color               = function ( $key ) use ( $raw ) {
+                    $value = isset( $raw[ $key ] ) && is_string( $raw[ $key ] ) ? sanitize_hex_color( $raw[ $key ] ) : '';
+                    return $value ? $value : '';
+                };
+                $item['content']      = self::sanitize_rich_html( isset( $raw['content'] ) ? $raw['content'] : '' );
+                $item['width']        = in_array( $width, self::rich_widths(), true ) ? $width : '100';
+                $item['font_size']    = $number( 'font_size', 10, 48, '16' );
+                $item['line_height']  = $number( 'line_height', 1, 3, '1.6' );
+                $item['padding']      = $number( 'padding', 0, 80, '0' );
+                $item['radius']       = $number( 'radius', 0, 40, '0' );
+                $item['text_color']   = $color( 'text_color' );
+                $item['bg_color']     = $color( 'bg_color' );
+                $item['border_color'] = $color( 'border_color' );
+                $item['ul_style']     = isset( $raw['ul_style'] ) && in_array( $raw['ul_style'], $styles['ul'], true ) ? $raw['ul_style'] : 'disc';
+                $item['ol_style']     = isset( $raw['ol_style'] ) && in_array( $raw['ol_style'], $styles['ol'], true ) ? $raw['ol_style'] : 'decimal';
+                $item['required']     = false;
+                $item['help_text']    = '';
+                $item['placeholder']  = '';
+                break;
             case 'calculation':
                 $formula             = isset( $raw['formula'] ) ? (string) $raw['formula'] : '';
                 $item['formula']     = preg_replace( '/[^0-9a-z_\[\]{}+\-*\/().\s]/i', '', $formula );
@@ -134,6 +211,8 @@ class TSFS_Pro_Fields {
     }
 
     public static function enqueue_builder_assets() {
+        wp_enqueue_editor();
+        wp_enqueue_style( 'tsfs-pro-admin', TSFS_PRO_PLUGIN_URL . 'assets/css/tsfs-pro-admin.css', array( 'tsfs-admin-css' ), TSFS_PRO_VERSION );
         TSFS_Pro_Address::enqueue();
         wp_enqueue_style( 'tsfs-pro-public', TSFS_PRO_PLUGIN_URL . 'assets/css/tsfs-pro-public.css', array(), TSFS_PRO_VERSION );
         wp_enqueue_script( 'tsfs-pro-builder', TSFS_PRO_PLUGIN_URL . 'assets/js/tsfs-pro-builder.js', array( 'jquery', 'tsfs-builder-js', 'tsfs-pro-address-js' ), TSFS_PRO_VERSION, true );
@@ -144,6 +223,8 @@ class TSFS_Pro_Fields {
         wp_localize_script( 'tsfs-pro-builder', 'tsfsProBuilderData', array(
             'address_template' => TSFS_Pro_Address::preview_template(),
             'phone_countries'  => $countries,
+            'list_styles'      => self::list_styles(),
+            'rich_widths'      => self::rich_widths(),
         ) );
     }
 
@@ -155,6 +236,7 @@ class TSFS_Pro_Fields {
             'calculation' => array( 'dashicons-calculator', __( 'Calculation', 'techsolution-form-studio-pro' ), 'calculation formula total price sum' ),
             'payment'     => array( 'dashicons-cart', __( 'Payment Details', 'techsolution-form-studio-pro' ), 'payment card fee checkout' ),
             'admission'   => array( 'dashicons-welcome-learn-more', __( 'Admission', 'techsolution-form-studio-pro' ), 'admission student university application' ),
+            'rich_text'   => array( 'dashicons-editor-paste-text', __( 'Rich Content', 'techsolution-form-studio-pro' ), 'rich text editor paragraph content bold color list heading formatted' ),
         );
         ?>
         <div class="tsfs-fields-group">
@@ -330,6 +412,34 @@ class TSFS_Pro_Fields {
             <input type="hidden" name="<?php echo esc_attr( $name ); ?>" id="<?php echo esc_attr( $id ); ?>" class="tsfs-calculation-hidden" value="0">
         </div>
         <?php
+    }
+
+    /**
+     * Formatted content block. The core label is hidden by CSS; the content itself is the block.
+     */
+    public static function render_rich_text( $field ) {
+        $style = array(
+            '--tsfs-rich-font-size:' . ( isset( $field['font_size'] ) ? (float) $field['font_size'] : 16 ) . 'px',
+            '--tsfs-rich-line-height:' . ( isset( $field['line_height'] ) ? (float) $field['line_height'] : 1.6 ),
+            '--tsfs-rich-padding:' . ( isset( $field['padding'] ) ? absint( $field['padding'] ) : 0 ) . 'px',
+            '--tsfs-rich-radius:' . ( isset( $field['radius'] ) ? absint( $field['radius'] ) : 0 ) . 'px',
+            '--tsfs-rich-ul:' . ( ! empty( $field['ul_style'] ) ? $field['ul_style'] : 'disc' ),
+            '--tsfs-rich-ol:' . ( ! empty( $field['ol_style'] ) ? $field['ol_style'] : 'decimal' ),
+        );
+        foreach ( array( 'text_color' => '--tsfs-rich-color', 'bg_color' => '--tsfs-rich-bg', 'border_color' => '--tsfs-rich-border' ) as $key => $var ) {
+            $color = ! empty( $field[ $key ] ) ? sanitize_hex_color( $field[ $key ] ) : '';
+            if ( $color ) {
+                $style[] = $var . ':' . $color;
+            }
+        }
+        echo '<div class="tsfs-rich-content" style="' . esc_attr( implode( ';', $style ) ) . '">' . self::sanitize_rich_html( isset( $field['content'] ) ? $field['content'] : '' ) . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- filtered by wp_kses in sanitize_rich_html().
+    }
+
+    /**
+     * Content blocks collect no input.
+     */
+    public static function process_rich_text( $result ) {
+        return $result;
     }
 
     /* ------------------------------------------------------------------ */

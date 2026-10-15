@@ -2,8 +2,8 @@
 /**
  * Plugin Name:       TechSolution Form Studio Pro
  * Plugin URI:        https://usp.com.pk/products/techsolution-form-studio-pro
- * Description:       Pro add-on for TechSolution Form Studio: complete address, international phone, digital signature, calculation, payment details and admission application fields.
- * Version:           2.0.0
+ * Description:       Pro add-on for TechSolution Form Studio: complete address, international phone, digital signature, calculation, payment details, admission application fields and a rich content editor block.
+ * Version:           2.1.0
  * Requires at least: 6.5
  * Requires PHP:      7.4
  * Requires Plugins:  techsolution-form-studio
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'TSFS_PRO_VERSION', '2.0.0' );
+define( 'TSFS_PRO_VERSION', '2.1.0' );
 define( 'TSFS_PRO_FILE', __FILE__ );
 define( 'TSFS_PRO_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TSFS_PRO_PLUGIN_URL', plugin_dir_url( __FILE__ ) );

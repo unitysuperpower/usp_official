@@ -171,7 +171,9 @@ class TSFS_Form {
                         if ( '' === $key || isset( $item[ $key ] ) ) {
                             continue;
                         }
-                        if ( is_scalar( $value ) ) {
+                        if ( 'content' === $key && is_string( $value ) ) {
+                            $item[ $key ] = wp_kses_post( $value );
+                        } elseif ( is_scalar( $value ) ) {
                             $item[ $key ] = is_bool( $value ) ? $value : sanitize_text_field( (string) $value );
                         } elseif ( is_array( $value ) ) {
                             $item[ $key ] = array_map( 'sanitize_text_field', array_filter( array_slice( $value, 0, 200 ), 'is_scalar' ) );

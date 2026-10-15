@@ -498,3 +498,38 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* Rich Content block */
+.tsfs-form-container .tsfs-width-75 { flex: 0 0 calc(75% - var(--tsfs-field-gap, 18px) / 4); width: calc(75% - var(--tsfs-field-gap, 18px) / 4); }
+.tsfs-form-container .tsfs-width-66 { flex: 0 0 calc(66.666% - var(--tsfs-field-gap, 18px) / 3); width: calc(66.666% - var(--tsfs-field-gap, 18px) / 3); }
+.tsfs-form-container .tsfs-width-25 { flex: 0 0 calc(25% - var(--tsfs-field-gap, 18px) * 3 / 4); width: calc(25% - var(--tsfs-field-gap, 18px) * 3 / 4); }
+@media (max-width: 640px) {
+    .tsfs-form-container .tsfs-width-75,
+    .tsfs-form-container .tsfs-width-66,
+    .tsfs-form-container .tsfs-width-25 { flex-basis: 100%; width: 100%; }
+}
+.tsfs-field-rich_text > .tsfs-field-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.tsfs-rich-content {
+    font-size: var(--tsfs-rich-font-size, 16px);
+    line-height: var(--tsfs-rich-line-height, 1.6);
+    color: var(--tsfs-rich-color, inherit);
+    background: var(--tsfs-rich-bg, transparent);
+    padding: var(--tsfs-rich-padding, 0);
+    border-radius: var(--tsfs-rich-radius, 0);
+    border: 1px solid var(--tsfs-rich-border, transparent);
+    overflow-wrap: anywhere;
+}
+.tsfs-rich-content > :first-child { margin-top: 0; }
+.tsfs-rich-content > :last-child { margin-bottom: 0; }
+.tsfs-rich-content p { margin: 0 0 0.8em; }
+.tsfs-rich-content h2, .tsfs-rich-content h3, .tsfs-rich-content h4, .tsfs-rich-content h5, .tsfs-rich-content h6 { margin: 1em 0 0.5em; line-height: 1.3; color: inherit; }
+.tsfs-rich-content ul { list-style-type: var(--tsfs-rich-ul, disc); padding-left: 1.5em; margin: 0 0 0.8em; }
+.tsfs-rich-content ol { list-style-type: var(--tsfs-rich-ol, decimal); padding-left: 1.8em; margin: 0 0 0.8em; }
+.tsfs-rich-content ul ul { list-style-type: circle; }
+.tsfs-rich-content li { margin: 0.2em 0; }
+.tsfs-rich-content blockquote { margin: 0 0 0.8em; padding: 0.4em 1em; border-left: 4px solid var(--tsfs-primary, #4f46e5); background: rgba(127, 127, 127, 0.08); }
+.tsfs-rich-content a { color: var(--tsfs-primary, #4f46e5); text-decoration: underline; }
+.tsfs-rich-content hr { border: 0; border-top: 1px solid #e2e8f0; margin: 1em 0; }
+.tsfs-rich-content .alignleft { float: left; margin: 0 1em 0.5em 0; }
+.tsfs-rich-content .alignright { float: right; margin: 0 0 0.5em 1em; }
+.tsfs-rich-content .aligncenter { display: block; margin-left: auto; margin-right: auto; }
