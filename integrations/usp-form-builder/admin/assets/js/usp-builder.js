@@ -14,6 +14,12 @@
         return Number.isFinite(value) ? Math.max(min, Math.min(max, Math.round(value))) : fallback;
     }
 
+    function safeTermsUrl(value) {
+        try { var url = new URL(value, window.location.href); return ['http:', 'https:'].indexOf(url.protocol) !== -1 ? url.href : ''; }
+        catch (error) { return ''; }
+    }
+    function escapeMarkup(value) { return String(value || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
     function contentPreview(field) {
         var escape = function(value) { return $('<div>').text(value || '').html(); };
         var tag = ['h2','h3','h4','h5','h6'].indexOf(field.tag) >= 0 ? field.tag : 'h3';
@@ -1466,9 +1472,9 @@
                         cardHtml += '<div class="usp-mock-consent-wrap" style="display:flex; align-items:flex-start; gap:10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-top:4px;">';
                         cardHtml += '  <input type="checkbox" disabled style="margin-top:2px;">';
                         cardHtml += '  <div style="font-size:13px; color:#334155; line-height:1.45;">';
-                        cardHtml += '    <span>' + (field.consent_text || 'I agree to the Terms of Service and Privacy Policy.') + '</span> ';
+                        cardHtml += '    <span>' + escapeMarkup(field.consent_text || 'I agree to the Terms of Service and Privacy Policy.') + '</span> ';
                         if (field.terms_url) {
-                            cardHtml += '    <a href="' + field.terms_url + '" target="_blank" style="color:#4f46e5; text-decoration:underline; font-weight:600;">' + (field.terms_label || 'Terms & Conditions') + '</a>';
+                            cardHtml += '    <a href="' + escapeMarkup(safeTermsUrl(field.terms_url)) + '" target="_blank" rel="noopener noreferrer" style="color:#4f46e5; text-decoration:underline; font-weight:600;">' + escapeMarkup(field.terms_label || 'Terms & Conditions') + '</a>';
                         }
                         cardHtml += '  </div>';
                         cardHtml += '</div>';
@@ -1669,15 +1675,15 @@
             if (field.type === 'consent') {
                 html += '<div class="usp-settings-form-group">';
                 html += '  <label>Agreement Statement Text</label>';
-                html += '  <textarea id="insp-consent-text" rows="3">' + (field.consent_text || 'I have read and agree to the Terms of Service and Privacy Policy.') + '</textarea>';
+                html += '  <textarea id="insp-consent-text" rows="3">' + escapeMarkup(field.consent_text || 'I have read and agree to the Terms of Service and Privacy Policy.') + '</textarea>';
                 html += '</div>';
                 html += '<div class="usp-settings-form-group">';
                 html += '  <label>Terms Page Link (URL)</label>';
-                html += '  <input type="url" id="insp-terms-url" placeholder="https://example.com/terms" value="' + (field.terms_url || '') + '">';
+                html += '  <input type="url" id="insp-terms-url" placeholder="https://example.com/terms" value="' + escapeMarkup(field.terms_url || '') + '">';
                 html += '</div>';
                 html += '<div class="usp-settings-form-group">';
                 html += '  <label>Terms Link Text</label>';
-                html += '  <input type="text" id="insp-terms-label" placeholder="Terms & Conditions" value="' + (field.terms_label || 'Terms & Conditions') + '">';
+                html += '  <input type="text" id="insp-terms-label" placeholder="Terms & Conditions" value="' + escapeMarkup(field.terms_label || 'Terms & Conditions') + '">';
                 html += '</div>';
             }
 
@@ -1988,7 +1994,7 @@
             if (field.type === 'consent') {
                 $card.find('.usp-mock-consent-wrap span').first().text(field.consent_text);
                 if (field.terms_url) {
-                    $card.find('.usp-mock-consent-wrap a').attr('href', field.terms_url).text(field.terms_label);
+                    $card.find('.usp-mock-consent-wrap a').attr('href', safeTermsUrl(field.terms_url)).text(field.terms_label);
                 }
             }
 
@@ -2068,6 +2074,11 @@
             $canvas.removeClass('usp-btn-align-left usp-btn-align-center usp-btn-align-right usp-btn-align-full');
             $canvas.addClass('usp-btn-align-' + align);
 
+            $submitBtn.css({'background':sizes.button_bg, 'font-size':sizes.button_font_size+'px','border-radius':sizes.button_radius+'px','padding-top':sizes.button_vertical_padding+'px','padding-bottom':sizes.button_vertical_padding+'px','text-decoration':'none'});
+            $canvas.css('font-size',sizes.text_size+'px');
+            $canvas.find('.usp-card-label').css('font-size',sizes.label_size+'px');
+            $canvas.find('.usp-mock-consent-wrap').css({background:sizes.consent_bg,border:'1px solid '+sizes.consent_border,padding:sizes.consent_padding+'px'}).find('div, span').css({color:sizes.consent_color,'font-size':sizes.consent_size+'px'});
+
             // 5. Box shadow
             $canvas.removeClass('usp-shadow-none usp-shadow-subtle usp-shadow-medium usp-shadow-elevated usp-shadow-outline');
             $canvas.addClass('usp-shadow-' + shadow);
@@ -2110,6 +2121,19 @@
                 button_height: layoutNumber('button_height',46,32,120),
                 button_padding: layoutNumber('button_padding',30,0,80),
 
+                text_size: layoutNumber('text_size',16,12,24),
+                label_size: layoutNumber('label_size',15,12,26),
+                button_font_size: layoutNumber('button_font_size',16,12,30),
+                button_radius: layoutNumber('button_radius',8,0,60),
+                button_vertical_padding: layoutNumber('button_vertical_padding',12,4,40),
+                consent_size: layoutNumber('consent_size',14,12,24),
+                consent_padding: layoutNumber('consent_padding',14,0,40),
+                checkbox_size: layoutNumber('checkbox_size',20,16,32),
+                button_bg: $('#usp-color-button_bg').val() || '#4f46e5',
+                button_hover: $('#usp-color-button_hover').val() || '#4338ca',
+                consent_bg: $('#usp-color-consent_bg').val() || '#f8fafc',
+                consent_border: $('#usp-color-consent_border').val() || '#e2e8f0',
+                consent_color: $('#usp-color-consent_color').val() || '#334155',
                 // Theme & Styling Options
                 theme_preset: $('#usp-theme-preset-val').val() || 'default',
                 primary_color: $('#usp-theme-primary-color').val() || '#4f46e5',
@@ -2360,12 +2384,12 @@
                     html += '    <span class="usp-sim-rating-score" style="margin-left:8px; font-size:13px; font-weight:700; color:#475569;"></span>';
                     html += '  </div>';
                 } else if (f.type === 'consent') {
-                    html += '  <div style="display:flex; align-items:flex-start; gap:10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:' + btnRadius + '; padding:12px;">';
-                    html += '    <input type="checkbox" style="margin-top:3px; accent-color:' + primaryColor + ';" required>';
+                    html += '  <div class="usp-preview-consent" style="display:flex; align-items:flex-start; gap:10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:' + btnRadius + '; padding:12px;">';
+                    html += '    <input type="checkbox" style="margin-top:3px; accent-color:' + primaryColor + ';" ' + (f.required ? 'required' : '') + '>';
                     html += '    <div style="font-size:13px; color:#334155; line-height:1.45;">';
                     html += '      <span>' + $('<div>').text(f.consent_text || 'I agree to the Terms of Service and Privacy Policy.').html() + '</span> ';
                     if (f.terms_url) {
-                        html += '      <a href="' + f.terms_url + '" target="_blank" style="color:' + primaryColor + '; text-decoration:underline; font-weight:600;">' + $('<div>').text(f.terms_label || 'Terms & Conditions').html() + '</a>';
+                        html += '      <a href="' + escapeMarkup(safeTermsUrl(f.terms_url)) + '" target="_blank" rel="noopener noreferrer" style="color:' + primaryColor + '; text-decoration:underline; font-weight:600;">' + $('<div>').text(f.terms_label || 'Terms & Conditions').html() + '</a>';
                     }
                     html += '    </div>';
                     html += '  </div>';
@@ -2414,6 +2438,11 @@
             $preview.find('.usp-preview-form-box').css({width:'100%', 'max-width':sizes.form_max_width + 'px', 'min-height':sizes.form_min_height + 'px', padding:sizes.form_padding + 'px', margin:'0 auto', 'box-sizing':'border-box'});
             $preview.find('input:not([type=checkbox]):not([type=radio]):not([type=hidden]), select').css('min-height',sizes.input_height + 'px');
             $preview.find('button[type=submit]').css({width:align === 'full' ? '100%' : (sizes.button_width ? sizes.button_width + 'px' : 'auto'), 'max-width':'100%', 'min-height':sizes.button_height + 'px', 'padding-left':sizes.button_padding + 'px', 'padding-right':sizes.button_padding + 'px', 'white-space':'normal'});
+            $preview.find('button[type=submit]').css({background:sizes.button_bg,'font-size':sizes.button_font_size+'px','border-radius':sizes.button_radius+'px','padding-top':sizes.button_vertical_padding+'px','padding-bottom':sizes.button_vertical_padding+'px','text-decoration':'none'});
+            $preview.find('.usp-preview-form-box').css('font-size',sizes.text_size+'px');
+            $preview.find('.usp-preview-consent').css({background:sizes.consent_bg,border:'1px solid '+sizes.consent_border,padding:sizes.consent_padding+'px',color:sizes.consent_color,'font-size':sizes.consent_size+'px'});
+            $preview.find('.usp-preview-consent div, .usp-preview-consent span').css({'font-size':sizes.consent_size+'px',color:sizes.consent_color,'line-height':'1.6','white-space':'pre-line'});
+            $preview.find('.usp-preview-consent input').css({width:sizes.checkbox_size+'px',height:sizes.checkbox_size+'px','flex-shrink':0});
             if (window.USPCountry) window.USPCountry.init(document.getElementById('usp-live-preview-viewport'));
             if (window.USPAddress) window.USPAddress.init(document.getElementById('usp-live-preview-viewport'));
 

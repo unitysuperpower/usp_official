@@ -14,9 +14,20 @@ class USP_Form {
     /** Bounded pixel values, including imported forms. Height is a minimum to avoid clipping. */
     public static function layout_settings( $settings ) {
         $result = array();
-        foreach ( array('form_max_width'=>array(680,280,1600),'form_min_height'=>array(0,0,1600),'form_padding'=>array(32,0,80),'field_gap'=>array(18,0,64),'input_height'=>array(44,32,100),'button_width'=>array(0,0,1000),'button_height'=>array(46,32,120),'button_padding'=>array(30,0,80)) as $key => $rule ) {
+        foreach ( array('form_max_width'=>array(680,280,1600),'form_min_height'=>array(0,0,1600),'form_padding'=>array(32,0,80),'field_gap'=>array(18,0,64),'input_height'=>array(44,32,100),'button_width'=>array(0,0,1000),'button_height'=>array(46,32,120),'button_padding'=>array(30,0,80),'text_size'=>array(16,12,24),'label_size'=>array(15,12,26),'button_font_size'=>array(16,12,30),'button_radius'=>array(8,0,60),'button_vertical_padding'=>array(12,4,40),'consent_size'=>array(14,12,24),'consent_padding'=>array(14,0,40),'checkbox_size'=>array(20,16,32)) as $key => $rule ) {
             $value = $settings[$key] ?? $rule[0];
             $result[$key] = is_numeric( $value ) ? max( $rule[1], min( $rule[2], (int) $value ) ) : $rule[0];
+        }
+        return $result;
+    }
+
+    public static function color_settings( $settings ) {
+        $defaults = array('button_bg'=>'#4f46e5','button_hover'=>'#4338ca','consent_bg'=>'#f8fafc','consent_border'=>'#e2e8f0','consent_color'=>'#334155');
+        if ( is_string( $settings['primary_color'] ?? null ) && preg_match( '/^#[a-f0-9]{6}$/iD', $settings['primary_color'] ) ) { $defaults['button_bg'] = $settings['primary_color']; }
+        $result = array();
+        foreach ( $defaults as $key => $default ) {
+            $value = $settings[$key] ?? $default;
+            $result[$key] = is_string( $value ) && preg_match( '/^#[a-f0-9]{6}$/iD', $value ) ? $value : $default;
         }
         return $result;
     }
@@ -827,6 +838,9 @@ class USP_Form {
         foreach ( self::layout_settings( $settings ) as $key => $value ) {
             $css_vars[] = '--usp-' . str_replace( '_', '-', $key ) . ': ' . ( 'button_width' === $key && 0 === $value ? 'auto' : $value . 'px' ) . ';';
         }
+        foreach ( self::color_settings( $settings ) as $key => $value ) {
+            $css_vars[] = '--usp-' . str_replace( '_', '-', $key ) . ': ' . $value . ';';
+        }
         $inline_style = ! empty( $css_vars ) ? 'style="' . esc_attr( implode( ' ', $css_vars ) ) . '"' : '';
 
         // Multi-Step Wizard Partitioning
@@ -1412,7 +1426,7 @@ class USP_Form {
                                 <span class="usp-accepted-title"><?php esc_html_e( 'Accepted Cards:', 'usp-form-builder' ); ?></span>
                                 <div class="usp-card-badges-list">
                                     <span class="usp-brand-badge usp-badge-visa" data-brand="visa" title="Visa">
-                                        <svg viewBox="0 0 36 22" class="usp-brand-svg"><rect width="36" height="22" rx="3" fill="#1434CB"/><path d="M14.5 15.5l2.4-9h2.5l-2.4 9h-2.5zm8.9-8.8c-.5-.2-1.3-.4-2.3-.4-2.5 0-4.3 1.3-4.3 3.3 0 1.4 1.3 2.2 2.2 2.7.9.5 1.3.8 1.3 1.2 0 .6-.8.9-1.5.9-.9 0-1.5-.2-2.3-.5l-.3-.1-.3 2c.6.3 1.7.5 2.8.5 2.7 0 4.5-1.3 4.5-3.4 0-1.1-.7-2-2.3-2.7-.9-.5-1.5-.8-1.5-1.3 0-.4.5-.9 1.5-.9.8 0 1.4.2 1.9.4l.2.1.3-1.8zm6.6 5.8l1-4.8-1.5 4.8h.5zm2.3-6h-1.9c-.6 0-1.1.3-1.3.7l-3.8 8.3h2.6l.5-1.3h3.2l.3 1.3h2.3l-1.9-9zm-15.6 0l-2.4 6-.3-1.2c-.5-1.5-2-3.1-3.7-3.9l2.4 7.9h2.6l3.9-8.8h-2.5z" fill="#fff"/></svg>
+                                        <svg viewBox="0 0 36 22" class="usp-brand-svg"><rect width="36" height="22" rx="3" fill="#1434CB"/><path d="M14.5 15.5l2.4-9h2.5l-2.4 9h-2.5zm8.9-8.8c-.5-.2-1.3-.4-2.3-.4-2.5 0-4.3 1.3-4.3 3.3 0 1.4 1.3 2.2 2.2 2.7.9.5 1.3.8 1.3 1.2 0 .6-.8.9-1.5.9-.9 0-1.5-.2-2.3-.5l-.3-.1-.3 2c.6.3 1.7.5 2.8.5 2.7 0 4.5-1.3 4.5-3.4 0-1.1-.7-2-2.3-2.7-.9-.5-1.5-.8-1.5-1.3 0-.4.5-.9 1.5-.9.8 0 1.4.2 1.9.4l.2.1.3-1.8zm6.6 5.8l1-4.8-1.5 4.8h.5zm2.3-6h-1.9c-.6 0-1.1.4-1.3.7l-3.8 8.3h2.6l.5-1.3h3.2l.3 1.3h2.3l-1.9-9zm-15.6 0l-2.4 6-.3-1.2c-.5-1.5-2-3.1-3.7-3.9l2.4 7.9h2.6l3.9-8.8h-2.5z" fill="#fff"/></svg>
                                     </span>
                                     <span class="usp-brand-badge usp-badge-mastercard" data-brand="mastercard" title="Mastercard">
                                         <svg viewBox="0 0 36 22" class="usp-brand-svg"><rect width="36" height="22" rx="3" fill="#252525"/><circle cx="14" cy="11" r="6.5" fill="#EB001B"/><circle cx="22" cy="11" r="6.5" fill="#F79E1B"/><path d="M18 6.5a6.47 6.47 0 00-2.4 4.5 6.47 6.47 0 002.4 4.5 6.47 6.47 0 002.4-4.5A6.47 6.47 0 0018 6.5z" fill="#FF5F00"/></svg>
@@ -1549,8 +1563,8 @@ class USP_Form {
                         $terms_url  = ! empty( $field['terms_url'] ) ? esc_url( $field['terms_url'] ) : '';
                         $terms_label = ! empty( $field['terms_label'] ) ? $field['terms_label'] : __( 'View Terms', 'usp-form-builder' );
                         ?>
-                        <div class="usp-consent-control" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px 14px;">
-                            <label class="usp-consent-label" for="<?php echo esc_attr( $id ); ?>" style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; font-size:13px; color:#334155; line-height:1.4;">
+                        <div class="usp-consent-control">
+                            <label class="usp-consent-label" for="<?php echo esc_attr( $id ); ?>" >
                                 <input 
                                     type="checkbox" 
                                     name="<?php echo esc_attr( $name ); ?>" 

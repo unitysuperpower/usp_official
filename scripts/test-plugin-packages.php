@@ -2,7 +2,7 @@
 // Exercise the actual generated edition, rather than only its source template.
 $edition=$argv[1] ?? 'free';
 $zip=new ZipArchive;
-if ($zip->open(__DIR__.'/../dist/plugins/usp-form-builder-1.1.3-'.$edition.'.zip')!==true) { throw new RuntimeException('Build plugin packages first.'); }
+if ($zip->open(__DIR__.'/../dist/plugins/usp-form-builder-1.1.4-'.$edition.'.zip')!==true) { throw new RuntimeException('Build plugin packages first.'); }
 $temp=sys_get_temp_dir().'/usp-package-test-'.bin2hex(random_bytes(8));
 mkdir($temp);$zip->extractTo($temp);$zip->close();
 register_shutdown_function(function () use ($temp) {
@@ -99,3 +99,7 @@ echo "Passed consent values, checkbox rendering and bounded form layout.\n";
 USP_DB::$settings=['form_max_width'=>960,'form_min_height'=>400,'button_width'=>240,'button_height'=>60];
 $html=USP_Form::render_form_html(1);
 verify(strpos($html,'--usp-form-max-width: 960px')!==false && strpos($html,'--usp-button-height: 60px')!==false, 'Custom layout settings must reach rendered form');
+$colors=USP_Form::color_settings(['button_bg'=>'red;display:none','consent_bg'=>['bad'],'primary_color'=>'#123456']);
+verify($colors['button_bg']==='#123456' && $colors['consent_bg']==='#f8fafc','Invalid appearance values must fall back safely');
+$appearance=USP_Form::layout_settings(['checkbox_size'=>100,'button_font_size'=>0]);
+verify($appearance['checkbox_size']===32 && $appearance['button_font_size']===12,'Appearance controls must be bounded');

@@ -8,13 +8,13 @@ Run `python3 scripts/build-plugin.py` from the Laravel repository. PHP, Python, 
 
 Output under `dist/plugins/`:
 
-- `usp-form-builder-1.1.3-free.zip`: Free implementation, standard fields, shared builder UI, security and license/upgrade client. Premium field renderers and submission handlers, address/country datasets, and Pro frontend engines are excluded. The shared admin UI can still show upgrade prompts and recognize existing Pro field types.
-- `usp-form-builder-1.1.3-pro.zip`: Full plugin with Pro implementations and server-verified licensing. Keep this package private.
+- `usp-form-builder-1.1.4-free.zip`: Free implementation, standard fields, shared builder UI, security and license/upgrade client. Premium field renderers and submission handlers, address/country datasets, and Pro frontend engines are excluded. The shared admin UI can still show upgrade prompts and recognize existing Pro field types.
+- `usp-form-builder-1.1.4-pro.zip`: Full plugin with Pro implementations and server-verified licensing. Keep this package private.
 - `manifest.json`: SHA-256 checksums and edition/version metadata.
 
 Both ZIPs contain `usp-form-builder/usp-form-builder.php`. The same folder is intentional: the Pro upgrade replaces Free in place, preserves the WordPress database and settings, and avoids duplicate plugin classes. Do not install them under different folder names.
 
-In `/admin/store/products`, upload version `1.1.3` with the matching **Free** or **Pro** edition. The uploader checks folder structure, PHP version header, edition header, symbolic links, unsafe paths, duplicate entries, and archive size. It now reports the specific reason for rejection. The original `usp-form-builder-1.0.0.zip` is internally version `1.0.7` and contains premium implementations; do not publish it as the new Free distribution.
+In `/admin/store/products`, upload version `1.1.4` with the matching **Free** or **Pro** edition. The uploader checks folder structure, PHP version header, edition header, symbolic links, unsafe paths, duplicate entries, and archive size. It now reports the specific reason for rejection. The original `usp-form-builder-1.0.0.zip` is internally version `1.0.7` and contains premium implementations; do not publish it as the new Free distribution.
 
 ## Customer flow
 
@@ -67,3 +67,14 @@ In **Theme & Style → Form size & spacing**, configure maximum form width, mini
 Verification: both generated packages passed rendering, edition separation, CNIC, consent-value and layout-bound checks. The actual production JavaScript validator passed checked, unchecked, optional and disabled consent cases. Chrome fixtures using production PHP-rendered forms, CSS and JavaScript passed at 1200px and 500px viewport widths with mocked AJAX: required unchecked consent blocked, checked consent reached the submission handler with `privacy=1`, CNIC was normalized, a 240×60px button rendered, and no horizontal overflow occurred. These fixtures do not submit to a customer's database.
 
 Install the 1.1.3 Pro ZIP through WordPress or use **Install latest Pro release** with an active license. Uploading the same plugin replaces its files; keep a backup first. Publishing a store release does not automatically update customer installations.
+
+
+### Version 1.1.4: appearance and reliability review
+
+Theme & Style now includes body/label text size, button font size, vertical padding, radius, background and hover colors, plus consent text size, padding, checkbox size, background, border and text colors. Button text color uses the existing color control. Scoped button rules protect the configured appearance from common theme underlines, text color, padding and height overrides. Consent preserves paragraph breaks and optional consent stays optional in the simulator.
+
+Fixed raw consent text/link interpolation in the builder preview, escaped server messages in the Pro frontend, restricted redirect/link protocols, and added an in-flight submission guard with a 30-second timeout and error recovery. These are targeted fixes, not a claim of a complete security audit.
+
+Checks: package validation for both editions, bounded appearance values, consent regression, safe preview protocols/escaping, builder history, and Chrome desktop (1200px) / narrow-screen (500px) fixtures with conflicting theme CSS. Checked consent submitted, unchecked consent blocked, duplicate submission was prevented, simulated network failure allowed retry, response HTML was displayed as text, the configured 240×60px white-text button had no underline, and there was no horizontal overflow. Network calls in these browser fixtures were mocked.
+
+Publishing a release does not update client sites automatically. Update through the licensed Pro installer or upload the matching ZIP, then clear any page cache if old styling remains. ERP, existing license records and pricing are outside this release.

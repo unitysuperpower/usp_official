@@ -3,7 +3,7 @@ require __DIR__.'/store-license-client.php';
 require __DIR__.'/../includes/class-usp-pro-installer.php';
 $test_api_reply=$valid_reply;
 $test_api_reply['update'] = array(
-    'slug'=>'usp-form-builder', 'edition'=>'pro', 'version'=>'1.1.3',
+    'slug'=>'usp-form-builder', 'edition'=>'pro', 'version'=>'1.1.4',
     'sha256'=>str_repeat('b',64), 'package'=>'https://usp.com.pk/api/licenses/packages/1/2?expires=9999999999&signature=test',
 );
 USP_Security::process_license_action('TEST-KEY-123456','activate');

@@ -1288,3 +1288,58 @@
     .usp-form-container { padding: min(var(--usp-form-padding, 32px), 20px); }
     .usp-form-container .usp-width-50, .usp-form-container .usp-width-33 { flex-basis: 100%; width: 100%; }
 }
+
+/* Component styles take precedence over common theme button/link resets.
+   Change these through the per-form controls; variables remain configurable. */
+.usp-form-container .usp-form { font-size: var(--usp-text-size, 16px); }
+.usp-form-container .usp-field-label { font-size: var(--usp-label-size, 15px); }
+.usp-form-container .usp-form button.usp-btn-submit {
+    appearance: none !important;
+    display: inline-flex !important;
+    align-items: center; justify-content: center;
+    height: auto !important;
+    min-height: var(--usp-button-height, 46px) !important;
+    width: var(--usp-button-width, auto) !important;
+    max-width: 100% !important;
+    padding: var(--usp-button-vertical-padding, 12px) var(--usp-button-padding, 30px) !important;
+    background: var(--usp-button-bg, var(--usp-primary)) !important;
+    color: var(--usp-btn-color, #fff) !important;
+    border: 1px solid transparent !important;
+    border-radius: var(--usp-button-radius, 8px) !important;
+    font-family: inherit !important;
+    font-size: var(--usp-button-font-size, 16px) !important;
+    font-weight: 600 !important;
+    line-height: 1.4 !important;
+    text-decoration: none !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+}
+.usp-form-container .usp-form .usp-btn-align-full button.usp-btn-submit { width: 100% !important; }
+.usp-form-container .usp-form button.usp-btn-submit .usp-btn-text {
+    color: inherit !important; font: inherit !important; text-decoration: none !important;
+}
+.usp-form-container .usp-form button.usp-btn-submit:hover { background: var(--usp-button-hover, #4338ca) !important; }
+.usp-form-container .usp-form button.usp-btn-submit:focus-visible { outline: 3px solid var(--usp-primary); outline-offset: 3px; }
+.usp-form-container .usp-form button.usp-btn-submit:disabled { opacity: .65; cursor: wait; }
+.usp-form-container .usp-consent-control {
+    background: var(--usp-consent-bg, #f8fafc);
+    border: 1px solid var(--usp-consent-border, #e2e8f0);
+    border-radius: 8px; padding: var(--usp-consent-padding, 14px);
+}
+.usp-form-container label.usp-consent-label {
+    display: flex; align-items: flex-start; gap: 12px; cursor: pointer;
+    margin: 0; text-transform: none; letter-spacing: normal;
+    color: var(--usp-consent-color, #334155);
+    font-size: var(--usp-consent-size, 14px); line-height: 1.6;
+}
+.usp-form-container .usp-consent-text { white-space: pre-line; }
+.usp-form-container .usp-consent-checkbox {
+    flex-basis: var(--usp-checkbox-size, 20px);
+    width: var(--usp-checkbox-size, 20px); height: var(--usp-checkbox-size, 20px);
+    min-width: var(--usp-checkbox-size, 20px);
+}
+
+.usp-form-container .usp-input, .usp-form-container .usp-html-desc { font-size: var(--usp-text-size, 16px); }

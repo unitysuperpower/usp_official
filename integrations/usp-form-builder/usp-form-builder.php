@@ -3,7 +3,7 @@
  * Plugin Name:       USP Form Builder Pro
  * Plugin URI:        https://usptechsolution.com/
  * Description:       A powerful drag-and-drop form builder with basic inputs, templates, and secure submissions.
- * Version:           1.1.3
+ * Version:           1.1.4
  * Requires at least: 6.3
  * Requires PHP:      7.4
  * USP Edition:       pro
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // Plugin Constants
 define( 'USP_FORM_BUILDER_EDITION', 'pro' );
-define( 'USP_FORM_BUILDER_VERSION', '1.1.3' );
+define( 'USP_FORM_BUILDER_VERSION', '1.1.4' );
 define( 'USP_FORM_BUILDER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'USP_FORM_BUILDER_URL', plugin_dir_url( __FILE__ ) );
 define( 'USP_FORM_BUILDER_BASENAME', plugin_basename( __FILE__ ) );

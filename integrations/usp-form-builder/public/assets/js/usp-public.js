@@ -102,7 +102,7 @@
         }
 
         function markFieldError($wrap, msg) {
-            $wrap.addClass('has-error');
+            $wrap.addClass('has-error').find(':input').attr('aria-invalid', 'true');
             $wrap.find('.usp-field-error').text(msg).show();
         }
 
@@ -123,7 +123,7 @@
         $(document).on('input change', '.usp-form .usp-input, .usp-form input[type="radio"], .usp-form input[type="checkbox"], .usp-form input[type="file"], .usp-signature-data', function() {
             var $wrap = $(this).closest('.usp-field-wrap');
             if ($wrap.hasClass('has-error')) {
-                $wrap.removeClass('has-error');
+                $wrap.removeClass('has-error').find(':input').removeAttr('aria-invalid');
                 $wrap.find('.usp-field-error').fadeOut(150, function() { $(this).text('').hide(); });
             }
         });
@@ -1005,6 +1005,7 @@
             e.preventDefault();
 
             var $form = $(this);
+            if ($form.data('uspSubmitting')) return;
             var $submitBtn = $form.find('.usp-btn-submit');
             var $btnText = $submitBtn.find('.usp-btn-text');
             var $spinner = $submitBtn.find('.usp-spinner');
@@ -1052,6 +1053,7 @@
                 return;
             }
 
+            $form.data('uspSubmitting', true).attr('aria-busy', 'true');
             // Lock UI and show spinner
             $submitBtn.prop('disabled', true);
             $btnText.text(i18n.submitting || 'Submitting...');
@@ -1065,6 +1067,8 @@
                 data: formData,
                 processData: false,
                 contentType: false,
+                timeout: 30000,
+                complete: function() { $form.data('uspSubmitting', false).removeAttr('aria-busy'); },
                 success: function(response) {
                     $submitBtn.prop('disabled', false);
                     $btnText.text(origBtnText);
@@ -1072,7 +1076,7 @@
 
                     if (response.success) {
                         var successIcon = '<svg style="width:22px;height:22px;vertical-align:middle;margin-right:8px;fill:currentColor;" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>';
-                        var msgHtml = successIcon + ' ' + (response.data.message || 'Thank you! Your submission has been received.');
+                        var msgHtml = successIcon + ' ' + $('<div>').text(response.data.message || 'Thank you! Your submission has been received.').html();
                         $messages.addClass('usp-success').html(msgHtml).fadeIn();
                         $form[0].reset();
                         evaluateConditionalLogic($form);
@@ -1100,13 +1104,13 @@
                         // Optional redirect
                         if (response.data.redirect_url) {
                             setTimeout(function() {
-                                window.location.href = response.data.redirect_url;
+                                try { var target = new URL(response.data.redirect_url, window.location.href); if (['http:', 'https:'].indexOf(target.protocol) !== -1) window.location.assign(target.href); } catch (error) {}
                             }, 1200);
                         }
                     } else {
                         var alertIcon = '<svg style="width:20px;height:20px;vertical-align:middle;margin-right:8px;fill:currentColor;" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>';
                         var errorMsg = (response.data && response.data.message) ? response.data.message : (i18n.generic_error || 'Something went wrong.');
-                        $messages.addClass('usp-error').html(alertIcon + ' ' + errorMsg).fadeIn();
+                        $messages.addClass('usp-error').html(alertIcon + ' ' + $('<div>').text(errorMsg).html()).fadeIn();
 
                         // Field-level error highlights from server
                         if (response.data && response.data.errors) {

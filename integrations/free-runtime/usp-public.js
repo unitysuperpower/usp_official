@@ -38,7 +38,7 @@
             $form.data('submitting', true); $button.prop('disabled', true);
             $message.removeClass('usp-error usp-success').text('Submitting…').show().attr('role','status');
             $form.find('.usp-field-wrap').removeClass('has-error').find('.usp-field-error').hide();
-            $.ajax({url: window.uspPublicData.ajax_url, type:'POST', data:new FormData(form), processData:false, contentType:false})
+            $.ajax({url: window.uspPublicData.ajax_url, type:'POST', data:new FormData(form), processData:false, contentType:false, timeout:30000})
                 .done(function (response) {
                     const data = response.data || {};
                     $message.addClass(response.success ? 'usp-success' : 'usp-error').text(data.message || 'Please try again.');

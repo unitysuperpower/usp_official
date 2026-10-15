@@ -180,7 +180,7 @@ class USP_AJAX {
             $sanitized_fields[] = $field_item;
         }
 
-        $sanitized_settings = USP_Form::layout_settings( $settings ) + array(
+        $sanitized_settings = USP_Form::layout_settings( $settings ) + USP_Form::color_settings( $settings ) + array(
             'submit_button_text'    => isset( $settings['submit_button_text'] ) ? sanitize_text_field( $settings['submit_button_text'] ) : __( 'Submit', 'usp-form-builder' ),
             'success_message'       => isset( $settings['success_message'] ) ? sanitize_textarea_field( $settings['success_message'] ) : __( 'Thank you! Your submission has been received.', 'usp-form-builder' ),
             'redirect_url'          => isset( $settings['redirect_url'] ) ? esc_url_raw( $settings['redirect_url'] ) : '',
