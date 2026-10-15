@@ -96,3 +96,12 @@ Published private student event view and .ics snapshot download for active enrol
 - Production has three manual payment methods and an exchange rate configured. JazzCash is not configured. Subscription renewal requires customer checkout; automatic recurring debits are not implemented.
 - Validated 166 website tests / 989 assertions, production assets, generated edition rendering/separation, license policy, installer metadata policy and Free builder history. Server-side public/account/admin routes returned 200; invalid license keys were rejected. A real paid WordPress upgrade has not been exercised against a customer license.
 - Installed the Free distribution locally in `/var/www/html/wp-content/plugins/usp-form-builder`, preserving the original files in `/home/usp/plugins/backups/usp-form-builder-20261014-094140`. No WordPress database changes.
+
+## TechSolution Form Studio Pro draft — 15 October 2026
+
+- The website release was unchanged (`20261014-044147-plugin-licensing`). Every application file it runs already matched GitHub `main` (`d2249dc`). That commit only changed the WordPress plugin sources and build script.
+- Backed up only the website database to `backups/20261015-102644-tsfs-pro-draft/website-before.sql`.
+- Created store product #3 `techsolution-form-studio-pro` as **unpublished**. Its six plans were copied with the same names, prices, terms and site limits as `usp-form-builder` (plans #3–#8). The 2.0.0 Pro release (SHA-256 prefix `194c8c8deaca`) was uploaded through `Packages::publish` and left **unpublished**.
+- `usp-form-builder` (product #2), its releases, orders and the two active licenses were not changed.
+- Origin checks: `/` and `/products` returned 200, and the draft product page returned 404. The ERP entry-file hash is unchanged (`eba77cba…`). ERP files and database were not touched.
+- To go live after WordPress.org approves the free plugin, publish the 2.0.0 release and the product in `/admin/store/products`. Then migrate existing `usp-form-builder` licenses and stop new sales of the old product.
