@@ -4,7 +4,7 @@ Tags: form builder, contact form, multi-step form, file upload, conditional logi
 Requires at least: 6.3
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.0.0
+Stable tag: 2.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -111,6 +111,11 @@ Yes. On activation, forms, entries and anti-spam settings from USP Form Builder 
 
 == Changelog ==
 
+= 2.0.1 =
+* Uploaded files get random names, are blocked from direct access and are deleted with their entry.
+* HTML, SVG and XML uploads are always refused.
+* Formatting of add-on content blocks is kept when the add-on is inactive.
+
 = 2.0.0 =
 * Renamed from USP Form Builder to TechSolution Form Studio, with a new slug, text domain and code prefix. Existing forms, entries and settings are migrated automatically.
 * File upload, star rating, rating slider, consent, country / nationality and multi-step forms are now included for everyone.
@@ -123,5 +128,5 @@ Yes. On activation, forms, entries and anti-spam settings from USP Form Builder 
 
 == Upgrade Notice ==
 
-= 2.0.0 =
+= 2.0.1 =
 New name and shortcode: replace `[usp_form id="…"]` with `[tsfs_form id="…"]`. Forms, entries and settings are migrated automatically.

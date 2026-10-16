@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       TechSolution Form Studio
  * Description:       Drag-and-drop form builder with conditional logic, multi-step forms, file uploads, ratings, entries management, exports, email notifications and spam protection.
- * Version:           2.0.0
+ * Version:           2.0.1
  * Requires at least: 6.3
  * Requires PHP:      7.4
  * Author:            usptechsolution
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin Constants
-define( 'TSFS_VERSION', '2.0.0' );
+define( 'TSFS_VERSION', '2.0.1' );
 define( 'TSFS_FILE', __FILE__ );
 define( 'TSFS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TSFS_URL', plugin_dir_url( __FILE__ ) );
