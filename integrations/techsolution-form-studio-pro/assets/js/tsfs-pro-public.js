@@ -331,6 +331,33 @@
     /* Core form events                                                    */
     /* ------------------------------------------------------------------ */
 
+    /* ------------------------------------------------------------------ */
+    /* Rich Content SmartCodes: show the visitor's answers as they type      */
+    /* ------------------------------------------------------------------ */
+
+    function answerText($form, key) {
+        var $inputs = $form.find('[name="' + key + '"], [name="' + key + '[]"]');
+        if (!$inputs.length) return '';
+        if ($inputs.is(':checkbox') || $inputs.is(':radio')) {
+            return $inputs.filter(':checked').map(function () { return $(this).val(); }).get().join(', ');
+        }
+        if ($inputs.is('select')) return $inputs.find('option:selected').val() ? $inputs.find('option:selected').text() : '';
+        return String($inputs.first().val() || '');
+    }
+
+    function fillSmartFields($form) {
+        $form.find('.tsfs-smart-field').each(function () {
+            $(this).text(answerText($form, $(this).attr('data-field')));
+        });
+    }
+
+    $(document).on('tsfs:form-init', function (e, $form) {
+        fillSmartFields($form);
+    });
+    $(document).on('tsfs:form-change tsfs:form-reset', function (e, $form) {
+        fillSmartFields($form);
+    });
+
     $(document).on('tsfs:form-init', function (e, $form) {
         $form.find('.tsfs-tel-masked-input').each(function () { updatePhone($(this)); });
         initSignatures($form);

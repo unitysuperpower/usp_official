@@ -42,3 +42,18 @@
 /* Show the formatted content itself, not the block's internal name. */
 .tsfs-canvas-field-card:has(.tsfs-rich-content) > .tsfs-card-label,
 .tsfs-preview-field-col:has(> .tsfs-rich-content) > label { display: none; }
+
+/* Rich Content editor panels (Custom HTML style) */
+.tsfs-rich-panel { border: 1px solid #dfe3ea; border-radius: 8px; margin-bottom: 12px; background: #fff; }
+.tsfs-rich-panel > summary { cursor: pointer; padding: 10px 14px; font-weight: 600; color: #2563eb; background: #f5f7fb; border-radius: 8px; list-style: none; display: flex; justify-content: space-between; }
+.tsfs-rich-panel > summary::-webkit-details-marker { display: none; }
+.tsfs-rich-panel > summary::after { content: "⌄"; color: #475569; }
+.tsfs-rich-panel[open] > summary { border-bottom: 1px solid #dfe3ea; border-radius: 8px 8px 0 0; }
+.tsfs-rich-panel[open] > summary::after { content: "⌃"; }
+.tsfs-rich-panel-body { padding: 12px 14px; }
+.tsfs-rich-label { display: flex; align-items: center; gap: 4px; font-weight: 600; margin: 4px 0 8px; }
+.tsfs-rich-label .dashicons { font-size: 16px; width: 16px; height: 16px; color: #64748b; cursor: help; }
+.tsfs-rich-panel #insp-rich-smartcode { width: 100%; }
+.tsfs-rich-panel .wp-editor-tabs { float: none; display: flex; gap: 4px; padding: 0 0 6px; }
+.tsfs-rich-panel .wp-switch-editor { float: none; margin: 0; border-radius: 6px 6px 0 0; padding: 6px 14px; font-size: 13px; }
+.tsfs-canvas-field-card .tsfs-rich-content a.tsfs-rich-button { display: inline-block; padding: 6px 14px; border-radius: 8px; background: #4f46e5; color: #fff; text-decoration: none; }

@@ -432,7 +432,35 @@ class TSFS_Pro_Fields {
                 $style[] = $var . ':' . $color;
             }
         }
-        echo '<div class="tsfs-rich-content" style="' . esc_attr( implode( ';', $style ) ) . '">' . self::sanitize_rich_html( isset( $field['content'] ) ? $field['content'] : '' ) . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- filtered by wp_kses in sanitize_rich_html().
+        $html = self::replace_smart_codes( self::sanitize_rich_html( isset( $field['content'] ) ? $field['content'] : '' ) );
+        echo '<div class="tsfs-rich-content" style="' . esc_attr( implode( ';', $style ) ) . '">' . $html . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- filtered by wp_kses; SmartCode values are escaped in replace_smart_codes().
+    }
+
+    /**
+     * Replace SmartCodes in Rich Content. Every value is escaped. {field:key} becomes a placeholder that the
+     * frontend script fills with the visitor's answer as they type.
+     */
+    public static function replace_smart_codes( $html ) {
+        if ( false === strpos( $html, '{' ) ) {
+            return $html;
+        }
+        $user   = wp_get_current_user();
+        $values = array(
+            '{site_name}'    => esc_html( get_bloginfo( 'name' ) ),
+            '{site_url}'     => esc_html( home_url( '/' ) ),
+            '{page_title}'   => esc_html( (string) get_the_title() ),
+            '{current_date}' => esc_html( wp_date( get_option( 'date_format' ) ) ),
+            '{user_name}'    => $user && $user->exists() ? esc_html( $user->display_name ) : '',
+            '{user_email}'   => $user && $user->exists() ? esc_html( $user->user_email ) : '',
+        );
+        $html = strtr( $html, $values );
+        return preg_replace_callback(
+            '/\{field:([a-z0-9_\-]+)\}/i',
+            function ( $m ) {
+                return '<span class="tsfs-smart-field" data-field="' . esc_attr( sanitize_key( $m[1] ) ) . '"></span>';
+            },
+            $html
+        );
     }
 
     /**

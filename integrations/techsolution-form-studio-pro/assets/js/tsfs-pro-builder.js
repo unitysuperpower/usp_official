@@ -253,6 +253,39 @@
             '</select></div>';
     }
 
+    function smartCodeOptions(current) {
+        var groups = [
+            ['Site', [['{site_name}', 'Site name'], ['{site_url}', 'Site address'], ['{page_title}', 'Current page title'], ['{current_date}', "Today's date"]]],
+            ['Visitor', [['{user_name}', 'Logged-in user name'], ['{user_email}', 'Logged-in user email']]],
+            ['Form answers (update as the visitor types)', builder.fields.filter(function (f) {
+                return f.id !== current.id && f.name && ['html', 'hidden', 'page_break', 'rich_text', 'file', 'signature'].indexOf(f.type) === -1;
+            }).map(function (f) { return ['{field:' + f.name + '}', f.label || f.name]; })]
+        ];
+        return '<option value="">Insert a SmartCode…</option>' + groups.filter(function (g) { return g[1].length; }).map(function (g) {
+            return '<optgroup label="' + esc(g[0]) + '">' + g[1].map(function (o) { return '<option value="' + esc(o[0]) + '">' + esc(o[1]) + ' — ' + esc(o[0]) + '</option>'; }).join('') + '</optgroup>';
+        }).join('');
+    }
+
+    function insertSmartCode(code) {
+        var ed = window.tinymce && window.tinymce.get(EDITOR_ID);
+        if (ed && !ed.isHidden()) {
+            ed.insertContent(code);
+        } else {
+            var area = document.getElementById(EDITOR_ID);
+            if (!area) return;
+            var start = area.selectionStart || 0, end = area.selectionEnd || 0;
+            area.value = area.value.slice(0, start) + code + area.value.slice(end);
+            area.selectionStart = area.selectionEnd = start + code.length;
+            area.focus();
+        }
+        syncRich();
+    }
+
+    $(document).on('change', '#insp-rich-smartcode', function () {
+        if (this.value) insertSmartCode(this.value);
+        this.value = '';
+    });
+
     function initRichEditor() {
         removeEditor();
         $('#tsfs-field-settings-content .tsfs-width-opt').closest('.tsfs-settings-form-group').hide();
@@ -262,10 +295,12 @@
         wp.editor.initialize(EDITOR_ID, {
             tinymce: {
                 wpautop: false,
-                height: 240,
+                wordpress_adv_hidden: false,
+                height: 260,
                 plugins: 'charmap colorpicker hr lists link paste tabfocus textcolor wordpress wplink wptextpattern',
-                toolbar1: 'formatselect fontsizeselect | bold italic underline strikethrough | forecolor backcolor',
-                toolbar2: 'bullist numlist outdent indent | alignleft aligncenter alignright alignjustify | blockquote hr | link unlink | subscript superscript | removeformat undo redo',
+                toolbar1: 'formatselect tsfs_button bold italic bullist numlist link blockquote alignleft aligncenter alignright',
+                toolbar2: 'underline strikethrough forecolor backcolor fontsizeselect removeformat outdent indent hr undo redo',
+                content_style: 'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#1f2937;margin:10px}a.tsfs-rich-button{display:inline-block;padding:8px 18px;border-radius:8px;background:#4f46e5;color:#fff;text-decoration:none;font-weight:600}',
                 toolbar3: '',
                 toolbar4: '',
                 block_formats: 'Paragraph=p;Heading 2=h2;Heading 3=h3;Heading 4=h4;Heading 5=h5;Heading 6=h6;Preformatted=pre',
@@ -273,6 +308,29 @@
                 textcolor_map: ['0f172a', 'Dark', '334155', 'Slate', '64748b', 'Grey', 'ffffff', 'White', '4f46e5', 'Indigo', '2563eb', 'Blue', '0891b2', 'Cyan', '059669', 'Green', '65a30d', 'Lime', 'ca8a04', 'Yellow', 'ea580c', 'Orange', 'dc2626', 'Red', 'db2777', 'Pink', '7c3aed', 'Violet', 'fef3c7', 'Light yellow', 'dcfce7', 'Light green', 'dbeafe', 'Light blue', 'fee2e2', 'Light red'],
                 setup: function (ed) {
                     ed.on('change keyup input undo redo SetContent ExecCommand', syncRich);
+                    ed.on('init', function () {
+                        $('#' + EDITOR_ID + '-html').text('Code');
+                    });
+                    // "Button" inserts a styled call-to-action link.
+                    ed.addButton('tsfs_button', {
+                        text: 'Button',
+                        tooltip: 'Insert a button link',
+                        onclick: function () {
+                            ed.windowManager.open({
+                                title: 'Insert button',
+                                body: [
+                                    { type: 'textbox', name: 'label', label: 'Button text', value: 'Learn more' },
+                                    { type: 'textbox', name: 'url', label: 'Link (URL)', value: 'https://' },
+                                    { type: 'checkbox', name: 'blank', label: 'Open in a new tab' }
+                                ],
+                                onsubmit: function (e) {
+                                    var url = String(e.data.url || '').trim();
+                                    if (!/^(https?:|mailto:|tel:|\/)/i.test(url)) return;
+                                    ed.insertContent('<a class="tsfs-rich-button" href="' + esc(url) + '"' + (e.data.blank ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' + esc(e.data.label || 'Learn more') + '</a>&nbsp;');
+                                }
+                            });
+                        }
+                    });
                 }
             },
             quicktags: { buttons: 'strong,em,ul,ol,li,link,close' },
@@ -297,9 +355,14 @@
             var styles = data.list_styles || { ul: ['disc', 'circle', 'square', 'none'], ol: ['decimal', 'lower-alpha', 'upper-alpha', 'lower-roman', 'upper-roman', 'none'] };
             var widths = (data.rich_widths || ['100', '75', '66', '50', '33', '25']).map(function (w) { return [w, w === '66' ? '66% (two thirds)' : (w === '33' ? '33% (one third)' : w + '%')]; });
             return '<div class="tsfs-rich-inspector">' +
-                '<div class="tsfs-settings-form-group"><label for="' + EDITOR_ID + '">Content</label>' +
+                '<details class="tsfs-rich-panel" open><summary>Custom HTML</summary><div class="tsfs-rich-panel-body">' +
+                '<label class="tsfs-rich-label" for="' + EDITOR_ID + '">HTML Code <span class="dashicons dashicons-info-outline" title="Use Visual to format text, or Code to edit the HTML. Scripts and styles are removed when saved."></span></label>' +
                 '<textarea id="' + EDITOR_ID + '" class="wp-editor-area" rows="10">' + esc(field.content || '') + '</textarea>' +
-                '<p class="description">Select text, then use the toolbar for bold, sizes, colours, headings, lists, alignment and links.</p></div>' +
+                '<label class="tsfs-rich-label" for="insp-rich-smartcode">Dynamic SmartCodes</label>' +
+                '<select id="insp-rich-smartcode">' + smartCodeOptions(field) + '</select>' +
+                '<p class="description">SmartCodes are replaced on the live form. Form answers fill in while the visitor types.</p>' +
+                '</div></details>' +
+                '<details class="tsfs-rich-panel" open><summary>Block style</summary><div class="tsfs-rich-panel-body">' +
                 '<div class="tsfs-rich-grid">' +
                 selectControl('insp-rich-width', 'Block width', widths, field.width || '100') +
                 selectControl('insp-rich-font', 'Base text size', [12, 13, 14, 15, 16, 17, 18, 20, 22, 24].map(function (n) { return [String(n), n + 'px']; }), field.font_size || '16') +
@@ -311,7 +374,7 @@
                 colorControl('insp-rich-bg', 'Background', field.bg_color) +
                 colorControl('insp-rich-border', 'Border', field.border_color) +
                 selectControl('insp-rich-radius', 'Corners', [['0', 'Square'], ['6', 'Slightly rounded'], ['12', 'Rounded'], ['20', 'Very rounded']], field.radius || '0') +
-                '</div></div>';
+                '</div></div></details></div>';
         },
         readInspector: function (field) {
             if (!$('#' + EDITOR_ID).length) return;
