@@ -46,6 +46,7 @@ class ProjectController extends Controller
             $approved = $data['decision'] === 'approve';
             $item->update(['status' => $approved ? 'completed' : 'changes_requested', 'approved_at' => $approved ? now() : null, 'approved_by' => $approved ? $request->user()->id : null, 'approval_note' => $data['approval_note'] ?? null]);
             $project->updates()->create(['user_id' => $request->user()->id, 'body' => ($approved ? 'Approved milestone: ' : 'Requested changes to milestone: ').$item->title, 'is_internal' => false]);
+            \App\Support\SiteNotifications::milestoneReviewed($project, $item, $approved);
         });
 
         return back()->with('success', 'Your milestone review has been saved.');

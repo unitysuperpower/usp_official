@@ -25,9 +25,12 @@ class MailSetting extends Model
         'payment_rejected' => 'Product payment not accepted',
         'enrollment_confirmed' => 'Course enrollment confirmed',
         'service_request' => 'Service request received',
+        'project_shared' => 'Project shared with the client',
+        'milestone_review' => 'Milestone ready for the client to approve',
         'admin_payment' => 'Alert admin: new product payment to verify',
         'admin_service_request' => 'Alert admin: new service request',
         'admin_contact' => 'Alert admin: new contact message',
+        'admin_milestone_review' => 'Alert admin: client approved or requested changes',
     ];
 
     public static function current(): self

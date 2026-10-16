@@ -188,6 +188,62 @@ class SiteNotifications
         ));
     }
 
+    /** The project became visible to the client's account. */
+    public static function projectShared(\App\Models\Project $project): void
+    {
+        $project->loadMissing('customer');
+        SiteMail::send($project->customer?->email, 'project_shared', new NotificationMail(
+            subjectLine: 'Your project workspace is ready: '.$project->title,
+            heading: 'Follow your project online',
+            lines: [
+                'Hello '.($project->customer?->name ?: 'there').',',
+                'Your project "'.$project->title.'" now has an online workspace. You can follow milestones, read updates, share files and approve deliverables there.',
+            ],
+            details: ['Project' => $project->title, 'Target date' => $project->due_on?->format('j F Y')],
+            actionLabel: 'Open your project',
+            actionUrl: url('/projects/'.$project->id),
+            replyToAddress: SiteMail::adminAddress(),
+        ));
+    }
+
+    /** A milestone was sent to the client for approval. */
+    public static function milestoneReview(\App\Models\Project $project, \App\Models\ProjectMilestone $milestone): void
+    {
+        $project->loadMissing('customer');
+        SiteMail::send($project->customer?->email, 'milestone_review', new NotificationMail(
+            subjectLine: 'Please review: '.$milestone->title,
+            heading: 'A milestone is ready for your review',
+            lines: [
+                'Hello '.($project->customer?->name ?: 'there').',',
+                'We have finished "'.$milestone->title.'" for '.$project->title.'. Please review it and approve it, or tell us what to change.',
+            ],
+            details: [
+                'Project' => $project->title,
+                'Milestone' => $milestone->title,
+                'Details' => \Illuminate\Support\Str::limit((string) $milestone->description, 500),
+            ],
+            actionLabel: 'Review and approve',
+            actionUrl: url('/projects/'.$project->id),
+            replyToAddress: SiteMail::adminAddress(),
+        ));
+    }
+
+    /** The client approved a milestone or asked for changes. */
+    public static function milestoneReviewed(\App\Models\Project $project, \App\Models\ProjectMilestone $milestone, bool $approved): void
+    {
+        $project->loadMissing('assignee', 'customer');
+        $to = $project->assignee?->email ?: SiteMail::adminAddress();
+        SiteMail::send($to, 'admin_milestone_review', new NotificationMail(
+            subjectLine: ($approved ? 'Approved: ' : 'Changes requested: ').$milestone->title.' ('.$project->title.')',
+            heading: $approved ? 'The client approved a milestone' : 'The client requested changes',
+            lines: [($project->customer?->name ?: 'The client').($approved ? ' approved this milestone.' : ' asked for changes to this milestone.')],
+            details: ['Project' => $project->title, 'Milestone' => $milestone->title, 'Client feedback' => $milestone->approval_note],
+            actionLabel: 'Open project',
+            actionUrl: url('/admin/projects/'.$project->id),
+            replyToAddress: $project->customer?->email,
+        ));
+    }
+
     public static function contactReceived(ContactMessage $message): void
     {
         SiteMail::send(SiteMail::adminAddress(), 'admin_contact', new NotificationMail(

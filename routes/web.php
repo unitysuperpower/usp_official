@@ -71,6 +71,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::patch('projects/{project}', [App\Http\Controllers\Admin\ProjectController::class, 'update'])->name('projects.update');
     Route::post('projects/{project}/milestones', [App\Http\Controllers\Admin\ProjectController::class, 'storeMilestone'])->name('projects.milestones.store');
     Route::patch('projects/{project}/milestones/{milestone}', [App\Http\Controllers\Admin\ProjectController::class, 'updateMilestone'])->name('projects.milestones.update');
+    Route::post('projects/{project}/milestones/{milestone}/request-approval', [App\Http\Controllers\Admin\ProjectController::class, 'requestApproval'])->name('projects.milestones.request-approval');
+    Route::patch('projects/{project}/customer', [App\Http\Controllers\Admin\ProjectController::class, 'linkCustomer'])->name('projects.customer');
     Route::patch('requests/{serviceRequest}/lead', [AdminServiceRequestController::class, 'updateLead'])->name('requests.lead');
     Route::post('requests/{serviceRequest}/project', [AdminServiceRequestController::class, 'convert'])->name('requests.convert');
     Route::get('/requests', [AdminServiceRequestController::class, 'index'])->name('requests.index');

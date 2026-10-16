@@ -714,6 +714,7 @@ export function ProjectDetail({
     files,
     assignees,
     linkedCustomerEmail,
+    suggestedAccountEmail,
 }) {
     const base = `/projects/${project.id}`;
     const closed = ["completed", "cancelled"].includes(project.status);
@@ -748,6 +749,37 @@ export function ProjectDetail({
                     </p>
                 </div>
             </div>
+            {admin && !project.customer_id && (
+                <div className="panel project-share-warning" role="alert">
+                    <h2>The client cannot see this project yet</h2>
+                    <p>
+                        Projects are visible only to the registered account
+                        linked here. Until then, the client sees no
+                        milestones, updates or approval buttons.
+                        {suggestedAccountEmail
+                            ? ` An account with ${suggestedAccountEmail} already exists — link it below.`
+                            : ` Ask ${project.customer_email || "the client"} to create an account on this website (Sign in → Create an account), then link that email here.`}
+                    </p>
+                    <Form
+                        action={`/admin/projects/${project.id}/customer`}
+                        method="PATCH"
+                        submit="Share project with client"
+                    >
+                        <Field
+                            name="customer_account_email"
+                            title="Client's account email"
+                            type="email"
+                            value={suggestedAccountEmail || project.customer_email}
+                            required
+                        />
+                    </Form>
+                </div>
+            )}
+            {admin && project.customer_id && (
+                <p className="project-share-ok">
+                    Shared with the client account {linkedCustomerEmail}.
+                </p>
+            )}
             {admin && (
                 <details className="panel workflow-settings">
                     <summary>Project settings & internal notes</summary>
@@ -856,6 +888,36 @@ export function ProjectDetail({
                             )}
                             {m.approved_at && (
                                 <small>Approved {date(m.approved_at)}</small>
+                            )}
+                            {admin &&
+                                !closed &&
+                                !["awaiting_approval", "completed"].includes(m.status) && (
+                                    <Form
+                                        action={`/admin/projects/${project.id}/milestones/${m.id}/request-approval`}
+                                        submit="Send to client for approval"
+                                        className="milestone-request"
+                                    >
+                                        {!project.customer_id && (
+                                            <small>
+                                                Share the project with the
+                                                client first.
+                                            </small>
+                                        )}
+                                    </Form>
+                                )}
+                            {admin && m.status === "awaiting_approval" && (
+                                <small className="milestone-hint">
+                                    Waiting for the client to approve.
+                                </small>
+                            )}
+                            {!admin && !closed && m.status !== "awaiting_approval" && m.status !== "completed" && (
+                                <small className="milestone-hint">
+                                    {m.status === "changes_requested"
+                                        ? "Thanks for your feedback. The team is making the changes and will send this for review again."
+                                        : m.requires_approval
+                                          ? "The team is working on this. You'll be emailed and asked to approve it here when it's ready."
+                                          : "The team is working on this milestone."}
+                                </small>
                             )}
                             {admin && !closed && (
                                 <details className="milestone-editor">

@@ -21,3 +21,10 @@
     transform: translateY(0);
   }
 }
+
+/* Project sharing and milestone hints */
+.project-share-warning { border: 1px solid #f0b4a8; background: #fff6f3; }
+.project-share-warning h2 { margin-top: 0; color: #9a3412; font-size: 1.15rem; }
+.project-share-ok { margin: 0 0 16px; color: #2f6b4f; font-weight: 600; }
+.milestone-hint { display: block; margin-top: 8px; color: #6b7670; }
+.milestone-request { margin-top: 10px; }

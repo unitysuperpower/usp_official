@@ -30,6 +30,10 @@ class ProjectWorkspace
         if ($admin) {
             $props['assignees'] = User::where('is_admin', true)->orderBy('name')->get(['id', 'name']);
             $props['linkedCustomerEmail'] = $project->customer?->email;
+            // When the project is not shared yet, suggest the registered account that matches the lead's email.
+            $props['suggestedAccountEmail'] = ! $project->customer_id && $project->customer_email
+                ? User::where('is_admin', false)->where('email', $project->customer_email)->value('email')
+                : null;
         }
 
         return $props;

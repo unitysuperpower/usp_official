@@ -55,6 +55,9 @@ class ProjectController extends Controller
             }
             if ($request->has('customer_account_email')) {
                 $data['customer_id'] = ! empty($data['customer_account_email']) ? User::where('email', $data['customer_account_email'])->where('is_admin', false)->value('id') : null;
+                if ($data['customer_id'] && $data['customer_id'] !== $project->customer_id) {
+                    \App\Support\SiteNotifications::projectShared($project->forceFill(['customer_id' => $data['customer_id']]));
+                }
             }
             unset($data['customer_account_email']);
             $data['completed_at'] = $data['status'] === 'completed' ? ($project->completed_at ?? now()) : null;
@@ -74,10 +77,50 @@ class ProjectController extends Controller
             $project = Project::whereKey($project->id)->lockForUpdate()->firstOrFail();
             ProjectWorkspace::requireOpen($project);
             $this->validateApproval($data);
-            $project->milestones()->create($data);
+            $item = $project->milestones()->create($data);
+            if ($item->status === 'awaiting_approval') {
+                \App\Support\SiteNotifications::milestoneReview($project, $item);
+            }
         });
 
         return back()->with('success', 'Milestone added.');
+    }
+
+    /** Share the project with a registered customer account so the client can see it. */
+    public function linkCustomer(Request $request, Project $project)
+    {
+        $data = $request->validate(['customer_account_email' => ['required', 'email', Rule::exists('users', 'email')->where('is_admin', 0)]],
+            ['customer_account_email.exists' => 'No customer account uses this email. Ask the client to register with it first, then link it here.']);
+        DB::transaction(function () use ($project, $data) {
+            $project = Project::whereKey($project->id)->lockForUpdate()->firstOrFail();
+            $customerId = User::where('email', $data['customer_account_email'])->where('is_admin', false)->value('id');
+            if ($project->customer_id !== $customerId) {
+                $project->update(['customer_id' => $customerId]);
+                \App\Support\SiteNotifications::projectShared($project);
+            }
+        });
+
+        return back()->with('success', 'Project shared. The client can now see it under My projects.');
+    }
+
+    /** Ask the client to approve a milestone. */
+    public function requestApproval(Project $project, int $milestone)
+    {
+        DB::transaction(function () use ($project, $milestone) {
+            $project = Project::whereKey($project->id)->lockForUpdate()->firstOrFail();
+            ProjectWorkspace::requireOpen($project);
+            if (! $project->customer_id) {
+                throw ValidationException::withMessages(['project' => 'Link the client\'s account first, so they can see and approve this milestone.']);
+            }
+            $item = $project->milestones()->whereKey($milestone)->lockForUpdate()->firstOrFail();
+            if ($item->status === 'completed') {
+                throw ValidationException::withMessages(['status' => 'This milestone is already completed.']);
+            }
+            $item->update(['requires_approval' => true, 'status' => 'awaiting_approval', 'approved_at' => null, 'approved_by' => null]);
+            \App\Support\SiteNotifications::milestoneReview($project, $item);
+        });
+
+        return back()->with('success', 'Sent to the client for approval. They have been emailed and will see the approve button in their project.');
     }
 
     public function updateMilestone(Request $request, Project $project, int $milestone)
@@ -88,6 +131,7 @@ class ProjectController extends Controller
             ProjectWorkspace::requireOpen($project);
             $item = $project->milestones()->whereKey($milestone)->lockForUpdate()->firstOrFail();
             // Editing approved work requires a fresh approval; unchanged saves preserve it.
+            $wasAwaiting = $item->status === 'awaiting_approval';
             $item->fill($data);
             if ($item->isDirty()) {
                 $this->validateApproval($data);
@@ -96,6 +140,9 @@ class ProjectController extends Controller
                 $item->approval_note = null;
             }
             $item->save();
+            if (! $wasAwaiting && $item->status === 'awaiting_approval' && $project->customer_id) {
+                \App\Support\SiteNotifications::milestoneReview($project, $item);
+            }
         });
 
         return back()->with('success', 'Milestone updated.');
