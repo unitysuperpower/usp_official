@@ -8,6 +8,17 @@ import React, {
 } from "react";
 import DOMPurify from "dompurify";
 export const context = window.__USP__;
+
+// Rich content from the editor: keep formatting, tables, callouts and task lists, allow video
+// iframes only from known players, and make new-tab links safe.
+const EMBED = /^https:\/\/(www\.youtube-nocookie\.com|www\.youtube\.com|player\.vimeo\.com|www\.loom\.com|drive\.google\.com)\//;
+DOMPurify.addHook("uponSanitizeElement", (node, data) => {
+    if (data.tagName === "iframe" && !EMBED.test(node.getAttribute("src") || "")) node.remove();
+});
+DOMPurify.addHook("afterSanitizeAttributes", (node) => {
+    if (node.tagName === "A" && node.getAttribute("target") === "_blank") node.setAttribute("rel", "noopener noreferrer");
+});
+export const sanitize = (html) => DOMPurify.sanitize(html || "", { ADD_TAGS: ["iframe"], ADD_ATTR: ["target", "allow", "allowfullscreen", "frameborder", "loading", "referrerpolicy"] });
 const FormScope = createContext(null);
 export const rows = (value) =>
     Array.isArray(value) ? value : value?.data || [];
@@ -33,7 +44,7 @@ export function Html({ value }) {
         <div
             className="prose"
             dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(value || ""),
+                __html: sanitize(value),
             }}
         />
     );

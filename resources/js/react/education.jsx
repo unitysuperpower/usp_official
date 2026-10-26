@@ -1,5 +1,6 @@
 import LearningCalendar from "./learning-calendar";
 import StudentHub from "./education-hub";
+import RichEditor from "./rich-editor-lazy";
 import { TeachingDashboard } from "./education-insights";
 import {
     EnrollmentReview,
@@ -1272,18 +1273,10 @@ function LessonFields({ lesson = {} }) {
                     required
                 />
             </div>
-            <Field
-                name="content"
-                title="Lesson content"
-                type="textarea"
-                rows={14}
-                value={lesson.content}
-                required
-                maxLength={100000}
-            />
-            <small className="field-hint">
-                Formatting: <code># Heading</code>, <code>- bullet</code>, <code>1. step</code>, <code>**bold**</code>, <code>[link](https://…)</code>. Plain text works too — blank lines start new paragraphs.
-            </small>
+            <div className="field">
+                <span>Lesson content *</span>
+                <RichEditor name="content" value={lesson.content} minHeight={260} placeholder="Write the lesson… Add headings, lists, images, videos, tables and tip boxes." />
+            </div>
             <Field
                 name="video_url"
                 title="Video URL (HTTPS) — YouTube, Vimeo, Loom and Google Drive links play inside the lesson"

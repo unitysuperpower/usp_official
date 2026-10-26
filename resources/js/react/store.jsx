@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { context, rows, date, label, Heading, Field, Form, Badge, Pagination, Table, Empty, Modal, ModalErrors, DeleteAction, api } from "./ui";
 import { PaymentMethodCards, PaymentInstructions } from "./payment-cards";
 import { LessonBody } from "./education-insights";
+import RichEditor from "./rich-editor-lazy";
 
 // Product store: public catalog and product pages, checkout, the customer's licenses, and the
 // admin product studio, orders and licenses.
@@ -1299,10 +1300,10 @@ function Editor({ product }) {
                         <Field name="category" title="Category" value={product?.category || "WordPress plugin"} maxLength={60} />
                     </div>
                     <Field name="summary" title="Summary (shown on cards and at the top of the page)" type="textarea" rows={2} value={product?.summary} required maxLength={500} />
-                    <Field name="description" title="Full description" type="textarea" rows={8} value={product?.description} />
-                    <small className="field-hint">
-                        Supports <code># headings</code>, <code>- bullets</code>, <code>**bold**</code> and <code>[links](https://…)</code>.
-                    </small>
+                    <div className="field">
+                        <span>Full description</span>
+                        <RichEditor name="description" value={product?.description} minHeight={240} placeholder="Describe what the plugin does, who it’s for and why it’s great…" />
+                    </div>
                     <h3>Requirements</h3>
                     <div className="store-field-grid three">
                         <Field name="requirements[wordpress]" title="Minimum WordPress" value={product?.requirements?.wordpress} placeholder="6.0" maxLength={20} />

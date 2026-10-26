@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import RichEditor from "./rich-editor-lazy";
 import {
     context,
     rows,
@@ -277,18 +278,14 @@ export function ResourceEditor({ kind, embedded = false, onCancel, ...props }) {
                         value={blog ? item.excerpt : item.short_description}
                     />
                 )}
-                <Field
-                    name={blog ? "content" : "description"}
-                    title={
-                        blog
-                            ? "Article content (HTML supported)"
-                            : "Description (HTML supported)"
-                    }
-                    type="textarea"
-                    rows={10}
-                    value={item.content || item.description}
-                    required={!category}
-                />
+                {category ? (
+                    <Field name="description" title="Description" type="textarea" rows={4} value={item.description} />
+                ) : (
+                    <div className="field">
+                        <span>{blog ? "Article" : "Service description"} *</span>
+                        <RichEditor name={blog ? "content" : "description"} value={item.content || item.description} placeholder={blog ? "Write your article… Type ## for a heading, - for a list, or drop images in." : "Describe the service…"} />
+                    </div>
+                )}
                 {kind === "services" && (
                     <>
                         <div className="form-grid">

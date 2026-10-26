@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from "react";
-import DOMPurify from "dompurify";
-import { context, date, Heading, Form, Field, Modal, ModalErrors, Empty } from "./ui";
+import { context, sanitize, date, Heading, Form, Field, Modal, ModalErrors, Empty } from "./ui";
 
 // Smart-learning building blocks shared by the student course hub and the instructor classroom.
 
@@ -79,7 +78,7 @@ const inline = (s) =>
  * [links](https://…)) becomes readable HTML. Content that is already HTML is sanitised as-is.
  */
 export function formatLesson(text = "") {
-    if (/<\s*(p|ul|ol|h[1-6]|div|br|strong|img|table)\b/i.test(text)) return text;
+    if (/<\s*(p|ul|ol|h[1-6]|div|br|strong|img|table|blockquote|pre|figure)\b/i.test(text)) return text;
     const out = [];
     let list = null,
         para = [];
@@ -134,7 +133,7 @@ export function formatLesson(text = "") {
 }
 
 export function LessonBody({ content }) {
-    const html = useMemo(() => DOMPurify.sanitize(formatLesson(content || ""), { ADD_ATTR: ["target", "rel"] }), [content]);
+    const html = useMemo(() => sanitize(formatLesson(content || "")), [content]);
     return <div className="prose lesson-prose" dangerouslySetInnerHTML={{ __html: html }} />;
 }
 

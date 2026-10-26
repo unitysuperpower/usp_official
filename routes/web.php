@@ -136,6 +136,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::patch('chat/{id}/status', [App\Http\Controllers\Admin\ChatController::class, 'updateStatus'])->name('chat.status');
     });
 
+    Route::post('editor/images', [App\Http\Controllers\Admin\EditorUploadController::class, 'store'])->middleware('throttle:60,1')->name('editor.images');
+
     // Admin Profile
     Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('profile', [ProfileController::class, 'update'])->name('profile.update');
