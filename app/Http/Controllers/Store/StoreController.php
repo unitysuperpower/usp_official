@@ -24,7 +24,12 @@ class StoreController extends Controller
 {
     public function index()
     {
-        return ReactPage::render('store.catalog', ['products' => DigitalProduct::where('published', true)->with(['plans' => fn ($q) => $q->where('published', true)->orderBy('price_minor')])->paginate(12)]);
+        $products = DigitalProduct::where('published', true)->with(['plans' => fn ($q) => $q->where('published', true)->orderBy('price_minor')])
+            ->orderBy('sort_order')->orderBy('name')->paginate(12);
+        $latest = ProductRelease::whereIn('digital_product_id', $products->modelKeys())->where('published', true)
+            ->orderByDesc('id')->get(['digital_product_id', 'edition', 'version', 'created_at'])->groupBy('digital_product_id')->map(fn ($r) => $r->first());
+        $products->getCollection()->each(fn ($p) => $p->setAttribute('latest_release', $latest[$p->id] ?? null)->setAttribute('has_free', (bool) ProductRelease::where('digital_product_id', $p->id)->where('edition', 'free')->where('published', true)->exists()));
+        return ReactPage::render('store.catalog', ['products' => $products]);
     }
 
     public function show(string $slug)
@@ -33,6 +38,9 @@ class StoreController extends Controller
         return ReactPage::render('store.product', [
             'product' => $product->load(['plans' => fn ($q) => $q->where('published', true)->orderBy('price_minor')]),
             'freeRelease' => $product->releases()->where('published', true)->where('edition', 'free')->latest('id')->first(),
+            // Public changelog: versions and notes only, never package paths or checksums.
+            'releases' => $product->releases()->where('published', true)->latest('id')->limit(15)->get(['id', 'version', 'edition', 'changelog', 'created_at']),
+            'owned' => auth()->check() ? ProductLicense::where('user_id', auth()->id())->where('digital_product_id', $product->id)->where('status', 'active')->where('expires_at', '>', now())->value('id') : null,
             'checkoutReady' => (float) StoreSetting::find(1)?->usd_pkr_rate > 0 && (count(Education::methods()) > 0 || app(JazzCashService::class)->configured()),
         ]);
     }
@@ -41,7 +49,8 @@ class StoreController extends Controller
     {
         return ReactPage::render('store.library', [
             'licenses' => ProductLicense::where('user_id', $request->user()->id)->with('product')->withCount('activations')->latest()->paginate(12, ['*'], 'licenses_page'),
-            'orders' => ProductOrder::where('user_id', $request->user()->id)->latest()->paginate(12, ['*'], 'orders_page'),
+            'orders' => ProductOrder::where('user_id', $request->user()->id)->with('payments:id,product_order_id,status')->latest()->paginate(12, ['*'], 'orders_page'),
+            'latest' => ProductRelease::where('published', true)->where('edition', 'pro')->orderByDesc('id')->get(['id', 'digital_product_id', 'version'])->groupBy('digital_product_id')->map(fn ($r) => $r->first()),
         ]);
     }
 
