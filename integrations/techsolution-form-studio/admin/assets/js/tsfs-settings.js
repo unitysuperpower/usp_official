@@ -8,32 +8,36 @@ jQuery(function ($) {
 
     var __ = wp.i18n.__;
 
-    // Tab Switching
+    // Section switching (left menu). The selected section is remembered in the URL hash.
+    function showTab(tab) {
+        var $tab = $('.tsfs-hub-tab[data-tab="' + tab + '"]');
+        if (!$tab.length) {
+            return;
+        }
+        $('.tsfs-hub-tab').removeClass('active').attr('aria-selected', 'false');
+        $tab.addClass('active').attr('aria-selected', 'true');
+        $('.tsfs-hub-panel').removeClass('active').prop('hidden', true);
+        $('#tsfs-panel-' + tab).addClass('active').prop('hidden', false);
+    }
     $('.tsfs-hub-tab').on('click', function () {
         var tab = $(this).data('tab');
-        $('.tsfs-hub-tab').removeClass('active').css({ color: '#64748b', 'border-bottom-color': 'transparent' });
-        $(this).addClass('active').css({ color: '#4f46e5', 'border-bottom-color': '#4f46e5' });
-        $('.tsfs-hub-panel').hide();
-        $('#tsfs-panel-' + tab).show();
+        showTab(tab);
+        if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', '#' + tab);
+        }
     });
+    if (window.location.hash) {
+        showTab(window.location.hash.slice(1));
+    }
 
-    // Provider Selector Change
+    // CAPTCHA provider: highlight the choice and show only the keys it needs.
     $('input[name="anti_spam_provider"]').on('change', function () {
         var val = $(this).val();
-        $('.tsfs-provider-card').css({ 'border-color': '#cbd5e1', background: '#fff' });
-        $(this).closest('.tsfs-provider-card').css({ 'border-color': '#4f46e5', background: '#eef2ff' });
-
-        if (val === 'recaptcha_v2' || val === 'recaptcha_v3') {
-            $('#tsfs-recaptcha-keys-wrap').slideDown(150);
-            $('#tsfs-turnstile-keys-wrap').slideUp(150);
-            $('#tsfs-recaptcha-v3-score-wrap')[val === 'recaptcha_v3' ? 'slideDown' : 'slideUp'](150);
-        } else if (val === 'turnstile') {
-            $('#tsfs-turnstile-keys-wrap').slideDown(150);
-            $('#tsfs-recaptcha-keys-wrap').slideUp(150);
-        } else {
-            $('#tsfs-recaptcha-keys-wrap').slideUp(150);
-            $('#tsfs-turnstile-keys-wrap').slideUp(150);
-        }
+        $('.tsfs-provider-card').removeClass('is-selected');
+        $(this).closest('.tsfs-provider-card').addClass('is-selected');
+        $('#tsfs-recaptcha-keys-wrap').prop('hidden', val !== 'recaptcha_v2' && val !== 'recaptcha_v3');
+        $('#tsfs-recaptcha-v3-score-wrap').prop('hidden', val !== 'recaptcha_v3');
+        $('#tsfs-turnstile-keys-wrap').prop('hidden', val !== 'turnstile');
     });
 
     function checked(id) {

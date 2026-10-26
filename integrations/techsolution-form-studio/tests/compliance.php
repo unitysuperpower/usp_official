@@ -39,7 +39,16 @@ foreach ( $files as $file ) {
             $errors[] = "$rel can be loaded directly (missing ABSPATH check).";
         }
         // Text domain must match the slug.
-        if ( preg_match_all( "/(?:__|_e|esc_html__|esc_html_e|esc_attr__|esc_attr_e|_n|_x)\(\s*'(?:[^'\\\\]|\\\\.)*'\s*,\s*'([^']+)'/", $code, $m ) ) {
+        // _n( single, plural, count, domain ) is matched separately below.
+        $domains = array();
+        if ( preg_match_all( "/(?<![a-z_])(?:__|_e|esc_html__|esc_html_e|esc_attr__|esc_attr_e|_x)\(\s*'(?:[^'\\\\]|\\\\.)*'\s*,\s*'([^']+)'/", $code, $m ) ) {
+            $domains = $m[1];
+        }
+        if ( preg_match_all( "/(?<![a-z_])_n\(\s*'(?:[^'\\\\]|\\\\.)*'\s*,\s*'(?:[^'\\\\]|\\\\.)*'\s*,[^,]+,\s*'([^']+)'/", $code, $m ) ) {
+            $domains = array_merge( $domains, $m[1] );
+        }
+        if ( $domains ) {
+            $m = array( 1 => $domains );
             foreach ( array_unique( $m[1] ) as $domain ) {
                 if ( 'techsolution-form-studio' !== $domain ) {
                     $errors[] = "$rel uses text domain \"$domain\".";

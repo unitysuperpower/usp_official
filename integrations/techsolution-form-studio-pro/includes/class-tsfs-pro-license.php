@@ -224,49 +224,91 @@ class TSFS_Pro_License {
     public static function render_page() {
         $license = self::get();
         $valid   = self::is_valid();
+        $expires = $license['expires'] ? strtotime( $license['expires'] ) : 0;
+        $days    = $expires ? (int) ceil( ( $expires - time() ) / DAY_IN_SECONDS ) : 0;
+        $state   = $valid ? ( $days <= 14 ? 'is-warn' : 'is-on' ) : 'is-off';
         ?>
-        <div class="wrap">
-            <h1><?php esc_html_e( 'TechSolution Form Studio Pro — License', 'techsolution-form-studio-pro' ); ?></h1>
-            <p><?php esc_html_e( 'All Pro fields work without a license. Activate your license to receive automatic updates and support.', 'techsolution-form-studio-pro' ); ?></p>
+        <div class="wrap tsfs-admin-wrap tsfs-license-page">
+            <header class="tsfs-page-header">
+                <div class="tsfs-header-title-group">
+                    <span class="tsfs-header-icon-box"><span class="dashicons dashicons-admin-network" aria-hidden="true"></span></span>
+                    <div>
+                        <h1 class="tsfs-main-heading"><?php esc_html_e( 'Pro License', 'techsolution-form-studio-pro' ); ?></h1>
+                        <p class="tsfs-main-subheading"><?php esc_html_e( 'All Pro fields work without a license. Activate it to receive automatic updates and support.', 'techsolution-form-studio-pro' ); ?></p>
+                    </div>
+                </div>
+                <div class="tsfs-header-actions-group">
+                    <a class="button" href="https://usp.com.pk/account/products" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'My licenses at usp.com.pk ↗', 'techsolution-form-studio-pro' ); ?></a>
+                </div>
+            </header>
 
-            <table class="form-table" role="presentation">
-                <tr>
-                    <th scope="row"><?php esc_html_e( 'Status', 'techsolution-form-studio-pro' ); ?></th>
-                    <td>
+            <div class="tsfs-status-strip tsfs-license-strip">
+                <div class="tsfs-status-item">
+                    <span class="tsfs-status-dot <?php echo esc_attr( $state ); ?>" aria-hidden="true"></span>
+                    <div>
+                        <span class="tsfs-status-label"><?php esc_html_e( 'Status', 'techsolution-form-studio-pro' ); ?></span>
                         <strong><?php echo $valid ? esc_html__( 'Active — updates enabled', 'techsolution-form-studio-pro' ) : esc_html__( 'Not active', 'techsolution-form-studio-pro' ); ?></strong>
-                        <?php if ( $license['expires'] ) : ?>
-                            <?php /* translators: %s: expiry date */ ?>
-                            <p class="description"><?php echo esc_html( sprintf( __( 'Expires: %s', 'techsolution-form-studio-pro' ), $license['expires'] ) ); ?></p>
-                        <?php endif; ?>
-                        <?php if ( $license['limit'] ) : ?>
-                            <?php /* translators: 1: sites in use, 2: site limit */ ?>
-                            <p class="description"><?php echo esc_html( sprintf( __( 'Sites: %1$d of %2$d', 'techsolution-form-studio-pro' ), $license['site_count'], $license['limit'] ) ); ?></p>
-                        <?php endif; ?>
-                        <?php if ( $license['error'] ) : ?>
-                            <p class="description"><?php echo esc_html( $license['error'] ); ?></p>
-                        <?php endif; ?>
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row"><label for="tsfs-pro-license-key"><?php esc_html_e( 'License key', 'techsolution-form-studio-pro' ); ?></label></th>
-                    <td>
-                        <input type="password" id="tsfs-pro-license-key" class="regular-text code" autocomplete="off" value="<?php echo esc_attr( $license['key'] ); ?>">
-                        <p class="description">
-                            <?php esc_html_e( 'Find your key in your account at usp.com.pk.', 'techsolution-form-studio-pro' ); ?>
-                            <a href="https://usp.com.pk/account/products" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'My products & licenses', 'techsolution-form-studio-pro' ); ?></a>
-                        </p>
-                    </td>
-                </tr>
-            </table>
-            <p>
-                <button type="button" class="button button-primary" data-license-action="activate"><?php esc_html_e( 'Activate', 'techsolution-form-studio-pro' ); ?></button>
-                <?php if ( $license['key'] ) : ?>
-                    <button type="button" class="button" data-license-action="check"><?php esc_html_e( 'Check now', 'techsolution-form-studio-pro' ); ?></button>
-                    <button type="button" class="button button-link-delete" data-license-action="deactivate"><?php esc_html_e( 'Deactivate', 'techsolution-form-studio-pro' ); ?></button>
+                    </div>
+                </div>
+                <div class="tsfs-status-item">
+                    <span class="tsfs-status-dot <?php echo esc_attr( $expires ? $state : 'is-off' ); ?>" aria-hidden="true"></span>
+                    <div>
+                        <span class="tsfs-status-label"><?php esc_html_e( 'Valid until', 'techsolution-form-studio-pro' ); ?></span>
+                        <strong>
+                            <?php
+                            if ( $expires ) {
+                                echo esc_html( wp_date( get_option( 'date_format' ), $expires ) );
+                                if ( $valid ) {
+                                    /* translators: %d: days until the license expires */
+                                    echo ' <span class="tsfs-muted">' . esc_html( sprintf( _n( '(%d day left)', '(%d days left)', max( 0, $days ), 'techsolution-form-studio-pro' ), max( 0, $days ) ) ) . '</span>';
+                                }
+                            } else {
+                                echo '—';
+                            }
+                            ?>
+                        </strong>
+                    </div>
+                </div>
+                <div class="tsfs-status-item">
+                    <span class="tsfs-status-dot <?php echo esc_attr( $license['limit'] ? 'is-on' : 'is-off' ); ?>" aria-hidden="true"></span>
+                    <div>
+                        <span class="tsfs-status-label"><?php esc_html_e( 'Websites', 'techsolution-form-studio-pro' ); ?></span>
+                        <strong>
+                            <?php
+                            echo $license['limit']
+                                /* translators: 1: sites in use, 2: site limit */
+                                ? esc_html( sprintf( __( '%1$d of %2$d in use', 'techsolution-form-studio-pro' ), $license['site_count'], $license['limit'] ) )
+                                : ( $valid ? esc_html__( 'Unlimited', 'techsolution-form-studio-pro' ) : '—' );
+                            ?>
+                        </strong>
+                    </div>
+                </div>
+            </div>
+
+            <section class="tsfs-settings-panel">
+                <header class="tsfs-panel-head">
+                    <h2><?php echo $valid ? esc_html__( 'Your license', 'techsolution-form-studio-pro' ) : esc_html__( 'Activate your license', 'techsolution-form-studio-pro' ); ?></h2>
+                    <p><?php esc_html_e( 'Find your key under My products & licenses in your usp.com.pk account, then paste it below.', 'techsolution-form-studio-pro' ); ?></p>
+                </header>
+                <?php if ( $license['error'] ) : ?>
+                    <div class="tsfs-setting-subcard tsfs-license-error" role="alert"><?php echo esc_html( $license['error'] ); ?></div>
                 <?php endif; ?>
-                <span class="tsfs-pro-license-message" role="status" aria-live="polite"></span>
-            </p>
-            <p class="description"><?php esc_html_e( 'Activation, checks and updates send the license key, this site\'s address and the plugin version to usp.com.pk.', 'techsolution-form-studio-pro' ); ?></p>
+                <div class="tsfs-setting-row is-stacked">
+                    <label class="tsfs-field">
+                        <span><?php esc_html_e( 'License key', 'techsolution-form-studio-pro' ); ?></span>
+                        <input type="password" id="tsfs-pro-license-key" class="code" autocomplete="off" spellcheck="false" placeholder="USP-…" value="<?php echo esc_attr( $license['key'] ); ?>">
+                    </label>
+                    <div class="tsfs-license-actions">
+                        <button type="button" class="button button-primary tsfs-btn-primary" data-license-action="activate"><?php echo $valid ? esc_html__( 'Update key', 'techsolution-form-studio-pro' ) : esc_html__( 'Activate license', 'techsolution-form-studio-pro' ); ?></button>
+                        <?php if ( $license['key'] ) : ?>
+                            <button type="button" class="button" data-license-action="check"><?php esc_html_e( 'Check now', 'techsolution-form-studio-pro' ); ?></button>
+                            <button type="button" class="button button-link-delete" data-license-action="deactivate"><?php esc_html_e( 'Deactivate on this site', 'techsolution-form-studio-pro' ); ?></button>
+                        <?php endif; ?>
+                        <span class="tsfs-pro-license-message" role="status" aria-live="polite"></span>
+                    </div>
+                </div>
+                <p class="tsfs-setting-note"><?php esc_html_e( 'Activation, checks and updates send the license key, this site\'s address and the plugin version to usp.com.pk.', 'techsolution-form-studio-pro' ); ?></p>
+            </section>
         </div>
         <?php
     }

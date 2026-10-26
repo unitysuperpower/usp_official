@@ -4,7 +4,7 @@ Tags: form builder, contact form, multi-step form, file upload, conditional logi
 Requires at least: 6.3
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.0.1
+Stable tag: 2.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -111,6 +111,14 @@ Yes. On activation, forms, entries and anti-spam settings from USP Form Builder 
 
 == Changelog ==
 
+= 2.1.0 =
+* Admin screens now use the full width of the dashboard (up to 1640px), so tables show every column, including actions.
+* Redesigned Settings: a section menu, clear setting rows with plain-language descriptions, a status summary and a sticky Save bar.
+* Consistent page headers on Forms, Submissions and Settings.
+* Builder: tablet and mobile previews now narrow the canvas correctly, even when a custom form width is set; the desktop canvas follows the form's real width.
+* Settings and submission counts use correct singular and plural wording.
+* The view counter only counts forms that exist.
+
 = 2.0.1 =
 * Uploaded files get random names, are blocked from direct access and are deleted with their entry.
 * HTML, SVG and XML uploads are always refused.
@@ -127,6 +135,9 @@ Yes. On activation, forms, entries and anti-spam settings from USP Form Builder 
 * All scripts and styles are loaded with the WordPress enqueue functions and only on pages that show a form.
 
 == Upgrade Notice ==
+
+= 2.1.0 =
+Wider, cleaner admin screens and a redesigned Settings page. No changes to your forms or entries.
 
 = 2.0.1 =
 New name and shortcode: replace `[usp_form id="…"]` with `[tsfs_form id="…"]`. Forms, entries and settings are migrated automatically.

@@ -785,8 +785,9 @@ class TSFS_AJAX {
      * Track impression / view counter for a form.
      */
     public function ajax_track_view() {
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- anonymous, idempotent view counter; pages may be cached, so a nonce would expire.
         $form_id = isset( $_POST['form_id'] ) ? absint( $_POST['form_id'] ) : 0;
-        if ( $form_id > 0 ) {
+        if ( $form_id > 0 && TSFS_DB::get_form( $form_id ) ) {
             TSFS_DB::increment_views( $form_id );
             wp_send_json_success( array( 'tracked' => true, 'form_id' => $form_id ) );
         }

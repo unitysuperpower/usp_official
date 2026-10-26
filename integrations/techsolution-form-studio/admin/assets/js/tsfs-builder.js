@@ -496,7 +496,8 @@
 
                 var $canvas = $('#tsfs-canvas-container');
                 $canvas.removeClass('device-desktop device-tablet device-mobile');
-                $canvas.addClass('device-' + device);
+                $canvas.addClass('device-' + device).data('device', device);
+                self.applyThemeLive();
             });
 
             // Template Modal Trigger & Dismiss
@@ -1888,7 +1889,9 @@
             if (!$canvas.length) return;
 
             var sizes = this.collectSettings();
-            $canvas.css({ 'max-width': sizes.form_max_width + 'px', width:'100%', 'min-height':sizes.form_min_height + 'px', padding:sizes.form_padding + 'px' });
+            // The canvas shows the form at its real width, narrowed further by the tablet/mobile preview.
+            var deviceWidth = { tablet: 640, mobile: 390 }[$canvas.data('device')] || Infinity;
+            $canvas.css({ 'max-width': Math.min(sizes.form_max_width, deviceWidth) + 'px', width:'100%', 'min-height':sizes.form_min_height + 'px', padding:sizes.form_padding + 'px' });
             $('#tsfs-canvas-submit-preview').css({width:align === 'full' ? '100%' : (sizes.button_width ? sizes.button_width + 'px' : 'auto'), 'max-width':'100%', 'min-height':sizes.button_height + 'px', 'padding-left':sizes.button_padding + 'px', 'padding-right':sizes.button_padding + 'px'});
 
             // 1. Remove theme preset classes and add the current one

@@ -158,23 +158,25 @@ foreach ( $entries as $entry ) {
 ?>
 
 <div class="wrap tsfs-admin-wrap">
-    <!-- Page Header Bar -->
-    <div class="tsfs-page-header">
-        <div>
-            <h1 class="wp-heading-inline">
-                <span class="dashicons dashicons-email-alt" style="color:var(--tsfs-adm-primary); font-size:26px; width:26px; height:26px;"></span>
-                <?php esc_html_e( 'Form Submissions', 'techsolution-form-studio' ); ?>
-            </h1>
+    <header class="tsfs-page-header">
+        <div class="tsfs-header-title-group">
+            <span class="tsfs-header-icon-box"><span class="dashicons dashicons-email-alt" aria-hidden="true"></span></span>
+            <div>
+                <h1 class="tsfs-main-heading"><?php esc_html_e( 'Submissions', 'techsolution-form-studio' ); ?></h1>
+                <p class="tsfs-main-subheading">
+                    <?php
+                    /* translators: %s: number of submissions */
+                    echo esc_html( sprintf( _n( '%s submission matches your filters.', '%s submissions match your filters.', $total_entries, 'techsolution-form-studio' ), number_format_i18n( $total_entries ) ) );
+                    ?>
+                </p>
+            </div>
         </div>
-        <div class="tsfs-header-badge" style="display:flex; align-items:center; gap:8px;">
-            <button type="button" id="tsfs-open-export-modal-btn" class="button button-primary" style="font-weight:600; border-radius:6px; height:34px; display:inline-flex; align-items:center; gap:6px; background:var(--tsfs-adm-primary); border-color:var(--tsfs-adm-primary); color:#fff; cursor:pointer;" title="<?php esc_attr_e( 'Export submissions with customized options and headers', 'techsolution-form-studio' ); ?>">
-                <span class="dashicons dashicons-download" style="font-size:16px; width:16px; height:16px;"></span> <?php esc_html_e( 'Export Submissions', 'techsolution-form-studio' ); ?>
+        <div class="tsfs-header-actions-group">
+            <button type="button" id="tsfs-open-export-modal-btn" class="button button-primary tsfs-btn-primary" title="<?php esc_attr_e( 'Export submissions with customized options and headers', 'techsolution-form-studio' ); ?>">
+                <span class="dashicons dashicons-download" aria-hidden="true"></span> <?php esc_html_e( 'Export', 'techsolution-form-studio' ); ?>
             </button>
-            <span class="tsfs-badge-free" style="height:32px; display:inline-flex; align-items:center; padding:0 12px; border-radius:16px; font-weight:700; font-size:12px;">
-                <?php echo esc_html( number_format_i18n( $total_entries ) ); ?> <?php esc_html_e( 'Submissions Found', 'techsolution-form-studio' ); ?>
-            </span>
         </div>
-    </div>
+    </header>
 
     <!-- 1. Top KPI Metric Cards (1-Click Filtering) -->
     <div class="tsfs-kpi-grid">
