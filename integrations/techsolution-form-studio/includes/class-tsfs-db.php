@@ -268,17 +268,18 @@ class TSFS_DB {
         $offset = absint( $params['offset'] );
         $by_date = 'created_at' === $params['orderby'];
         $asc     = 'ASC' === strtoupper( (string) $params['order'] );
-        $values  = array( self::entries_table(), self::forms_table(), $f['form_id'], $f['form_id'], $f['status'], $f['status'], $f['from'], $f['to'], $f['like'], $f['like'], $f['like'], $limit, $offset );
+        $entries = self::entries_table();
+        $forms   = self::forms_table();
 
         // Each sort order is its own literal query so no SQL is assembled from variables.
         if ( $by_date && $asc ) {
-            $rows = $wpdb->get_results( $wpdb->prepare( "SELECT e.*, f.title AS form_title FROM %i e LEFT JOIN %i f ON e.form_id = f.id WHERE (%d = 0 OR e.form_id = %d) AND (%s = '' OR e.status = %s) AND e.created_at >= %s AND e.created_at <= %s AND (%s = '' OR e.fields_data LIKE %s OR e.user_ip LIKE %s) ORDER BY e.created_at ASC LIMIT %d OFFSET %d", $values ), ARRAY_A );
+            $rows = $wpdb->get_results( $wpdb->prepare( "SELECT e.*, f.title AS form_title FROM %i e LEFT JOIN %i f ON e.form_id = f.id WHERE (%d = 0 OR e.form_id = %d) AND (%s = '' OR e.status = %s) AND e.created_at >= %s AND e.created_at <= %s AND (%s = '' OR e.fields_data LIKE %s OR e.user_ip LIKE %s) ORDER BY e.created_at ASC LIMIT %d OFFSET %d", $entries, $forms, $f['form_id'], $f['form_id'], $f['status'], $f['status'], $f['from'], $f['to'], $f['like'], $f['like'], $f['like'], $limit, $offset ), ARRAY_A );
         } elseif ( $by_date ) {
-            $rows = $wpdb->get_results( $wpdb->prepare( "SELECT e.*, f.title AS form_title FROM %i e LEFT JOIN %i f ON e.form_id = f.id WHERE (%d = 0 OR e.form_id = %d) AND (%s = '' OR e.status = %s) AND e.created_at >= %s AND e.created_at <= %s AND (%s = '' OR e.fields_data LIKE %s OR e.user_ip LIKE %s) ORDER BY e.created_at DESC LIMIT %d OFFSET %d", $values ), ARRAY_A );
+            $rows = $wpdb->get_results( $wpdb->prepare( "SELECT e.*, f.title AS form_title FROM %i e LEFT JOIN %i f ON e.form_id = f.id WHERE (%d = 0 OR e.form_id = %d) AND (%s = '' OR e.status = %s) AND e.created_at >= %s AND e.created_at <= %s AND (%s = '' OR e.fields_data LIKE %s OR e.user_ip LIKE %s) ORDER BY e.created_at DESC LIMIT %d OFFSET %d", $entries, $forms, $f['form_id'], $f['form_id'], $f['status'], $f['status'], $f['from'], $f['to'], $f['like'], $f['like'], $f['like'], $limit, $offset ), ARRAY_A );
         } elseif ( $asc ) {
-            $rows = $wpdb->get_results( $wpdb->prepare( "SELECT e.*, f.title AS form_title FROM %i e LEFT JOIN %i f ON e.form_id = f.id WHERE (%d = 0 OR e.form_id = %d) AND (%s = '' OR e.status = %s) AND e.created_at >= %s AND e.created_at <= %s AND (%s = '' OR e.fields_data LIKE %s OR e.user_ip LIKE %s) ORDER BY e.id ASC LIMIT %d OFFSET %d", $values ), ARRAY_A );
+            $rows = $wpdb->get_results( $wpdb->prepare( "SELECT e.*, f.title AS form_title FROM %i e LEFT JOIN %i f ON e.form_id = f.id WHERE (%d = 0 OR e.form_id = %d) AND (%s = '' OR e.status = %s) AND e.created_at >= %s AND e.created_at <= %s AND (%s = '' OR e.fields_data LIKE %s OR e.user_ip LIKE %s) ORDER BY e.id ASC LIMIT %d OFFSET %d", $entries, $forms, $f['form_id'], $f['form_id'], $f['status'], $f['status'], $f['from'], $f['to'], $f['like'], $f['like'], $f['like'], $limit, $offset ), ARRAY_A );
         } else {
-            $rows = $wpdb->get_results( $wpdb->prepare( "SELECT e.*, f.title AS form_title FROM %i e LEFT JOIN %i f ON e.form_id = f.id WHERE (%d = 0 OR e.form_id = %d) AND (%s = '' OR e.status = %s) AND e.created_at >= %s AND e.created_at <= %s AND (%s = '' OR e.fields_data LIKE %s OR e.user_ip LIKE %s) ORDER BY e.id DESC LIMIT %d OFFSET %d", $values ), ARRAY_A );
+            $rows = $wpdb->get_results( $wpdb->prepare( "SELECT e.*, f.title AS form_title FROM %i e LEFT JOIN %i f ON e.form_id = f.id WHERE (%d = 0 OR e.form_id = %d) AND (%s = '' OR e.status = %s) AND e.created_at >= %s AND e.created_at <= %s AND (%s = '' OR e.fields_data LIKE %s OR e.user_ip LIKE %s) ORDER BY e.id DESC LIMIT %d OFFSET %d", $entries, $forms, $f['form_id'], $f['form_id'], $f['status'], $f['status'], $f['from'], $f['to'], $f['like'], $f['like'], $f['like'], $limit, $offset ), ARRAY_A );
         }
 
         foreach ( $rows as &$row ) {
