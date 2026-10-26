@@ -31,6 +31,7 @@ return [
         ],
         'Administration' => [
             'settings.email' => 'Change email delivery settings',
+            'settings.theme' => 'Change the site theme, logo and branding',
             'users.manage' => 'Manage user accounts and assign roles',
             'roles.manage' => 'Create and edit roles and their permissions',
         ],

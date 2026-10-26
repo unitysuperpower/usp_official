@@ -278,23 +278,36 @@ export function Profile() {
     );
 }
 export function Appearance() {
-    const [theme, setTheme] = useState(
-        document.documentElement.dataset.theme || "light",
-    );
+    const [theme, setTheme] = useState(() => {
+        try {
+            return localStorage.getItem("usp-theme") || "site";
+        } catch {
+            return "site";
+        }
+    });
     function update(value) {
         setTheme(value);
         try {
-            localStorage.setItem("usp-theme", value);
+            if (value === "site") localStorage.removeItem("usp-theme");
+            else localStorage.setItem("usp-theme", value);
         } catch {}
-        document.documentElement.dataset.theme = value;
+        let mode = value === "site" ? context.theme.mode : value;
+        if (mode === "system") mode = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        document.documentElement.dataset.theme = mode;
     }
+    if (!context.theme.allow_toggle)
+        return (
+            <section className="section">
+                <Heading title="Your space, your style." description="This site uses one color theme for everyone." />
+            </section>
+        );
     return (
         <section className="section">
             <Heading title="Your space, your style." />
             <div className="panel">
                 <fieldset>
                     <legend>Color theme</legend>
-                    {["light", "dark"].map((t) => (
+                    {["site", "light", "dark", "system"].map((t) => (
                         <label className="check-field" key={t}>
                             <input
                                 type="radio"
@@ -302,7 +315,7 @@ export function Appearance() {
                                 checked={theme === t}
                                 onChange={() => update(t)}
                             />
-                            {t === "light" ? "Light" : "Dark"}
+                            {{ site: "Site default", light: "Light", dark: "Dark", system: "Match my device" }[t]}
                         </label>
                     ))}
                 </fieldset>

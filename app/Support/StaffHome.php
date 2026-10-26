@@ -25,6 +25,7 @@ class StaffHome
         'analytics.view' => '/admin/analytics',
         'users.manage' => '/admin/users',
         'roles.manage' => '/admin/roles',
+        'settings.theme' => '/admin/settings/theme',
         'settings.email' => '/admin/settings/email',
         'education.settings' => '/admin/education/settings',
     ];

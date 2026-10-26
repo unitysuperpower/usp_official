@@ -108,6 +108,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::post('settings/email/test', [App\Http\Controllers\Admin\MailSettingsController::class, 'test'])->middleware('throttle:5,1')->name('settings.email.test');
     });
 
+    Route::middleware('can:settings.theme')->group(function () {
+        Route::get('settings/theme', [App\Http\Controllers\Admin\ThemeController::class, 'show'])->name('settings.theme');
+        Route::put('settings/theme', [App\Http\Controllers\Admin\ThemeController::class, 'update'])->middleware('throttle:20,1')->name('settings.theme.update');
+        Route::post('settings/theme/reset', [App\Http\Controllers\Admin\ThemeController::class, 'reset'])->middleware('throttle:10,1')->name('settings.theme.reset');
+    });
+
     // Users & roles
     Route::middleware('can:users.manage')->group(function () {
         Route::get('users', [App\Http\Controllers\Admin\UserController::class, 'index'])->name('users.index');

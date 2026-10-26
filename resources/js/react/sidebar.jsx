@@ -43,6 +43,7 @@ const groups = [
         [
             ["users", "Users"],
             ["roles", "Roles & permissions"],
+            ["settings/theme", "Appearance"],
             ["settings/email", "Email delivery"],
         ],
     ],
@@ -70,6 +71,7 @@ const permissionFor = {
     users: "users.manage",
     roles: "roles.manage",
     "settings/email": "settings.email",
+    "settings/theme": "settings.theme",
 };
 const allowed = (path) => {
     const granted = context.user?.permissions || [];
@@ -98,6 +100,7 @@ const paths = {
     requests: "M8 5H5v16h14V5h-3 M8 3h8v4H8z M8 12h8 M8 16h5",
     "contact-messages": "M3 5h18v14H3z M3 6l9 7 9-7",
     "settings/email": "M3 5h18v14H3z M3 6l9 7 9-7 M16 15l2 2 4-4",
+    "settings/theme": "M12 3a9 9 0 1 0 0 18c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.4-.5-.8-.5-1.3 0-1.1.9-2 2-2h2.4A4.6 4.6 0 0 0 21 9.8C21 6 17 3 12 3z M7.5 11h.01 M10 7.5h.01 M14.5 7.5h.01",
     users: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0 M22 21v-2a4 4 0 0 0-3-3.9 M16 3.1a4 4 0 0 1 0 7.8",
     roles: "M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z M9 12l2 2 4-4",
     chat: "M21 11a8 8 0 0 1-8 8H7l-4 3V11a9 9 0 0 1 18 0z M7 11h.01 M12 11h.01 M17 11h.01",
@@ -220,7 +223,7 @@ export default function Sidebar({
                 <div className="sidebar-workspace">
                     <span className="workspace-dot" />
                     <span>Admin workspace</span>
-                    <span className="workspace-tag">USP</span>
+                    <span className="workspace-tag">{context.theme.brand.name}</span>
                 </div>
                 <nav aria-label="Admin navigation">
                     {visibleGroups.map(([title, links]) => (

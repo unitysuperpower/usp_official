@@ -4,6 +4,7 @@ import { Projects, ProjectDetail, Leads } from "./projects";
 import EducationPage from "./education";
 import StorePage from "./store";
 import EmailSettings from "./settings-email";
+import ThemeSettings from "./settings-theme";
 import { Users, Roles } from "./admin-access";
 import "../../css/store.css";
 import Sidebar, { workspaceTitle } from "./sidebar";
@@ -20,20 +21,32 @@ import {
 } from "./admin";
 import { Auth, Profile, Appearance, Security, Chat, ChatList } from "./account";
 import "../../css/react.css";
-try {
-    document.documentElement.dataset.theme =
-        localStorage.getItem("usp-theme") || "light";
-} catch {}
 const admin = context.page.startsWith("admin.");
+const brand = context.theme.brand;
+const footer = context.theme.footer;
+// Uploaded logos replace the text mark; a separate dark-mode logo is optional.
 function Logo() {
     return (
-        <a className="brand" href="/">
-            <span className="brand-icon">
-                u<span>.</span>
-            </span>
-            <span>
-                USP<span className="brand-subtitle">TECH SOLUTION</span>
-            </span>
+        <a className="brand" href="/" aria-label={`${brand.name} home`}>
+            {brand.logo ? (
+                <>
+                    <img className="brand-logo light-only" src={brand.logo} alt="" />
+                    <img className="brand-logo dark-only" src={brand.logo_dark || brand.logo} alt="" />
+                </>
+            ) : (
+                <>
+                    {brand.mark && (
+                        <span className="brand-icon">
+                            {brand.mark}
+                            <span>.</span>
+                        </span>
+                    )}
+                    <span>
+                        {brand.name}
+                        {brand.subtitle && <span className="brand-subtitle">{brand.subtitle}</span>}
+                    </span>
+                </>
+            )}
         </a>
     );
 }
@@ -224,11 +237,7 @@ function Layout({ children }) {
                         <div className="footer-top">
                             <div>
                                 <Logo />
-                                <p>
-                                    Thoughtfully designed.
-                                    <br />
-                                    Purposefully built.
-                                </p>
+                                <p className="preserve">{footer.tagline}</p>
                             </div>
                             <div>
                                 <span className="eyebrow">EXPLORE</span>
@@ -261,17 +270,17 @@ function Layout({ children }) {
                                 )}
                             </div>
                             <div className="footer-statement">
-                                Your next big idea.
+                                {footer.statement}
                                 <br />
-                                <em>Let’s make it happen.</em>
+                                <em>{footer.statement_emphasis}</em>
                                 <a href="/contact">Start a conversation ↗</a>
                             </div>
                         </div>
                         <div className="footer-bottom">
                             <span>
-                                © {new Date().getFullYear()} USP Tech Solution
+                                © {new Date().getFullYear()} {footer.copyright}
                             </span>
-                            <span>Ideas. Craft. Impact.</span>
+                            <span>{footer.motto}</span>
                         </div>
                     </footer>
                 )}
@@ -284,6 +293,7 @@ function Page() {
         p = context.props;
     if (page.startsWith("store.") || page.startsWith("admin.store.")) return <StorePage {...p} />;
     if (page === "admin.settings.email") return <EmailSettings {...p} />;
+    if (page === "admin.settings.theme") return <ThemeSettings {...p} />;
     if (page === "admin.users.index") return <Users {...p} />;
     if (page === "admin.roles.index") return <Roles {...p} />;
     if (page.startsWith("education.") || page.startsWith("admin.education.")) return <EducationPage {...p} />;
