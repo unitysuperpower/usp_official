@@ -29,29 +29,37 @@ Route::middleware('auth')->name('education.')->group(function () {
     Route::get('learn/{enrollment}/certificate', [EnrollmentController::class, 'certificate'])->name('certificate');
 });
 Route::middleware(['auth', 'admin'])->prefix('admin/education')->name('admin.education.')->group(function () {
-    Route::get('/', fn () => redirect()->route('admin.education.enrollments.index'));
-    Route::get('courses', [AdminCourseController::class, 'index'])->name('courses.index');
-    Route::get('courses/create', [AdminCourseController::class, 'create'])->name('courses.create');
-    Route::post('courses', [AdminCourseController::class, 'store'])->name('courses.store');
-    Route::get('courses/{course}/edit', [AdminCourseController::class, 'edit'])->name('courses.edit');
-    Route::put('courses/{course}', [AdminCourseController::class, 'update'])->name('courses.update');
-    Route::post('courses/{course}/batches', [AdminCourseController::class, 'batch'])->name('batches.store');
-    Route::put('courses/{course}/batches/{batch}', [AdminCourseController::class, 'batch'])->name('batches.update');
-    Route::post('courses/{course}/lessons', [AdminCourseController::class, 'lesson'])->name('lessons.store');
-    Route::put('courses/{course}/lessons/{lesson}', [AdminCourseController::class, 'lesson'])->name('lessons.update');
-    Route::get('enrollments', [AdminEnrollmentController::class, 'index'])->name('enrollments.index');
-    Route::get('enrollments/{enrollment}', [AdminEnrollmentController::class, 'show'])->name('enrollments.show');
-    Route::patch('enrollments/{enrollment}', [AdminEnrollmentController::class, 'review'])->name('enrollments.review');
-    Route::get('payments', [AdminEnrollmentController::class, 'payments'])->name('payments.index');
-    Route::patch('payments/{payment}', [AdminEnrollmentController::class, 'verify'])->name('payments.verify');
+    Route::get('/', fn () => redirect(request()->user()->can('education.enrollments') ? route('admin.education.enrollments.index') : url('admin/education/overview')))->middleware('can:education.any');
+    Route::middleware('can:education.courses')->group(function () {
+        Route::get('courses', [AdminCourseController::class, 'index'])->name('courses.index');
+        Route::get('courses/create', [AdminCourseController::class, 'create'])->name('courses.create');
+        Route::post('courses', [AdminCourseController::class, 'store'])->name('courses.store');
+        Route::get('courses/{course}/edit', [AdminCourseController::class, 'edit'])->name('courses.edit');
+        Route::put('courses/{course}', [AdminCourseController::class, 'update'])->name('courses.update');
+        Route::post('courses/{course}/batches', [AdminCourseController::class, 'batch'])->name('batches.store');
+        Route::put('courses/{course}/batches/{batch}', [AdminCourseController::class, 'batch'])->name('batches.update');
+        Route::post('courses/{course}/lessons', [AdminCourseController::class, 'lesson'])->name('lessons.store');
+        Route::put('courses/{course}/lessons/{lesson}', [AdminCourseController::class, 'lesson'])->name('lessons.update');
+    });
+    Route::middleware('can:education.enrollments')->group(function () {
+        Route::get('enrollments', [AdminEnrollmentController::class, 'index'])->name('enrollments.index');
+        Route::get('enrollments/{enrollment}', [AdminEnrollmentController::class, 'show'])->name('enrollments.show');
+        Route::patch('enrollments/{enrollment}', [AdminEnrollmentController::class, 'review'])->name('enrollments.review');
+    });
+    Route::middleware('can:education.payments')->group(function () {
+        Route::get('payments', [AdminEnrollmentController::class, 'payments'])->name('payments.index');
+        Route::patch('payments/{payment}', [AdminEnrollmentController::class, 'verify'])->name('payments.verify');
+    });
 });
 
 Route::post('learn/{enrollment}/checkout', [JazzCashController::class, 'checkout'])->middleware(['auth', 'throttle:10,1'])->name('education.checkout');
 Route::post('education/jazzcash/return', [JazzCashController::class, 'callback'])->middleware('throttle:120,1')->name('education.jazzcash.return');
 
-Route::middleware(['auth', 'admin'])->prefix('admin/education')->name('admin.education.')->group(function () {
+Route::middleware(['auth', 'admin', 'can:education.settings'])->prefix('admin/education')->name('admin.education.')->group(function () {
     Route::get('settings', [PaymentSettingsController::class, 'edit'])->name('settings');
     Route::put('settings', [PaymentSettingsController::class, 'update'])->middleware('throttle:10,1')->name('settings.update');
+});
+Route::middleware(['auth', 'admin', 'can:education.teach'])->prefix('admin/education')->name('admin.education.')->group(function () {
     Route::get('batches/{batch}/classroom', [AdminLearningController::class, 'show'])->name('classroom');
     Route::patch('batches/{batch}/requirements', [AdminLearningController::class, 'requirements'])->name('requirements');
     Route::post('batches/{batch}/sessions', [AdminLearningController::class, 'session'])->name('sessions.store');
@@ -73,8 +81,8 @@ Route::middleware('auth')->group(function () {
     Route::put('learn/{enrollment}/lessons/{lesson}/note', [ExperienceController::class, 'note'])->middleware('throttle:30,1');
     Route::get('education/payments/{payment}/receipt', [ExperienceController::class, 'receipt']);
 });
-Route::middleware(['auth', 'admin'])->prefix('admin/education')->group(function () {
-    Route::get('overview', [ExperienceController::class, 'overview']);
+Route::get('admin/education/overview', [ExperienceController::class, 'overview'])->middleware(['auth', 'admin', 'can:education.any']);
+Route::middleware(['auth', 'admin', 'can:education.teach'])->prefix('admin/education')->group(function () {
     Route::post('batches/{batch}/announcements', [ExperienceController::class, 'announce']);
     Route::delete('batches/{batch}/announcements/{announcement}', [ExperienceController::class, 'removeAnnouncement']);
 });

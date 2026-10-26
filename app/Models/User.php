@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -25,7 +26,6 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'is_admin',
     ];
 
     /**
@@ -64,6 +64,47 @@ class User extends Authenticatable
             ->take(2)
             ->map(fn ($word) => Str::substr($word, 0, 1))
             ->implode('');
+    }
+
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(Role::class);
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->roles->contains('is_system', true);
+    }
+
+    /** Permission keys granted by all of the user's roles. */
+    public function permissions(): array
+    {
+        if ($this->isSuperAdmin()) {
+            return Role::catalog();
+        }
+
+        return $this->roles->flatMap(fn (Role $role) => $role->permissions ?? [])->unique()->values()->all();
+    }
+
+    public function hasPermission(string $permission): bool
+    {
+        return $this->roles->contains(fn (Role $role) => $role->grants($permission));
+    }
+
+    /**
+     * Replace the user's roles. `is_admin` stays as the "staff member" flag that admin-area
+     * checks rely on: it is true whenever any role grants at least one permission.
+     */
+    public function syncRoles(array $roleIds): void
+    {
+        $this->roles()->sync($roleIds);
+        $this->unsetRelation('roles');
+        $this->forceFill(['is_admin' => $this->permissions() !== []])->save();
+    }
+
+    public function assignRole(string $slug): void
+    {
+        $this->syncRoles(array_unique([...$this->roles()->pluck('roles.id')->all(), Role::where('slug', $slug)->value('id')]));
     }
 
     public function conversations(): HasMany

@@ -52,7 +52,7 @@ class ExperienceController extends Controller
     public function receipt(Request $request, CoursePayment $payment)
     {
         $payment->load('enrollment.student', 'enrollment.batch.course');
-        abort_unless($request->user()->is_admin || $payment->enrollment->user_id === $request->user()->id, 404);
+        abort_unless($request->user()->can('education.payments') || $payment->enrollment->user_id === $request->user()->id, 404);
         abort_unless($payment->status === 'approved', 404);
 
         return response()->view('education.receipt', compact('payment'))->header('Cache-Control', 'private, no-store');

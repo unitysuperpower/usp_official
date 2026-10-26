@@ -16,7 +16,7 @@
             'page' => $page,
             'props' => $props,
             'breadcrumbs' => $seo['public'] && count($seo['breadcrumbs']) > 1 ? $seo['breadcrumbs'] : [],
-            'user' => auth()->user()?->only(['id', 'name', 'email', 'is_admin']),
+            'user' => auth()->user() ? auth()->user()->only(['id', 'name', 'email', 'is_admin']) + ['permissions' => auth()->user()->permissions(), 'home' => auth()->user()->is_admin ? App\Support\StaffHome::url(auth()->user()) : '/dashboard', 'roles' => auth()->user()->roles->pluck('name')] : null,
             'csrf' => csrf_token(),
             'errors' => $errors->toArray(),
             'old' => collect(session()->getOldInput())->except(['password', 'password_confirmation', 'current_password', 'code', 'recovery_code', 'jazzcash_password', 'jazzcash_integrity_salt', 'license', 'license_key', 'token'])->all(),

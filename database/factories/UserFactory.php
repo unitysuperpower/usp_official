@@ -35,6 +35,17 @@ class UserFactory extends Factory
         ];
     }
 
+    public function configure(): static
+    {
+        // Factory admins get the super-admin role so permission gates pass, mirroring the roles migration.
+        return $this->afterCreating(function (\App\Models\User $user) {
+            $slug = $user->is_admin ? 'super-admin' : config('permissions.default_role');
+            if ($role = \App\Models\Role::where('slug', $slug)->value('id')) {
+                $user->roles()->syncWithoutDetaching([$role]);
+            }
+        });
+    }
+
     /**
      * Indicate that the model's email address should be unverified.
      */

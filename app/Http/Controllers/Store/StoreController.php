@@ -108,7 +108,7 @@ class StoreController extends Controller
 
     public function proof(Request $request, ProductPayment $payment)
     {
-        abort_unless($request->user()->is_admin || $payment->order->user_id === $request->user()->id, 404);
+        abort_unless($request->user()->can('store.orders') || $payment->order->user_id === $request->user()->id, 404);
         abort_unless($payment->proof_path && Storage::disk('local')->exists($payment->proof_path), 404);
         return Storage::disk('local')->download($payment->proof_path, 'payment-proof.'.pathinfo($payment->proof_path, PATHINFO_EXTENSION), ['X-Content-Type-Options' => 'nosniff']);
     }

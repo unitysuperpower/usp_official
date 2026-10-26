@@ -4,6 +4,7 @@ import { Projects, ProjectDetail, Leads } from "./projects";
 import EducationPage from "./education";
 import StorePage from "./store";
 import EmailSettings from "./settings-email";
+import { Users, Roles } from "./admin-access";
 import "../../css/store.css";
 import Sidebar, { workspaceTitle } from "./sidebar";
 import UserDropdown from "./user-dropdown";
@@ -127,11 +128,7 @@ function Layout({ children }) {
                                 ))}
                                 {context.user && (
                                     <a
-                                        href={
-                                            context.user.is_admin
-                                                ? "/admin/dashboard"
-                                                : "/dashboard"
-                                        }
+                                        href={context.user.home}
                                     >
                                         Dashboard
                                     </a>
@@ -287,6 +284,8 @@ function Page() {
         p = context.props;
     if (page.startsWith("store.") || page.startsWith("admin.store.")) return <StorePage {...p} />;
     if (page === "admin.settings.email") return <EmailSettings {...p} />;
+    if (page === "admin.users.index") return <Users {...p} />;
+    if (page === "admin.roles.index") return <Roles {...p} />;
     if (page.startsWith("education.") || page.startsWith("admin.education.")) return <EducationPage {...p} />;
     if (page === "home") return <Home {...p} />;
     if (page.startsWith("auth.")) return <Auth {...p} />;

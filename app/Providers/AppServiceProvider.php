@@ -22,6 +22,12 @@ class AppServiceProvider extends ServiceProvider
         // SMTP settings saved in Admin → Settings → Email override the .env mail settings.
         \App\Support\SiteMail::apply();
 
+        // Role permissions (config/permissions.php) become gates: `can:blogs.manage`, $user->can('chat.manage').
+        foreach (\App\Models\Role::catalog() as $permission) {
+            \Illuminate\Support\Facades\Gate::define($permission, fn (\App\Models\User $user) => $user->hasPermission($permission));
+        }
+        \Illuminate\Support\Facades\Gate::define('education.any', fn (\App\Models\User $user) => collect(['education.courses', 'education.teach', 'education.enrollments', 'education.payments'])->contains(fn ($p) => $user->hasPermission($p)));
+
         \App\Models\ChatMessage::created(function ($message) {
             if (app(\App\Services\ChatPushService::class)->configured()) {
                 \App\Jobs\SendChatPush::dispatch($message->id)->afterCommit();

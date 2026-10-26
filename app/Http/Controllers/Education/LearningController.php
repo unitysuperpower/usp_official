@@ -54,7 +54,7 @@ class LearningController extends Controller
 
     public function file(Request $request, EducationSubmission $submission)
     {
-        abort_unless($request->user()->is_admin || $submission->enrollment->user_id === $request->user()->id, 404);
+        abort_unless($request->user()->can('education.teach') || $submission->enrollment->user_id === $request->user()->id, 404);
         abort_unless($submission->file_path && Storage::disk('local')->exists($submission->file_path), 404);
 
         return Storage::disk('local')->download($submission->file_path, $submission->file_name, ['Content-Type' => 'application/octet-stream', 'X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'private, no-store']);

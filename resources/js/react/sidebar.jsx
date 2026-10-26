@@ -38,8 +38,46 @@ const groups = [
             ["chat", "Conversations"],
         ],
     ],
-    ["Settings", [["settings/email", "Email delivery"]]],
+    [
+        "Administration",
+        [
+            ["users", "Users"],
+            ["roles", "Roles & permissions"],
+            ["settings/email", "Email delivery"],
+        ],
+    ],
 ];
+// Permission each link needs (see config/permissions.php).
+const permissionFor = {
+    "store/products": "store.products",
+    "store/orders": "store.orders",
+    "store/licenses": "store.licenses",
+    "education/overview": ["education.courses", "education.teach", "education.enrollments", "education.payments"],
+    "education/courses": "education.courses",
+    "education/enrollments": "education.enrollments",
+    "education/payments": "education.payments",
+    "education/settings": "education.settings",
+    dashboard: "dashboard.view",
+    analytics: "analytics.view",
+    services: "services.manage",
+    categories: "services.manage",
+    blogs: "blogs.manage",
+    "blog-categories": "blogs.manage",
+    requests: "requests.manage",
+    projects: "projects.manage",
+    "contact-messages": "contact.manage",
+    chat: "chat.manage",
+    users: "users.manage",
+    roles: "roles.manage",
+    "settings/email": "settings.email",
+};
+const allowed = (path) => {
+    const granted = context.user?.permissions || [];
+    return [permissionFor[path]].flat().some((p) => granted.includes(p));
+};
+const visibleGroups = groups
+    .map(([title, links]) => [title, links.filter(([path]) => allowed(path))])
+    .filter(([, links]) => links.length);
 const paths = {
     "store/products": "M3 5h18v16H3z M3 10h18 M8 5V3h8v2",
     "store/orders": "M3 5h18v14H3z M3 10h18 M7 15h3",
@@ -60,6 +98,8 @@ const paths = {
     requests: "M8 5H5v16h14V5h-3 M8 3h8v4H8z M8 12h8 M8 16h5",
     "contact-messages": "M3 5h18v14H3z M3 6l9 7 9-7",
     "settings/email": "M3 5h18v14H3z M3 6l9 7 9-7 M16 15l2 2 4-4",
+    users: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0 M22 21v-2a4 4 0 0 0-3-3.9 M16 3.1a4 4 0 0 1 0 7.8",
+    roles: "M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z M9 12l2 2 4-4",
     chat: "M21 11a8 8 0 0 1-8 8H7l-4 3V11a9 9 0 0 1 18 0z M7 11h.01 M12 11h.01 M17 11h.01",
     external: "M14 3h7v7 M21 3l-11 11 M10 3H3v18h18v-7",
     collapse: "M3 3h18v18H3z M9 3v18 M16 9l-3 3 3 3",
@@ -183,7 +223,7 @@ export default function Sidebar({
                     <span className="workspace-tag">USP</span>
                 </div>
                 <nav aria-label="Admin navigation">
-                    {groups.map(([title, links]) => (
+                    {visibleGroups.map(([title, links]) => (
                         <div className="nav-group" key={title}>
                             <span className="nav-caption">{title}</span>
                             {links.map(([path, title]) => (

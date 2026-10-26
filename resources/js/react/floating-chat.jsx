@@ -23,7 +23,7 @@ function ChatIcon() {
 
 export default function FloatingChat() {
     const user = context.user;
-    const admin = Boolean(user?.is_admin);
+    const admin = Boolean(user?.permissions?.includes("chat.manage"));
     const [open, setOpen] = useState(false);
     const [selected, setSelected] = useState(null);
     const [data, setData] = useState({

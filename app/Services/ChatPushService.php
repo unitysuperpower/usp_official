@@ -36,7 +36,7 @@ class ChatPushService
         if (!$message->conversation) return;
         $recipients = $message->is_admin
             ? [$message->conversation->user_id]
-            : User::where('is_admin', true)->pluck('id')->all();
+            : User::where('is_admin', true)->with('roles')->get()->filter(fn (User $user) => $user->can('chat.manage'))->pluck('id')->all();
         $subscriptions = WebPushSubscription::whereIn('user_id', $recipients)
             ->where('user_id', '!=', $message->user_id)->get();
         if ($subscriptions->isEmpty()) return;

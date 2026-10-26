@@ -38,7 +38,7 @@ export default function UserDropdown({ open, onToggle, onClose }) {
             .join("")
             .toUpperCase() || "U";
     const profile = user.is_admin ? "/admin/profile" : "/profile";
-    const dashboard = user.is_admin ? "/admin/dashboard" : "/dashboard";
+    const dashboard = user.home;
 
     useEffect(() => {
         if (!open) return;
@@ -84,7 +84,7 @@ export default function UserDropdown({ open, onToggle, onClose }) {
                 <span className="user-trigger-copy">
                     <strong>{user.name.split(" ")[0]}</strong>
                     <small>
-                        {user.is_admin ? "Administrator" : "My workspace"}
+                        {user.is_admin ? user.roles.join(", ") || "Administrator" : "My workspace"}
                     </small>
                 </span>
                 <svg
@@ -112,7 +112,7 @@ export default function UserDropdown({ open, onToggle, onClose }) {
                             <small>
                                 {user.is_admin
                                     ? "Admin workspace"
-                                    : "Personal account"}
+                                    : user.roles.join(", ") || "Personal account"}
                             </small>
                         </div>
                     </div>

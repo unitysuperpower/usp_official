@@ -148,7 +148,7 @@ class EnrollmentController extends Controller
 
     public function proof(Request $request, CoursePayment $payment)
     {
-        abort_unless($request->user()->is_admin || $payment->enrollment->user_id === $request->user()->id, 404);
+        abort_unless($request->user()->can('education.payments') || $payment->enrollment->user_id === $request->user()->id, 404);
         abort_unless($payment->proof_path && Storage::disk('local')->exists($payment->proof_path), 404);
 
         return Storage::disk('local')->download($payment->proof_path, 'payment-'.$payment->id.'.'.pathinfo($payment->proof_path, PATHINFO_EXTENSION), ['Content-Type' => 'application/octet-stream', 'X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'private, no-store']);
@@ -168,7 +168,7 @@ class EnrollmentController extends Controller
 
     public function certificate(Request $request, CourseEnrollment $enrollment)
     {
-        abort_unless($request->user()->is_admin || $enrollment->user_id === $request->user()->id, 404);
+        abort_unless($request->user()->can('education.enrollments') || $enrollment->user_id === $request->user()->id, 404);
         abort_unless($enrollment->status === 'completed' && $enrollment->certificate_code, 404);
 
         return response()->view('education.certificate', compact('enrollment'))->header('Cache-Control', 'private, no-store')->header('X-Robots-Tag', 'noindex, nofollow');

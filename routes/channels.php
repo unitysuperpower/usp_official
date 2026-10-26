@@ -15,10 +15,10 @@ Broadcast::channel('chat.{conversationId}', function ($user, $conversationId) {
     }
     
     // Allow access if user owns the conversation or is an admin
-    return $user->id === $conversation->user_id || $user->is_admin;
+    return $user->id === $conversation->user_id || $user->can('chat.manage');
 });
 
 Broadcast::channel('admin-notifications', function ($user) {
     // Only admins can listen to admin notifications
-    return $user->is_admin;
+    return $user->can('chat.manage');
 });

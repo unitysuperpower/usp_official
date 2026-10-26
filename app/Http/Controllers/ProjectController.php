@@ -14,7 +14,7 @@ class ProjectController extends Controller
 {
     private function authorizeProject(Request $request, Project $project): void
     {
-        abort_unless($request->user()->is_admin || $project->customer_id === $request->user()->id, 404);
+        abort_unless($request->user()->can('projects.manage') || $project->customer_id === $request->user()->id, 404);
     }
 
     public function index(Request $request)
@@ -56,7 +56,7 @@ class ProjectController extends Controller
     {
         $this->authorizeProject($request, $project);
         $data = $request->validate(['body' => 'required|string|max:10000', 'is_internal' => 'nullable|boolean']);
-        $project->updates()->create(['user_id' => $request->user()->id, 'body' => $data['body'], 'is_internal' => $request->user()->is_admin && $request->boolean('is_internal')]);
+        $project->updates()->create(['user_id' => $request->user()->id, 'body' => $data['body'], 'is_internal' => $request->user()->can('projects.manage') && $request->boolean('is_internal')]);
 
         return back()->with('success', 'Update posted.');
     }
@@ -91,7 +91,7 @@ class ProjectController extends Controller
     {
         $this->authorizeProject($request, $project);
         $item = $project->files()->findOrFail($file);
-        abort_unless($request->user()->is_admin || $item->uploaded_by === $request->user()->id, 403);
+        abort_unless($request->user()->can('projects.manage') || $item->uploaded_by === $request->user()->id, 403);
         abort_unless(Storage::disk('local')->delete($item->path), 503, 'Could not remove the stored file. Please try again.');
         $item->delete();
 

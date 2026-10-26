@@ -58,46 +58,77 @@ Route::post('/blogs/{blog}/comment', [BlogController::class, 'comment'])->name('
 
 // Admin Routes
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->middleware('can:dashboard.view')->name('dashboard');
 
-    // Analytics
-    Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
-    Route::get('/analytics/seo', [AnalyticsController::class, 'seo'])->name('analytics.seo');
+    Route::middleware('can:analytics.view')->group(function () {
+        Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
+        Route::get('/analytics/seo', [AnalyticsController::class, 'seo'])->name('analytics.seo');
+    });
 
-    Route::resource('categories', ServiceCategoryController::class)->except(['show']);
-    Route::resource('services', AdminServiceController::class)->except(['show']);
-    Route::get('projects', [App\Http\Controllers\Admin\ProjectController::class, 'index'])->name('projects.index');
-    Route::get('projects/{project}', [App\Http\Controllers\Admin\ProjectController::class, 'show'])->name('projects.show');
-    Route::patch('projects/{project}', [App\Http\Controllers\Admin\ProjectController::class, 'update'])->name('projects.update');
-    Route::post('projects/{project}/milestones', [App\Http\Controllers\Admin\ProjectController::class, 'storeMilestone'])->name('projects.milestones.store');
-    Route::patch('projects/{project}/milestones/{milestone}', [App\Http\Controllers\Admin\ProjectController::class, 'updateMilestone'])->name('projects.milestones.update');
-    Route::post('projects/{project}/milestones/{milestone}/request-approval', [App\Http\Controllers\Admin\ProjectController::class, 'requestApproval'])->name('projects.milestones.request-approval');
-    Route::patch('projects/{project}/customer', [App\Http\Controllers\Admin\ProjectController::class, 'linkCustomer'])->name('projects.customer');
-    Route::patch('requests/{serviceRequest}/lead', [AdminServiceRequestController::class, 'updateLead'])->name('requests.lead');
-    Route::post('requests/{serviceRequest}/project', [AdminServiceRequestController::class, 'convert'])->name('requests.convert');
-    Route::get('/requests', [AdminServiceRequestController::class, 'index'])->name('requests.index');
-    Route::get('/requests/{request}', [AdminServiceRequestController::class, 'show'])->name('requests.show');
-    Route::patch('/requests/{serviceRequest}/status', [AdminServiceRequestController::class, 'updateStatus'])->name('requests.updateStatus');
+    Route::middleware('can:services.manage')->group(function () {
+        Route::resource('categories', ServiceCategoryController::class)->except(['show']);
+        Route::resource('services', AdminServiceController::class)->except(['show']);
+    });
+
+    Route::middleware('can:projects.manage')->group(function () {
+        Route::get('projects', [App\Http\Controllers\Admin\ProjectController::class, 'index'])->name('projects.index');
+        Route::get('projects/{project}', [App\Http\Controllers\Admin\ProjectController::class, 'show'])->name('projects.show');
+        Route::patch('projects/{project}', [App\Http\Controllers\Admin\ProjectController::class, 'update'])->name('projects.update');
+        Route::post('projects/{project}/milestones', [App\Http\Controllers\Admin\ProjectController::class, 'storeMilestone'])->name('projects.milestones.store');
+        Route::patch('projects/{project}/milestones/{milestone}', [App\Http\Controllers\Admin\ProjectController::class, 'updateMilestone'])->name('projects.milestones.update');
+        Route::post('projects/{project}/milestones/{milestone}/request-approval', [App\Http\Controllers\Admin\ProjectController::class, 'requestApproval'])->name('projects.milestones.request-approval');
+        Route::patch('projects/{project}/customer', [App\Http\Controllers\Admin\ProjectController::class, 'linkCustomer'])->name('projects.customer');
+    });
+
+    Route::middleware('can:requests.manage')->group(function () {
+        Route::patch('requests/{serviceRequest}/lead', [AdminServiceRequestController::class, 'updateLead'])->name('requests.lead');
+        Route::post('requests/{serviceRequest}/project', [AdminServiceRequestController::class, 'convert'])->name('requests.convert');
+        Route::get('/requests', [AdminServiceRequestController::class, 'index'])->name('requests.index');
+        Route::get('/requests/{request}', [AdminServiceRequestController::class, 'show'])->name('requests.show');
+        Route::patch('/requests/{serviceRequest}/status', [AdminServiceRequestController::class, 'updateStatus'])->name('requests.updateStatus');
+    });
 
     // Blog Management
-    Route::resource('blog-categories', BlogCategoryController::class)->except(['show']);
-    Route::resource('blogs', AdminBlogController::class)->except(['show']);
+    Route::middleware('can:blogs.manage')->group(function () {
+        Route::resource('blog-categories', BlogCategoryController::class)->except(['show']);
+        Route::resource('blogs', AdminBlogController::class)->except(['show']);
+    });
 
     // Contact Messages
-    Route::resource('contact-messages', ContactMessageController::class)->only(['index', 'show', 'update', 'destroy'])->parameters([
-        'contact-messages' => 'message',
-    ]);
-    Route::post('contact-messages/{message}/reply', [ContactMessageController::class, 'reply'])->name('contact-messages.reply');
-    Route::get('settings/email', [App\Http\Controllers\Admin\MailSettingsController::class, 'show'])->name('settings.email');
-    Route::put('settings/email', [App\Http\Controllers\Admin\MailSettingsController::class, 'update'])->middleware('throttle:10,1')->name('settings.email.update');
-    Route::post('settings/email/test', [App\Http\Controllers\Admin\MailSettingsController::class, 'test'])->middleware('throttle:5,1')->name('settings.email.test');
+    Route::middleware('can:contact.manage')->group(function () {
+        Route::resource('contact-messages', ContactMessageController::class)->only(['index', 'show', 'update', 'destroy'])->parameters([
+            'contact-messages' => 'message',
+        ]);
+        Route::post('contact-messages/{message}/reply', [ContactMessageController::class, 'reply'])->name('contact-messages.reply');
+    });
+
+    Route::middleware('can:settings.email')->group(function () {
+        Route::get('settings/email', [App\Http\Controllers\Admin\MailSettingsController::class, 'show'])->name('settings.email');
+        Route::put('settings/email', [App\Http\Controllers\Admin\MailSettingsController::class, 'update'])->middleware('throttle:10,1')->name('settings.email.update');
+        Route::post('settings/email/test', [App\Http\Controllers\Admin\MailSettingsController::class, 'test'])->middleware('throttle:5,1')->name('settings.email.test');
+    });
+
+    // Users & roles
+    Route::middleware('can:users.manage')->group(function () {
+        Route::get('users', [App\Http\Controllers\Admin\UserController::class, 'index'])->name('users.index');
+        Route::post('users', [App\Http\Controllers\Admin\UserController::class, 'store'])->middleware('throttle:20,1')->name('users.store');
+        Route::put('users/{user}/roles', [App\Http\Controllers\Admin\UserController::class, 'roles'])->name('users.roles');
+    });
+    Route::middleware('can:roles.manage')->group(function () {
+        Route::get('roles', [App\Http\Controllers\Admin\RoleController::class, 'index'])->name('roles.index');
+        Route::post('roles', [App\Http\Controllers\Admin\RoleController::class, 'save'])->name('roles.store');
+        Route::put('roles/{role}', [App\Http\Controllers\Admin\RoleController::class, 'save'])->name('roles.update');
+        Route::delete('roles/{role}', [App\Http\Controllers\Admin\RoleController::class, 'destroy'])->name('roles.destroy');
+    });
 
     // Live Chat
-    Route::get('chat', [App\Http\Controllers\Admin\ChatController::class, 'index'])->name('chat.index');
-    Route::get('chat/{id}', [App\Http\Controllers\Admin\ChatController::class, 'show'])->name('chat.show');
-    Route::post('chat/send', [App\Http\Controllers\Admin\ChatController::class, 'sendMessage'])->name('chat.send');
-    Route::get('chat/{id}/messages', [App\Http\Controllers\Admin\ChatController::class, 'getMessages'])->name('chat.messages');
-    Route::patch('chat/{id}/status', [App\Http\Controllers\Admin\ChatController::class, 'updateStatus'])->name('chat.status');
+    Route::middleware('can:chat.manage')->group(function () {
+        Route::get('chat', [App\Http\Controllers\Admin\ChatController::class, 'index'])->name('chat.index');
+        Route::get('chat/{id}', [App\Http\Controllers\Admin\ChatController::class, 'show'])->name('chat.show');
+        Route::post('chat/send', [App\Http\Controllers\Admin\ChatController::class, 'sendMessage'])->name('chat.send');
+        Route::get('chat/{id}/messages', [App\Http\Controllers\Admin\ChatController::class, 'getMessages'])->name('chat.messages');
+        Route::patch('chat/{id}/status', [App\Http\Controllers\Admin\ChatController::class, 'updateStatus'])->name('chat.status');
+    });
 
     // Admin Profile
     Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -109,7 +140,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 // User Dashboard
 Route::get('dashboard', function () {
     if (auth()->user()->is_admin) {
-        return redirect()->route('admin.dashboard');
+        return redirect(App\Support\StaffHome::url(auth()->user()));
     }
 
     return ReactPage::render('dashboard', [

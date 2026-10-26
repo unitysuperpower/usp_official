@@ -23,23 +23,29 @@ Route::middleware(['auth',PrivateStoreResponse::class])->prefix('account/product
     Route::delete('licenses/{license}/activations/{activation}',[Store::class,'deactivate']);
 });
 Route::middleware(['auth','admin',PrivateStoreResponse::class])->prefix('admin/store')->group(function () {
-    Route::get('products',[Admin::class,'index']);
-    Route::get('products/create',[Admin::class,'edit']);
-    Route::post('products',[Admin::class,'save']);
-    Route::get('products/{product}',[Admin::class,'show'])->whereNumber('product');
-    Route::get('products/{product}/edit',[Admin::class,'edit']);
-    Route::delete('products/{product}',[Admin::class,'destroy']);
-    Route::delete('products/{product}/plans/{plan}',[Admin::class,'destroyPlan']);
-    Route::delete('releases/{release}',[Admin::class,'destroyRelease']);
-    Route::put('products/{product}',[Admin::class,'save']);
-    Route::post('products/{product}/plans',[Admin::class,'plan']);
-    Route::put('products/{product}/plans/{plan}',[Admin::class,'plan']);
-    Route::post('products/{product}/releases',[Admin::class,'release']);
-    Route::patch('releases/{release}',[Admin::class,'visibility']);
-    Route::put('settings',[Admin::class,'settings'])->middleware('throttle:10,1');
-    Route::get('orders',[Admin::class,'orders']);
-    Route::get('orders/{order:reference}',[Admin::class,'order']);
-    Route::patch('payments/{payment}',[Admin::class,'review']);
-    Route::get('licenses',[Admin::class,'licenses']);
-    Route::patch('licenses/{license}',[Admin::class,'license']);
+    Route::middleware('can:store.products')->group(function () {
+        Route::get('products',[Admin::class,'index']);
+        Route::get('products/create',[Admin::class,'edit']);
+        Route::post('products',[Admin::class,'save']);
+        Route::get('products/{product}',[Admin::class,'show'])->whereNumber('product');
+        Route::get('products/{product}/edit',[Admin::class,'edit']);
+        Route::delete('products/{product}',[Admin::class,'destroy']);
+        Route::delete('products/{product}/plans/{plan}',[Admin::class,'destroyPlan']);
+        Route::delete('releases/{release}',[Admin::class,'destroyRelease']);
+        Route::put('products/{product}',[Admin::class,'save']);
+        Route::post('products/{product}/plans',[Admin::class,'plan']);
+        Route::put('products/{product}/plans/{plan}',[Admin::class,'plan']);
+        Route::post('products/{product}/releases',[Admin::class,'release']);
+        Route::patch('releases/{release}',[Admin::class,'visibility']);
+        Route::put('settings',[Admin::class,'settings'])->middleware('throttle:10,1');
+    });
+    Route::middleware('can:store.orders')->group(function () {
+        Route::get('orders',[Admin::class,'orders']);
+        Route::get('orders/{order:reference}',[Admin::class,'order']);
+        Route::patch('payments/{payment}',[Admin::class,'review']);
+    });
+    Route::middleware('can:store.licenses')->group(function () {
+        Route::get('licenses',[Admin::class,'licenses']);
+        Route::patch('licenses/{license}',[Admin::class,'license']);
+    });
 });
