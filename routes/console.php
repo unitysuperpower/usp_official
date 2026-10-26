@@ -11,6 +11,9 @@ Artisan::command('inspire', function () {
 
 // Sitemaps are generated live on request; no cron or queue dependency.
 
+// Needs the server cron: * * * * * php artisan schedule:run
+Illuminate\Support\Facades\Schedule::command('education:reminders')->hourly()->withoutOverlapping();
+
 Artisan::command('webpush:setup', function () {
     $path = config('webpush.key_file');
     if (app(ChatPushService::class)->configured()) {

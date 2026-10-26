@@ -41,7 +41,7 @@ return [
     'defaults' => [
         'super-admin' => ['name' => 'Super Admin', 'description' => 'Full access, including roles and permissions. Cannot be edited.', 'permissions' => ['*']],
         'admin' => ['name' => 'Admin', 'description' => 'Manages the whole site except roles.', 'permissions' => ['*', '!roles.manage']],
-        'instructor' => ['name' => 'Instructor', 'description' => 'Teaches classes and grades students.', 'permissions' => ['dashboard.view', 'education.teach']],
+        'instructor' => ['name' => 'Instructor', 'description' => 'Teaches assigned courses: classes, attendance, grading and student insights.', 'permissions' => ['education.teach']],
         'editor' => ['name' => 'Editor', 'description' => 'Writes and edits services and journal content.', 'permissions' => ['dashboard.view', 'services.manage', 'blogs.manage']],
         'support' => ['name' => 'Support / Sales', 'description' => 'Handles leads, customers, chats and orders.', 'permissions' => ['dashboard.view', 'requests.manage', 'projects.manage', 'contact.manage', 'chat.manage', 'store.orders', 'store.licenses', 'education.enrollments']],
         'learner' => ['name' => 'Learner / Customer', 'description' => 'Default role for registered accounts. No admin access.', 'permissions' => []],

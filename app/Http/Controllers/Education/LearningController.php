@@ -49,12 +49,14 @@ class LearningController extends Controller
             Storage::disk('local')->delete($oldPath);
         }
 
+        \App\Support\EducationInsights::touch($enrollment);
+
         return back()->with('success', 'Assignment submitted. Your instructor will review it.');
     }
 
     public function file(Request $request, EducationSubmission $submission)
     {
-        abort_unless($request->user()->can('education.teach') || $submission->enrollment->user_id === $request->user()->id, 404);
+        abort_unless($submission->enrollment->user_id === $request->user()->id || \App\Support\Education::teaches($request->user(), $submission->assignment->batch), 404);
         abort_unless($submission->file_path && Storage::disk('local')->exists($submission->file_path), 404);
 
         return Storage::disk('local')->download($submission->file_path, $submission->file_name, ['Content-Type' => 'application/octet-stream', 'X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'private, no-store']);
@@ -87,6 +89,8 @@ class LearningController extends Controller
             $score = (int) floor($correct * 100 / count($questions));
             EducationQuizAttempt::create(['education_quiz_id' => $quiz->id, 'course_enrollment_id' => $item->id, 'answers' => $data['answers'], 'score' => $score, 'passed' => $score >= $quiz->pass_percent, 'attempt_number' => $data['attempt_number']]);
         });
+
+        \App\Support\EducationInsights::touch($enrollment);
 
         return back()->with('success', 'Quiz submitted. Your result is shown below.');
     }

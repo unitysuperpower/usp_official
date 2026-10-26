@@ -9,7 +9,7 @@ class StaffHome
     // First admin page each permission opens, in sidebar order.
     private const PAGES = [
         'dashboard.view' => '/admin/dashboard',
-        'education.teach' => '/admin/education/overview',
+        'education.teach' => '/admin/education/teaching',
         'education.courses' => '/admin/education/courses',
         'education.enrollments' => '/admin/education/enrollments',
         'education.payments' => '/admin/education/payments',
@@ -32,6 +32,10 @@ class StaffHome
 
     public static function url(User $user): string
     {
+        // Teachers who don't manage courses start from their own classes.
+        if ($user->hasPermission('education.teach') && ! $user->hasPermission('education.courses')) {
+            return '/admin/education/teaching';
+        }
         foreach (self::PAGES as $permission => $url) {
             if ($user->hasPermission($permission)) {
                 return $url;

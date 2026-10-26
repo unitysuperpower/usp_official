@@ -66,7 +66,7 @@ class Theme
     public static function client(): array
     {
         $theme = self::current();
-        $url = fn ($path) => $path ? Storage::disk('public')->url($path) : null;
+        $url = fn ($path) => $path ? self::publicPath($path) : null;
 
         return [
             'mode' => $theme['mode'],
@@ -83,7 +83,13 @@ class Theme
     {
         $path = self::current()['brand']['favicon'];
 
-        return $path ? Storage::disk('public')->url($path) : asset('favicon.png');
+        return $path ? self::publicPath($path) : '/favicon.png';
+    }
+
+    // Site-relative URL, so uploads work under any domain regardless of APP_URL.
+    public static function publicPath(string $path): string
+    {
+        return parse_url(Storage::disk('public')->url($path), PHP_URL_PATH);
     }
 
     private static function stack(string $font): string

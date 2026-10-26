@@ -27,14 +27,22 @@ class AdminCourseController extends Controller
 
     public function create()
     {
-        return ReactPage::render('admin.education.editor', ['currency' => config('education.currency')]);
+        return ReactPage::render('admin.education.editor', ['currency' => config('education.currency'), 'teachers' => $this->teachers()]);
+    }
+
+    // Staff accounts whose roles include the classroom permission can be assigned as instructors.
+    private function teachers()
+    {
+        return \App\Models\User::where('is_admin', true)->with('roles')->orderBy('name')->get()
+            ->filter(fn ($user) => $user->hasPermission('education.teach'))->map(fn ($user) => $user->only(['id', 'name', 'email']))->values();
     }
 
     public function edit(Course $course)
     {
-        $course->load(['batches' => fn ($q) => $q->withCount(['enrollments as reserved_count' => fn ($q) => $q->whereIn('status', Education::RESERVED)])->orderByDesc('starts_on'), 'lessons']);
+        $course->load(['batches' => fn ($q) => $q->withCount(['enrollments as reserved_count' => fn ($q) => $q->whereIn('status', Education::RESERVED), 'enrollments'])->orderByDesc('starts_on'), 'lessons']);
+        $instructorIds = $course->instructors()->pluck('users.id');
 
-        return ReactPage::render('admin.education.editor', compact('course'));
+        return ReactPage::render('admin.education.editor', ['course' => $course, 'teachers' => $this->teachers(), 'instructorIds' => $instructorIds]);
     }
 
     private function data(Request $request, ?Course $course = null): array
@@ -52,11 +60,12 @@ class AdminCourseController extends Controller
             'remove_cover' => 'nullable|boolean', 'cover_alt' => 'nullable|string|max:255',
             'visual_theme' => 'sometimes|required|in:mint,violet,amber,blue',
             'is_featured' => 'sometimes|boolean', 'carousel_position' => 'sometimes|required|integer|min:1|max:1000',
+            'instructor_ids' => 'nullable|array', 'instructor_ids.*' => 'integer|exists:users,id',
         ]);
         $data['fee_minor'] = (int) round((float) $data['fee'] * 100);
         $data['currency'] = $course?->currency ?? config('education.currency');
         $data['is_published'] = $request->boolean('is_published');
-        unset($data['fee'], $data['cover'], $data['remove_cover']);
+        unset($data['fee'], $data['cover'], $data['remove_cover'], $data['instructor_ids'], $data['instructors_submitted']);
 
         return $data;
     }
@@ -95,6 +104,10 @@ class AdminCourseController extends Controller
         }
         if ($oldPath && $oldPath !== $path) {
             $images->deleteImage($oldPath);
+        }
+        if ($request->boolean('instructors_submitted')) {
+            $allowed = $this->teachers()->pluck('id');
+            $saved->instructors()->sync(collect($request->input('instructor_ids', []))->map(fn ($id) => (int) $id)->intersect($allowed)->values()->all());
         }
 
         return $saved;
@@ -149,7 +162,7 @@ class AdminCourseController extends Controller
             'title' => 'required|string|max:255', 'position' => 'required|integer|min:1|max:10000',
             'duration_minutes' => 'required|integer|min:0|max:10000', 'content' => 'required|string|max:100000',
             'video_url' => 'nullable|url:https|max:2000', 'resource_url' => 'nullable|url:https|max:2000',
-            'is_published' => 'required|boolean',
+            'is_published' => 'required|boolean', 'section' => 'nullable|string|max:120',
         ]);
         $data['is_published'] = $request->boolean('is_published');
         if ($lesson) {
@@ -159,5 +172,42 @@ class AdminCourseController extends Controller
         }
 
         return back()->with('success', 'Lesson saved.');
+    }
+
+    public function destroyLesson(Course $course, CourseLesson $lesson)
+    {
+        abort_unless($lesson->course_id === $course->id, 404);
+        $lesson->delete();
+
+        return back()->with('success', "Lesson “{$lesson->title}” deleted. Student progress for it was removed.");
+    }
+
+    /** Move a lesson one place up or down; positions are renumbered 1..n. */
+    public function moveLesson(Request $request, Course $course, CourseLesson $lesson)
+    {
+        abort_unless($lesson->course_id === $course->id, 404);
+        $direction = $request->validate(['direction' => 'required|in:up,down'])['direction'];
+        DB::transaction(function () use ($course, $lesson, $direction) {
+            $ids = $course->lessons()->lockForUpdate()->pluck('id')->all();
+            $index = array_search($lesson->id, $ids, true);
+            $swap = $direction === 'up' ? $index - 1 : $index + 1;
+            if (isset($ids[$swap])) {
+                [$ids[$index], $ids[$swap]] = [$ids[$swap], $ids[$index]];
+            }
+            foreach ($ids as $position => $id) {
+                CourseLesson::whereKey($id)->update(['position' => $position + 1]);
+            }
+        });
+
+        return back()->with('success', 'Lesson order updated.');
+    }
+
+    public function destroyBatch(Course $course, CourseBatch $batch)
+    {
+        abort_unless($batch->course_id === $course->id, 404);
+        Education::ensure(! $batch->enrollments()->exists(), 'This batch has applications or students. Close it to new applications instead of deleting it.', 'batch');
+        $batch->delete();
+
+        return back()->with('success', "Batch “{$batch->name}” deleted.");
     }
 }

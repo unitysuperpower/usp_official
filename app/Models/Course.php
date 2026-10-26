@@ -15,6 +15,11 @@ class Course extends Model
         return $this->hasMany(CourseBatch::class);
     }
 
+    public function instructors()
+    {
+        return $this->belongsToMany(User::class, 'course_instructors');
+    }
+
     public function lessons()
     {
         return $this->hasMany(CourseLesson::class)->orderBy('position')->orderBy('id');

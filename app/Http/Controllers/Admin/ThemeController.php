@@ -18,7 +18,7 @@ class ThemeController extends Controller
         return ReactPage::render('admin.settings.theme', [
             'theme' => Theme::current(),
             'defaults' => config('theme'),
-            'images' => collect(self::IMAGES)->mapWithKeys(fn ($key) => [$key => ($path = Theme::current()['brand'][$key]) ? Storage::disk('public')->url($path) : null]),
+            'images' => collect(self::IMAGES)->mapWithKeys(fn ($key) => [$key => ($path = Theme::current()['brand'][$key]) ? Theme::publicPath($path) : null]),
             'fonts' => array_keys(config('theme.font_choices')),
             'presets' => config('theme.presets'),
         ]);

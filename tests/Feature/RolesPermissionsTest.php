@@ -34,7 +34,8 @@ it('limits each staff role to its own admin areas', function () {
     $this->actingAs($editor)->get('/admin/users')->assertForbidden();
 
     $instructor = staff('instructor');
-    $this->actingAs($instructor)->get('/admin/education/overview')->assertOk();
+    $this->actingAs($instructor)->get('/admin/education/overview')->assertRedirect('/admin/education/teaching');
+    $this->actingAs($instructor)->get('/admin/education/teaching')->assertOk();
     $this->actingAs($instructor)->get('/admin/education/courses')->assertForbidden();
     $this->actingAs($instructor)->get('/admin/education/payments')->assertForbidden();
 

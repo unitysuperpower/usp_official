@@ -1,4 +1,6 @@
 import LearningCalendar from "./learning-calendar";
+import StudentHub from "./education-hub";
+import { TeachingDashboard } from "./education-insights";
 import {
     EnrollmentReview,
     EnrollmentJourney,
@@ -43,6 +45,7 @@ import {
     Table,
     Stats,
     Empty,
+    DeleteAction,
 } from "./ui";
 
 const modes = [
@@ -883,8 +886,54 @@ function StudentWorkspace({
     learning,
     notes = {},
     announcements = [],
+    plan = {},
 }) {
     const canLearn = ["active", "completed"].includes(e.status);
+    if (canLearn)
+        return (
+            <Shell>
+                <StudentHub
+                    enrollment={e}
+                    lessons={lessons}
+                    completed={completed}
+                    learning={learning}
+                    notes={notes}
+                    announcements={announcements}
+                    plan={plan}
+                    payments={<PaymentHistory enrollment={e} />}
+                    details={
+                        <section className="panel">
+                            <h2>Enrollment details</h2>
+                            <dl className="education-facts">
+                                <dt>Student</dt>
+                                <dd>{context.user.name}</dd>
+                                <dt>Enrollment</dt>
+                                <dd>#{e.id}</dd>
+                                <dt>Course fee</dt>
+                                <dd>{e.fee_minor ? fee(e) : "Free"}</dd>
+                                <dt>Format</dt>
+                                <dd>{label(e.batch.course.mode)}</dd>
+                                <dt>Applied</dt>
+                                <dd>{date(e.created_at)}</dd>
+                                {e.certificate_code && (
+                                    <>
+                                        <dt>Certificate</dt>
+                                        <dd>
+                                            <a className="text-link" href={`/learn/${e.id}/certificate`}>
+                                                View certificate ↗
+                                            </a>
+                                        </dd>
+                                    </>
+                                )}
+                            </dl>
+                            <a className="text-link" href="/chat">
+                                Contact support →
+                            </a>
+                        </section>
+                    }
+                />
+            </Shell>
+        );
     const count = rows(lessons).filter((l) => completed.includes(l.id)).length;
     const messages = {
         applied:
@@ -1198,6 +1247,13 @@ function LessonFields({ lesson = {} }) {
                 required
                 maxLength={255}
             />
+            <Field
+                name="section"
+                title="Module / section (optional, groups lessons in the curriculum)"
+                value={lesson.section}
+                maxLength={120}
+                placeholder="Module 1 · Foundations"
+            />
             <div className="form-grid">
                 <Field
                     name="position"
@@ -1218,15 +1274,19 @@ function LessonFields({ lesson = {} }) {
             </div>
             <Field
                 name="content"
-                title="Lesson content (plain text)"
+                title="Lesson content"
                 type="textarea"
+                rows={14}
                 value={lesson.content}
                 required
                 maxLength={100000}
             />
+            <small className="field-hint">
+                Formatting: <code># Heading</code>, <code>- bullet</code>, <code>1. step</code>, <code>**bold**</code>, <code>[link](https://…)</code>. Plain text works too — blank lines start new paragraphs.
+            </small>
             <Field
                 name="video_url"
-                title="Video URL (HTTPS)"
+                title="Video URL (HTTPS) — YouTube, Vimeo, Loom and Google Drive links play inside the lesson"
                 type="url"
                 value={lesson.video_url}
             />
@@ -1245,7 +1305,7 @@ function LessonFields({ lesson = {} }) {
         </>
     );
 }
-function CourseEditor({ course: c, currency = "PKR" }) {
+function CourseEditor({ course: c, currency = "PKR", teachers = [], instructorIds = [] }) {
     return (
         <Shell>
             <Heading
@@ -1300,6 +1360,7 @@ function CourseEditor({ course: c, currency = "PKR" }) {
                     />
                     <Field
                         name="instructor"
+                        title="Instructor name shown to students"
                         value={c?.instructor}
                         required
                         maxLength={255}
@@ -1376,6 +1437,26 @@ function CourseEditor({ course: c, currency = "PKR" }) {
                     their learning access. Fee changes apply only to new
                     applications.
                 </small>
+                <fieldset className="permission-group">
+                    <legend>Instructor accounts</legend>
+                    <input type="hidden" name="instructors_submitted" value="1" />
+                    {teachers.length ? (
+                        <div className="permission-checks">
+                            {teachers.map((t) => (
+                                <label className="check-field" key={t.id}>
+                                    <input type="checkbox" name="instructor_ids[]" value={t.id} defaultChecked={instructorIds.includes(t.id)} />
+                                    <span>
+                                        {t.name}
+                                        <small>{t.email}</small>
+                                    </span>
+                                </label>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="muted">No staff accounts can teach yet. Give someone the Instructor role in Admin → Users.</p>
+                    )}
+                    <small className="muted">Assigned instructors run this course’s classrooms: sessions, attendance, grading and student insights.</small>
+                </fieldset>
             </Form>
             {c && (
                 <>
@@ -1403,6 +1484,9 @@ function CourseEditor({ course: c, currency = "PKR" }) {
                                     </a>
                                     <BatchFields batch={b} />
                                 </Form>
+                                {!b.enrollments_count && (
+                                    <DeleteAction action={`${adminRoot}/courses/${c.id}/batches/${b.id}`} name={b.name} message="This batch has no applications, so it can be deleted safely." />
+                                )}
                             </details>
                         ))}
                         <details className="education-lesson">
@@ -1417,14 +1501,28 @@ function CourseEditor({ course: c, currency = "PKR" }) {
                     </section>
                     <section id="course-lessons" className="panel">
                         <h2>Curriculum & learning materials</h2>
-                        {c.lessons.map((l) => (
+                        {c.lessons.map((l, i) => (
                             <details className="education-lesson" key={l.id}>
                                 <summary>
-                                    {l.position}. {l.title}
+                                    {i + 1}. {l.section ? <span className="muted">{l.section} · </span> : null}
+                                    {l.title}
                                     <Badge>
                                         {l.is_published ? "published" : "draft"}
                                     </Badge>
                                 </summary>
+                                <div className="row-actions lesson-tools">
+                                    {i > 0 && (
+                                        <Form action={`${adminRoot}/courses/${c.id}/lessons/${l.id}/move`} method="PATCH" submit="↑ Move up" className="inline-form">
+                                            <input type="hidden" name="direction" value="up" />
+                                        </Form>
+                                    )}
+                                    {i < c.lessons.length - 1 && (
+                                    <Form action={`${adminRoot}/courses/${c.id}/lessons/${l.id}/move`} method="PATCH" submit="↓ Move down" className="inline-form">
+                                        <input type="hidden" name="direction" value="down" />
+                                    </Form>
+                                    )}
+                                    <DeleteAction action={`${adminRoot}/courses/${c.id}/lessons/${l.id}`} name={l.title} message="Deleting a lesson also removes students’ completion marks and notes for it." />
+                                </div>
                                 <Form
                                     action={`${adminRoot}/courses/${c.id}/lessons/${l.id}`}
                                     method="PUT"
@@ -1757,6 +1855,7 @@ export default function EducationPage(props) {
         "admin.education.review": AdminReview,
         "admin.education.payments": AdminPayments,
         "admin.education.classroom": BatchClassroom,
+        "admin.education.teaching": TeachingDashboard,
         "admin.education.settings": PaymentSettings,
     };
     const Page = pages[context.page];

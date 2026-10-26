@@ -7,6 +7,7 @@ const groups = [
         "Education",
         [
             ["education/overview", "Education overview"],
+            ["education/teaching", "My classes"],
             ["education/courses", "Courses & curriculum"],
             ["education/enrollments", "Students & applications"],
             ["education/payments", "Course payments"],
@@ -53,7 +54,8 @@ const permissionFor = {
     "store/products": "store.products",
     "store/orders": "store.orders",
     "store/licenses": "store.licenses",
-    "education/overview": ["education.courses", "education.teach", "education.enrollments", "education.payments"],
+    "education/overview": ["education.courses", "education.enrollments", "education.payments"],
+    "education/teaching": "education.teach",
     "education/courses": "education.courses",
     "education/enrollments": "education.enrollments",
     "education/payments": "education.payments",
@@ -86,6 +88,7 @@ const paths = {
     "store/licenses": "M15 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0 M11 11v10 M11 16h4 M11 20h3",
     "education/overview": "M4 3v18h17 M8 16v-5 M13 16V7 M18 16V4",
     "education/courses": "M3 4h7l2 2 2-2h7v16h-7l-2 2-2-2H3z M12 6v16",
+    "education/teaching": "M2 9l10-5 10 5-10 5z M6 11v5c3 2 9 2 12 0v-5 M22 9v6",
     "education/enrollments":
         "M16 21v-2a6 6 0 0 0-12 0v2 M14 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0 M19 8v6 M16 11h6",
     "education/payments": "M3 5h18v14H3z M3 10h18 M7 15h3",
@@ -129,7 +132,7 @@ const active = (path) => {
     const page = context.page
         .replace("admin.store.editor", "admin.store.products")
         .replace(/^admin\.store\.order$/, "admin.store.orders")
-        .replace("admin.education.classroom", "admin.education.courses")
+        .replace("admin.education.classroom", context.user?.permissions?.includes("education.courses") ? "admin.education.courses" : "admin.education.teaching")
         .replace("admin.education.editor", "admin.education.courses")
         .replace("admin.education.review", "admin.education.enrollments");
     const key = path.replaceAll("/", ".");

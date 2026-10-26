@@ -262,4 +262,38 @@ class SiteNotifications
             replyToAddress: $message->email,
         ));
     }
+
+    /** An instructor's one-click reminder to a student who needs attention. */
+    public static function educationNudge(CourseEnrollment $enrollment, array $reasons, ?string $message, string $from): void
+    {
+        $enrollment->loadMissing('student', 'batch.course');
+        SiteMail::send($enrollment->student?->email, 'education_nudge', new NotificationMail(
+            subjectLine: 'A note from your instructor: '.$enrollment->batch->course->title,
+            heading: 'Let’s keep your course on track',
+            lines: array_values(array_filter([
+                'Hello '.($enrollment->student?->name ?: 'there').',',
+                $message ?: 'Your instructor checked in on your progress and wants to help you finish strong.',
+                $reasons ? 'Here is what needs your attention:' : null,
+                ...array_map(fn ($reason) => '• '.$reason, $reasons),
+            ])),
+            actionLabel: 'Open my course',
+            actionUrl: url('/learn/'.$enrollment->id),
+            footnote: 'Sent by '.$from.' from the USP education team.',
+        ));
+    }
+
+    /** Scheduled reminder (class tomorrow, assignment due, or inactivity). */
+    public static function educationReminder(CourseEnrollment $enrollment, string $heading, string $line, array $details, string $anchor = ''): void
+    {
+        $enrollment->loadMissing('student', 'batch.course');
+        SiteMail::send($enrollment->student?->email, 'education_reminders', new NotificationMail(
+            subjectLine: $heading.': '.$enrollment->batch->course->title,
+            heading: $heading,
+            lines: ['Hello '.($enrollment->student?->name ?: 'there').',', $line],
+            details: $details,
+            actionLabel: 'Open my course',
+            actionUrl: url('/learn/'.$enrollment->id.$anchor),
+            footnote: 'You receive these reminders because you are enrolled in '.$enrollment->batch->course->title.'.',
+        ));
+    }
 }

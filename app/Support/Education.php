@@ -16,6 +16,23 @@ class Education
         return array_filter(\App\Models\EducationSetting::current()?->manual_methods ?? config('education.payment_methods'), fn ($method) => filled($method['instructions']));
     }
 
+    /** Course managers see every classroom; instructors only the courses they are assigned to. */
+    public static function teaches(\App\Models\User $user, CourseBatch $batch): bool
+    {
+        return $user->can('education.courses')
+            || ($user->can('education.teach') && DB::table('course_instructors')->where('course_id', $batch->course_id)->where('user_id', $user->id)->exists());
+    }
+
+    /** Batch ids the user may teach, or null for all of them. */
+    public static function teachingBatchIds(\App\Models\User $user): ?\Illuminate\Support\Collection
+    {
+        if ($user->can('education.courses')) {
+            return null;
+        }
+
+        return CourseBatch::whereIn('course_id', DB::table('course_instructors')->where('user_id', $user->id)->select('course_id'))->pluck('id');
+    }
+
     public static function ensure(bool $condition, string $message, string $field = 'status'): void
     {
         if (! $condition) {

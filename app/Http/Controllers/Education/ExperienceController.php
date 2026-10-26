@@ -31,6 +31,11 @@ class ExperienceController extends Controller
             }
         });
 
+        \App\Support\EducationInsights::touch($enrollment, $lesson->id);
+        if ($request->expectsJson()) {
+            return response()->json(['saved_at' => now()->toIso8601String()]);
+        }
+
         return back()->with('success', 'Private lesson notes saved.');
     }
 
@@ -58,8 +63,12 @@ class ExperienceController extends Controller
         return response()->view('education.receipt', compact('payment'))->header('Cache-Control', 'private, no-store');
     }
 
-    public function overview()
+    public function overview(Request $request)
     {
+        // Instructors who only teach get their own class list instead of the school-wide numbers.
+        if (! collect(['education.courses', 'education.enrollments', 'education.payments'])->contains(fn ($p) => $request->user()->can($p))) {
+            return redirect()->route('admin.education.teaching');
+        }
         $stats = ['Published courses' => Course::where('is_published', true)->count(), 'Active students' => CourseEnrollment::where('status', 'active')->distinct()->count('user_id'), 'Applications to review' => CourseEnrollment::where('status', 'applied')->count(), 'Assignments to grade' => EducationSubmission::where('status', 'submitted')->count()];
         $payments = CoursePayment::where('status', 'approved')->selectRaw('currency, SUM(amount_minor) as collected')->groupBy('currency')->get();
         $outstanding = CourseEnrollment::where('status', 'accepted')->where('fee_minor', '>', 0)->whereDoesntHave('payments', fn ($q) => $q->where('status', 'approved'))->selectRaw('currency, SUM(fee_minor) as outstanding')->groupBy('currency')->get();

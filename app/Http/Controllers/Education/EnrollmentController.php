@@ -10,6 +10,7 @@ use App\Models\EducationAssignment;
 use App\Models\EducationSession;
 use App\Services\JazzCashService;
 use App\Support\Education;
+use App\Support\EducationInsights;
 use App\Support\EducationLearning;
 use App\Support\ReactPage;
 use Illuminate\Http\Request;
@@ -72,6 +73,7 @@ class EnrollmentController extends Controller
             'notes' => $canLearn ? DB::table('education_notes')->where('course_enrollment_id', $enrollment->id)->pluck('body', 'course_lesson_id') : [],
             'announcements' => $canLearn ? DB::table('education_announcements')->where('course_batch_id', $enrollment->course_batch_id)->latest()->limit(20)->get() : [],
             'jazzcashEnabled' => app(JazzCashService::class)->configured(),
+            'plan' => EducationInsights::studentPlan($enrollment),
         ]);
     }
 
@@ -161,9 +163,32 @@ class EnrollmentController extends Controller
             abort_unless(in_array($item->status, ['active', 'completed']), 403);
             abort_unless($lesson->course_id === $batch->course_id && $lesson->is_published, 404);
             DB::table('course_lesson_progress')->updateOrInsert(['course_enrollment_id' => $item->id, 'course_lesson_id' => $lesson->id], ['completed_at' => now()]);
+            EducationInsights::touch($item, $lesson->id);
         });
+        if ($request->boolean('continue')) {
+            $done = DB::table('course_lesson_progress')->where('course_enrollment_id', $enrollment->id)->pluck('course_lesson_id');
+            $lessons = $enrollment->batch->course->lessons()->where('is_published', true)->get(['id']);
+            $index = $lessons->search(fn ($l) => $l->id === $lesson->id);
+            $next = $lessons->slice($index + 1)->first(fn ($l) => ! $done->contains($l->id)) ?? $lessons->first(fn ($l) => ! $done->contains($l->id));
+            if ($next) {
+                return redirect('/learn/'.$enrollment->id.'?tab=lessons&lesson='.$next->id)->with('success', 'Lesson complete. Here’s your next one.');
+            }
+
+            return redirect('/learn/'.$enrollment->id.'?tab=overview')->with('success', 'You’ve finished every lesson in this course. Great work!');
+        }
 
         return back()->with('success', 'Lesson marked complete.');
+    }
+
+    // Called by the lesson player when a lesson is opened: resume point, streak and activity.
+    public function open(Request $request, CourseEnrollment $enrollment, CourseLesson $lesson)
+    {
+        $this->authorizeStudent($request, $enrollment);
+        abort_unless($enrollment->status === 'active', 403);
+        abort_unless($lesson->course_id === $enrollment->batch->course_id && $lesson->is_published, 404);
+        EducationInsights::touch($enrollment, $lesson->id);
+
+        return response()->json(['ok' => true]);
     }
 
     public function certificate(Request $request, CourseEnrollment $enrollment)

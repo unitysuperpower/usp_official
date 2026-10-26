@@ -6,9 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class CourseEnrollment extends Model
 {
-    protected $fillable = ['user_id', 'course_batch_id', 'status', 'phone', 'motivation', 'review_note', 'fee_minor', 'currency', 'accepted_at', 'enrolled_at', 'completed_at', 'certificate_code', 'certificate_name', 'certificate_course'];
+    protected $fillable = ['user_id', 'course_batch_id', 'status', 'phone', 'motivation', 'review_note', 'fee_minor', 'currency', 'accepted_at', 'enrolled_at', 'completed_at', 'certificate_code', 'certificate_name', 'certificate_course', 'last_lesson_id', 'last_active_at'];
 
-    protected $casts = ['fee_minor' => 'integer', 'accepted_at' => 'datetime', 'enrolled_at' => 'datetime', 'completed_at' => 'datetime'];
+    protected $casts = ['fee_minor' => 'integer', 'accepted_at' => 'datetime', 'enrolled_at' => 'datetime', 'completed_at' => 'datetime', 'last_active_at' => 'datetime'];
 
     public function student()
     {
@@ -18,6 +18,11 @@ class CourseEnrollment extends Model
     public function batch()
     {
         return $this->belongsTo(CourseBatch::class, 'course_batch_id');
+    }
+
+    public function submissions()
+    {
+        return $this->hasMany(EducationSubmission::class);
     }
 
     public function payments()

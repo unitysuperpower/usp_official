@@ -24,6 +24,8 @@ class MailSetting extends Model
         'payment_received' => 'Product payment received, awaiting verification',
         'payment_rejected' => 'Product payment not accepted',
         'enrollment_confirmed' => 'Course enrollment confirmed',
+        'education_nudge' => 'Instructor reminder sent to a student',
+        'education_reminders' => 'Automatic class, deadline and inactivity reminders to students',
         'service_request' => 'Service request received',
         'project_shared' => 'Project shared with the client',
         'milestone_review' => 'Milestone ready for the client to approve',

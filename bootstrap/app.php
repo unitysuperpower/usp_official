@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: ['education/jazzcash/return']);
         $middleware->alias([
             'admin' => IsAdmin::class,
+            'teaches' => \App\Http\Middleware\TeachesBatch::class,
         ]);
         $middleware->append(TrackPageViews::class);
         $middleware->append(SearchRobots::class);

@@ -1,4 +1,5 @@
 import { Announcements } from "./education-experience";
+import { ClassroomInsights } from "./education-insights";
 import React, { useState } from "react";
 import {
     context,
@@ -34,18 +35,8 @@ const inputTime = (value) => {
     const get = (key) => parts.find((part) => part.type === key)?.value;
     return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
 };
-function SectionNav({ sections }) {
-    return (
-        <nav className="learning-section-nav" aria-label="Classroom sections">
-            {sections.map(([id, title]) => (
-                <a key={id} href={`#${id}`}>
-                    {title}
-                </a>
-            ))}
-        </nav>
-    );
-}
-export function LearningActivities({ enrollment, learning = {} }) {
+// `only` renders one section without the inner tabs (used by the student course hub).
+export function LearningActivities({ enrollment, learning = {}, only }) {
     const [tab, setCurrentTab] = useState(() => {
         const value = new URLSearchParams(location.search).get("activity");
         return ["schedule", "assignments", "quizzes"].includes(value)
@@ -65,8 +56,11 @@ export function LearningActivities({ enrollment, learning = {} }) {
         ["quizzes", "Quizzes"],
     ];
     const active = enrollment.status === "active";
+    const current = only || tab;
     return (
         <section className="panel learning-activities" id="learning-activities">
+            {!only && (
+            <>
             <div className="panel-heading">
                 <h2>Your classroom activities</h2>
             </div>
@@ -112,13 +106,15 @@ export function LearningActivities({ enrollment, learning = {} }) {
                     </button>
                 ))}
             </div>
+            </>
+            )}
             <div
                 role="tabpanel"
                 tabIndex={0}
-                id={`activity-panel-${tab}`}
-                aria-labelledby={`activity-tab-${tab}`}
+                id={`activity-panel-${current}`}
+                aria-labelledby={only ? undefined : `activity-tab-${current}`}
             >
-                {tab === "schedule" && (
+                {current === "schedule" && (
                     <>
                         <AttendanceSummary
                             summary={learning.attendanceSummary}
@@ -162,7 +158,7 @@ export function LearningActivities({ enrollment, learning = {} }) {
                         </div>
                     </>
                 )}
-                {tab === "assignments" && (
+                {current === "assignments" && (
                     <>
                         {!rows(learning.assignments).length && (
                             <p>No assignments published yet.</p>
@@ -181,7 +177,7 @@ export function LearningActivities({ enrollment, learning = {} }) {
                                     !a.due_at ||
                                     new Date(a.due_at) >= new Date());
                             return (
-                                <article className="learning-task" key={a.id}>
+                                <article className="learning-task" key={a.id} id={`assignment-${a.id}`}>
                                     <div className="panel-heading">
                                         <h3>{a.title}</h3>
                                         <Badge>
@@ -276,7 +272,7 @@ export function LearningActivities({ enrollment, learning = {} }) {
                         })}
                     </>
                 )}
-                {tab === "quizzes" && (
+                {current === "quizzes" && (
                     <>
                         {!rows(learning.quizzes).length && (
                             <p>No quizzes published yet.</p>
@@ -287,7 +283,7 @@ export function LearningActivities({ enrollment, learning = {} }) {
                             );
                             const passed = attempts.some((a) => a.passed);
                             return (
-                                <article className="learning-task" key={q.id}>
+                                <article className="learning-task" key={q.id} id={`quiz-${q.id}`}>
                                     <div className="panel-heading">
                                         <h3>{q.title}</h3>
                                         <Badge>
@@ -673,30 +669,78 @@ export function BatchClassroom({
     assignments,
     quizzes,
     announcements = [],
+    insights = [],
+    nudged = {},
 }) {
     const base = `${root}/batches/${batch.id}`;
     const active = students.filter((s) => s.status === "active");
+    // Re-open the tab whose form failed validation; otherwise ?tab= or the Students tab.
+    const fromForm = (context.old._form_action || "").match(/\/(sessions|assignments|submissions|quizzes|announcements|requirements|nudge)/)?.[1];
+    const [tab, setTabState] = useState(
+        { sessions: "sessions", assignments: "assignments", submissions: "assignments", quizzes: "quizzes", announcements: "announcements", requirements: "settings", nudge: "students" }[fromForm] ||
+            new URLSearchParams(location.search).get("tab") ||
+            "students",
+    );
+    const setTab = (value) => {
+        setTabState(value);
+        const url = new URL(location.href);
+        url.searchParams.set("tab", value);
+        history.replaceState(null, "", url);
+    };
+    const toGrade = assignments.reduce((n, a) => n + (a.submissions || []).filter((x) => x.status === "submitted").length, 0);
+    const unmarked = sessions.filter((x) => x.status === "scheduled" && new Date(x.starts_at) < new Date()).length;
+    const atRisk = insights.filter((r) => r.level === "at_risk").length;
     return (
         <section className="education">
-            <a
-                className="text-link"
-                href={`${root}/courses/${batch.course_id}/edit`}
-            >
-                ← Course & batches
-            </a>
+            {context.user.permissions.includes("education.courses") ? (
+                <a className="text-link" href={`${root}/courses/${batch.course_id}/edit`}>
+                    ← Course & batches
+                </a>
+            ) : (
+                <a className="text-link" href={`${root}/teaching`}>
+                    ← My classes
+                </a>
+            )}
             <Heading
                 eyebrow={batch.course.title}
                 title={batch.name}
-                description="Plan classes, record attendance, and assess student learning."
-            />
-            <Announcements items={announcements} batchId={batch.id} />
-            <SectionNav
-                sections={[
-                    ["class-sessions", "Attendance"],
-                    ["class-assignments", "Assignments"],
-                    ["class-quizzes", "Quizzes"],
-                ]}
-            />
+                description="See who needs help, run classes, and assess student learning."
+            >
+                <a className="button secondary" href={`${base}/gradebook.csv`}>
+                    Export gradebook (CSV)
+                </a>
+            </Heading>
+            <div className="stats">
+                {[
+                    ["Active students", active.length],
+                    ["At risk", atRisk],
+                    ["Work to grade", toGrade],
+                    ["Sessions to close", unmarked],
+                ].map(([title, value]) => (
+                    <div className="stat" key={title}>
+                        <span>{title}</span>
+                        <strong>{value}</strong>
+                    </div>
+                ))}
+            </div>
+            <nav className="hub-tabs" aria-label="Classroom sections">
+                {[
+                    ["students", "Students", atRisk],
+                    ["sessions", "Sessions & attendance", unmarked],
+                    ["assignments", "Assignments", toGrade],
+                    ["quizzes", "Quizzes"],
+                    ["announcements", "Announcements"],
+                    ["settings", "Settings"],
+                ].map(([key, title, count]) => (
+                    <button key={key} type="button" aria-current={tab === key ? "page" : undefined} onClick={() => setTab(key)}>
+                        {title}
+                        {count > 0 && <small className="alert">{count}</small>}
+                    </button>
+                ))}
+            </nav>
+            {tab === "students" && <ClassroomInsights insights={insights} nudged={nudged} base={base} />}
+            {tab === "announcements" && <Announcements items={announcements} batchId={batch.id} />}
+            {tab === "settings" && (
             <Form
                 action={`${base}/requirements`}
                 method="PATCH"
@@ -713,6 +757,8 @@ export function BatchClassroom({
                     required
                 />
             </Form>
+            )}
+            {tab === "sessions" && (
             <section id="class-sessions" className="panel">
                 <h2>Class sessions & attendance</h2>
                 <p>
@@ -813,6 +859,8 @@ export function BatchClassroom({
                     </Form>
                 </details>
             </section>
+            )}
+            {tab === "assignments" && (
             <section id="class-assignments" className="panel">
                 <h2>Assignments & grading</h2>
                 {assignments.map((a) => (
@@ -914,6 +962,8 @@ export function BatchClassroom({
                     </Form>
                 </details>
             </section>
+            )}
+            {tab === "quizzes" && (
             <section id="class-quizzes" className="panel">
                 <h2>Quizzes</h2>
                 <p>
@@ -952,6 +1002,7 @@ export function BatchClassroom({
                     </Form>
                 </details>
             </section>
+            )}
         </section>
     );
 }

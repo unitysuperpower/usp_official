@@ -9,7 +9,10 @@ use App\Models\EducationAttendance;
 use App\Models\EducationQuiz;
 use App\Models\EducationSession;
 use App\Models\EducationSubmission;
+use App\Models\CourseEnrollment;
 use App\Support\Education;
+use App\Support\EducationInsights;
+use App\Support\SiteNotifications;
 use App\Support\ReactPage;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -26,8 +29,81 @@ class AdminLearningController extends Controller
         $quizzes = EducationQuiz::where('course_batch_id', $batch->id)->withCount('attempts')->latest()->get();
 
         $announcements = DB::table('education_announcements')->where('course_batch_id', $batch->id)->latest()->limit(20)->get();
+        $insights = EducationInsights::forBatch($batch)->map(fn ($row) => EducationInsights::public($row))->sortByDesc('score')->values();
+        $nudged = DB::table('education_reminders')->whereIn('course_enrollment_id', $students->modelKeys())->where('key', 'like', 'nudge:%')
+            ->selectRaw('course_enrollment_id, max(sent_at) as sent_at')->groupBy('course_enrollment_id')->pluck('sent_at', 'course_enrollment_id');
 
-        return ReactPage::render('admin.education.classroom', compact('batch', 'students', 'sessions', 'assignments', 'quizzes', 'announcements'));
+        return ReactPage::render('admin.education.classroom', compact('batch', 'students', 'sessions', 'assignments', 'quizzes', 'announcements', 'insights', 'nudged'));
+    }
+
+    /** "My classes": every batch the user teaches that is running, upcoming or recently finished. */
+    public function teaching(Request $request)
+    {
+        $ids = Education::teachingBatchIds($request->user());
+        $batches = CourseBatch::with('course:id,title,slug,cover_image,visual_theme')
+            ->when($ids !== null, fn ($q) => $q->whereIn('id', $ids))
+            ->where('ends_on', '>=', now()->subDays(30)->toDateString())
+            ->withCount(['enrollments as active_count' => fn ($q) => $q->where('status', 'active')])
+            ->orderBy('starts_on')->limit(50)->get();
+        $rows = $batches->map(function (CourseBatch $batch) {
+            $insights = EducationInsights::forBatch($batch);
+            $next = EducationSession::where('course_batch_id', $batch->id)->where('status', 'scheduled')->where('starts_at', '>=', now())->orderBy('starts_at')->first(['id', 'title', 'starts_at']);
+
+            return $batch->only(['id', 'name', 'starts_on', 'ends_on', 'schedule', 'active_count']) + [
+                'course' => $batch->course->only(['id', 'title', 'cover_image', 'visual_theme']),
+                'at_risk' => $insights->where('level', 'at_risk')->count(),
+                'watch' => $insights->where('level', 'watch')->count(),
+                'average_progress' => $insights->where('status', 'active')->avg('progress') !== null ? (int) round($insights->where('status', 'active')->avg('progress')) : null,
+                'to_grade' => EducationSubmission::where('status', 'submitted')->whereHas('assignment', fn ($q) => $q->where('course_batch_id', $batch->id))->count(),
+                'unmarked_sessions' => EducationSession::where('course_batch_id', $batch->id)->where('status', 'scheduled')->where('starts_at', '<', now())->count(),
+                'next_session' => $next,
+                'needs_attention' => $insights->whereIn('level', ['at_risk', 'watch'])->take(3)->map(fn ($row) => ['name' => $row['student']['name'] ?? 'Student', 'level' => $row['level'], 'reason' => $row['reasons'][0] ?? null])->values(),
+            ];
+        });
+
+        return ReactPage::render('admin.education.teaching', ['batches' => $rows, 'managesAll' => $ids === null]);
+    }
+
+    /** One-click reminder email to a student, at most once per day per student. */
+    public function nudge(Request $request, CourseBatch $batch, CourseEnrollment $enrollment)
+    {
+        abort_unless($enrollment->course_batch_id === $batch->id && $enrollment->status === 'active', 404);
+        $data = $request->validate(['message' => 'nullable|string|max:1000']);
+        $key = 'nudge:'.$enrollment->id.':'.now(EducationInsights::TZ)->toDateString();
+        Education::ensure(DB::table('education_reminders')->insertOrIgnore(['key' => $key, 'course_enrollment_id' => $enrollment->id, 'sent_at' => now()]) === 1, 'A reminder was already sent to this student today.', 'message');
+        $insight = EducationInsights::forEnrollment($enrollment);
+        SiteNotifications::educationNudge($enrollment, $insight['reasons'], $data['message'] ?? null, $request->user()->name);
+
+        return back()->with('success', 'Reminder emailed to '.$enrollment->student->name.'.');
+    }
+
+    /** Gradebook export: one row per student with progress, attendance, every assignment and quiz. */
+    public function gradebook(CourseBatch $batch)
+    {
+        $insights = EducationInsights::forBatch($batch);
+        $assignments = EducationAssignment::where('course_batch_id', $batch->id)->where('is_published', true)->orderBy('due_at')->get(['id', 'title']);
+        $quizzes = EducationQuiz::where('course_batch_id', $batch->id)->where('is_published', true)->get(['id', 'title']);
+        $subs = EducationSubmission::whereIn('education_assignment_id', $assignments->modelKeys())->get()->groupBy('course_enrollment_id');
+        $attempts = \App\Models\EducationQuizAttempt::whereIn('education_quiz_id', $quizzes->modelKeys())->get()->groupBy('course_enrollment_id');
+        $name = str($batch->course->title.' '.$batch->name)->slug().'-gradebook.csv';
+
+        return response()->streamDownload(function () use ($insights, $assignments, $quizzes, $subs, $attempts) {
+            $out = fopen('php://output', 'w');
+            // Spreadsheet apps treat cells starting with = + - @ as formulas.
+            $safe = fn ($v) => is_string($v) && preg_match('/^[=+\-@\t\r]/', $v) ? "'".$v : $v;
+            fputcsv($out, array_merge(['Student', 'Email', 'Status', 'Insight', 'Lessons done', 'Progress %', 'Attendance %', 'Average score'],
+                $assignments->map(fn ($a) => 'Assignment: '.$a->title)->all(), $quizzes->map(fn ($q) => 'Quiz (best %): '.$q->title)->all()));
+            foreach ($insights as $id => $row) {
+                $mySubs = collect($subs[$id] ?? [])->keyBy('education_assignment_id');
+                $myAttempts = collect($attempts[$id] ?? [])->groupBy('education_quiz_id');
+                fputcsv($out, array_map($safe, array_merge([
+                    $row['student']['name'] ?? '', $row['student']['email'] ?? '', $row['status'], str_replace('_', ' ', $row['level']),
+                    $row['lessons_done'].'/'.$row['lessons_total'], $row['progress'], $row['attendance'], $row['average_score'],
+                ], $assignments->map(fn ($a) => ($s = $mySubs[$a->id] ?? null) ? ($s->status === 'graded' ? $s->score : str_replace('_', ' ', $s->status)) : 'missing')->all(),
+                    $quizzes->map(fn ($q) => collect($myAttempts[$q->id] ?? [])->max('score') ?? '')->all())));
+            }
+            fclose($out);
+        }, $name, ['Content-Type' => 'text/csv; charset=UTF-8', 'Cache-Control' => 'private, no-store']);
     }
 
     public function requirements(Request $request, CourseBatch $batch)
