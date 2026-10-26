@@ -11,6 +11,9 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+// Included from a TSFS_Admin method, so these variables are local to that method, not globals.
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
+
 $paged         = isset( $paged ) ? max( 1, absint( $paged ) ) : 1;
 $per_page      = isset( $per_page ) ? absint( $per_page ) : 20;
 $total_entries = isset( $total_entries ) ? absint( $total_entries ) : count( $entries );

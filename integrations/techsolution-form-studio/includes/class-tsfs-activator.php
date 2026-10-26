@@ -23,7 +23,7 @@ class TSFS_Activator {
 
         // Seed starter "Contact Us" form if no forms exist
         $table_forms    = TSFS_DB::forms_table();
-        $existing_forms = $wpdb->get_var( "SELECT COUNT(*) FROM $table_forms" );
+        $existing_forms = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i', $table_forms ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- one-time check of the plugin's own table on activation.
         if ( 0 == $existing_forms ) {
             self::seed_default_form( $table_forms );
         }
@@ -131,7 +131,7 @@ class TSFS_Activator {
             'notification_email' => get_option( 'admin_email' ),
         );
 
-        $wpdb->insert(
+        $wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- seeds the plugin's own table on activation.
             $table_forms,
             array(
                 'title'       => 'Simple Contact Form',

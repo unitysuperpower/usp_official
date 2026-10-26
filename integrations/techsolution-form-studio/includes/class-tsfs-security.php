@@ -175,6 +175,7 @@ class TSFS_Security {
             return new WP_Error(
                 'tsfs_rate_limited',
                 sprintf(
+                    /* translators: %d: number of minutes to wait */
                     __( 'Too many submissions from your network. Please wait %d minutes before trying again.', 'techsolution-form-studio' ),
                     $window_minutes
                 )
@@ -290,7 +291,8 @@ class TSFS_Security {
                 return true; // Bypass if not configured
             }
 
-            $response = wp_safe_remote_post( 'https://challenges.cloudflare.com/turnstile/v0/siteverify', array(
+            // Server-side verification API call for the optional Turnstile service (disclosed in readme.txt), not offloaded content.
+            $response = wp_safe_remote_post( 'https://challenges.cloudflare.com/turnstile/v0/siteverify', array( // phpcs:ignore PluginCheck.CodeAnalysis.Offloading.OffloadedContent
                 'timeout' => 10,
                 'body'    => array(
                     'secret'   => $secret,

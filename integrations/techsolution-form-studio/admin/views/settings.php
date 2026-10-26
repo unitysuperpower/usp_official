@@ -10,6 +10,9 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+// Included from a TSFS_Admin method, so these variables are local to that method, not globals.
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
+
 $sec_settings = TSFS_Security::get_settings();
 $has_pro      = defined( 'TSFS_PRO_VERSION' );
 $upload_dir   = wp_upload_dir();
@@ -176,14 +179,7 @@ $tsfs_sections  = array(
                 </div>
 
                 <p class="tsfs-setting-note">
-                    <?php
-                    printf(
-                        /* translators: 1: Google privacy policy URL, 2: Cloudflare privacy policy URL */
-                        wp_kses( __( 'reCAPTCHA and Turnstile are external services. When enabled, visitors load the provider\'s script and their verification response and IP address are sent to the provider. See the <a href="%1$s" target="_blank" rel="noopener noreferrer">Google Privacy Policy</a> and the <a href="%2$s" target="_blank" rel="noopener noreferrer">Cloudflare Privacy Policy</a>.', 'techsolution-form-studio' ), array( 'a' => array( 'href' => array(), 'target' => array(), 'rel' => array() ) ) ),
-                        'https://policies.google.com/privacy',
-                        'https://www.cloudflare.com/privacypolicy/'
-                    );
-                    ?>
+                    <?php esc_html_e( 'reCAPTCHA (by Google) and Turnstile (by Cloudflare) are external services. When one is turned on, visitors load the provider\'s script, and their verification response and IP address are sent to that provider under its privacy policy. Mention this in your site\'s privacy policy.', 'techsolution-form-studio' ); ?>
                 </p>
             </section>
 

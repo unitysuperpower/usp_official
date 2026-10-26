@@ -663,8 +663,8 @@ class TSFS_AJAX {
         header( 'Pragma: no-cache' );
         header( 'Expires: 0' );
 
-        $output = fopen( 'php://output', 'w' );
-        fputs( $output, "\xEF\xBB\xBF" ); // UTF-8 BOM for Microsoft Excel
+        echo "\xEF\xBB\xBF"; // UTF-8 BOM so Microsoft Excel reads the file as UTF-8.
+        $output = fopen( 'php://output', 'w' ); // The download stream; PHP closes it on exit.
 
         // Form Top Meta Headers
         fputcsv( $output, array( '# TECHSOLUTION FORM STUDIO - SUBMISSIONS EXPORT' ) );
@@ -691,7 +691,6 @@ class TSFS_AJAX {
             fputcsv( $output, $safe_row );
         }
 
-        fclose( $output );
         exit;
     }
 
@@ -958,10 +957,10 @@ class TSFS_AJAX {
 
             // Read and sanitize the posted value immediately; type-specific checks follow.
             $raw_val = null;
-            if ( isset( $_POST[ $name ] ) ) {
-                $raw_val = is_array( $_POST[ $name ] )
-                    ? array_map( 'sanitize_text_field', array_filter( wp_unslash( $_POST[ $name ] ), 'is_scalar' ) )
-                    : sanitize_textarea_field( wp_unslash( $_POST[ $name ] ) );
+            if ( isset( $_POST[ $name ] ) && is_array( $_POST[ $name ] ) ) {
+                $raw_val = array_map( 'sanitize_text_field', array_filter( (array) wp_unslash( $_POST[ $name ] ), 'is_scalar' ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- each element is sanitized by sanitize_text_field().
+            } elseif ( isset( $_POST[ $name ] ) ) {
+                $raw_val = sanitize_textarea_field( wp_unslash( $_POST[ $name ] ) );
             }
 
             $is_empty = is_array( $raw_val ) ? empty( $raw_val ) : ( null === $raw_val || '' === trim( $raw_val ) );
@@ -1145,6 +1144,7 @@ class TSFS_AJAX {
     /**
      * Evaluate a field's conditional logic rules against the submitted values (mirrors the browser logic).
      */
+    // phpcs:disable WordPress.Security.NonceVerification.Missing -- the helpers below run only inside ajax_submit_form(), after its nonce check.
     private function is_field_visible( $field ) {
         if ( empty( $field['enable_conditions'] ) || empty( $field['conditions'] ) || ! is_array( $field['conditions'] ) ) {
             return true;
@@ -1155,10 +1155,10 @@ class TSFS_AJAX {
             $operator = isset( $rule['operator'] ) ? $rule['operator'] : '==';
             $expected = strtolower( trim( isset( $rule['value'] ) ? (string) $rule['value'] : '' ) );
             $current  = '';
-            if ( '' !== $target && isset( $_POST[ $target ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified in ajax_submit_form().
-                $current = is_array( $_POST[ $target ] )
-                    ? array_map( 'strtolower', array_map( 'trim', array_map( 'sanitize_text_field', array_filter( wp_unslash( $_POST[ $target ] ), 'is_scalar' ) ) ) )
-                    : strtolower( trim( sanitize_text_field( wp_unslash( $_POST[ $target ] ) ) ) );
+            if ( '' !== $target && isset( $_POST[ $target ] ) && is_array( $_POST[ $target ] ) ) {
+                $current = array_map( 'strtolower', array_map( 'trim', array_map( 'sanitize_text_field', array_filter( (array) wp_unslash( $_POST[ $target ] ), 'is_scalar' ) ) ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- each element is sanitized by sanitize_text_field().
+            } elseif ( '' !== $target && isset( $_POST[ $target ] ) ) {
+                $current = strtolower( trim( sanitize_text_field( wp_unslash( $_POST[ $target ] ) ) ) );
             }
             if ( is_array( $current ) ) {
                 $met = 'empty' === $operator ? empty( $current ) : ( 'not_empty' === $operator ? ! empty( $current ) : ( '!=' === $operator ? ! in_array( $expected, $current, true ) : in_array( $expected, $current, true ) ) );
@@ -1273,7 +1273,7 @@ class TSFS_AJAX {
      * @return array|string|WP_Error File data, '' when no optional file was sent, or an error.
      */
     private function process_file_upload( $field, $name, $label, $required ) {
-        if ( empty( $_FILES[ $name ]['name'] ) || ! isset( $_FILES[ $name ]['tmp_name'] ) || ! is_uploaded_file( $_FILES[ $name ]['tmp_name'] ) ) {
+        if ( empty( $_FILES[ $name ]['name'] ) || ! isset( $_FILES[ $name ]['tmp_name'] ) || ! is_uploaded_file( $_FILES[ $name ]['tmp_name'] ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- tmp_name is a server path checked by is_uploaded_file().
             /* translators: %s: field label */
             return $required ? new WP_Error( 'required', sprintf( __( '%s is required.', 'techsolution-form-studio' ), $label ) ) : '';
         }
@@ -1340,6 +1340,8 @@ class TSFS_AJAX {
         );
     }
 
+    // phpcs:enable WordPress.Security.NonceVerification.Missing
+
     /**
      * Save Security & Anti-spam Settings via AJAX.
      */
@@ -1353,7 +1355,7 @@ class TSFS_AJAX {
         $provider = isset( $_POST['anti_spam_provider'] ) ? sanitize_key( wp_unslash( $_POST['anti_spam_provider'] ) ) : 'none';
         $score    = isset( $_POST['recaptcha_v3_score'] ) ? (float) sanitize_text_field( wp_unslash( $_POST['recaptcha_v3_score'] ) ) : 0.5;
         $text     = function ( $key ) {
-            return isset( $_POST[ $key ] ) ? sanitize_text_field( trim( wp_unslash( $_POST[ $key ] ) ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce checked above.
+            return isset( $_POST[ $key ] ) ? trim( sanitize_text_field( wp_unslash( $_POST[ $key ] ) ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce checked above.
         };
 
         $settings = array(
@@ -1418,8 +1420,8 @@ class TSFS_AJAX {
             wp_send_json_error( array( 'message' => __( 'Permission denied.', 'techsolution-form-studio' ) ) );
         }
 
-        $webhook_url = isset( $_POST['webhook_url'] ) ? esc_url_raw( trim( wp_unslash( $_POST['webhook_url'] ) ) ) : '';
-        $secret      = isset( $_POST['webhook_secret'] ) ? sanitize_text_field( trim( wp_unslash( $_POST['webhook_secret'] ) ) ) : '';
+        $webhook_url = isset( $_POST['webhook_url'] ) ? trim( esc_url_raw( wp_unslash( $_POST['webhook_url'] ) ) ) : '';
+        $secret      = isset( $_POST['webhook_secret'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['webhook_secret'] ) ) ) : '';
 
         if ( empty( $webhook_url ) || ! filter_var( $webhook_url, FILTER_VALIDATE_URL ) ) {
             wp_send_json_error( array( 'message' => __( 'Please enter a valid Webhook URL (e.g. https://hooks.zapier.com/...)', 'techsolution-form-studio' ) ) );
@@ -1454,16 +1456,16 @@ class TSFS_AJAX {
 
         if ( $status_code >= 200 && $status_code < 300 ) {
             wp_send_json_success( array(
-                /* translators: placeholders are values inserted into the message: value inserted into the message. */
-                'message'     => sprintf( __( 'Webhook Delivered Successfully! (HTTP %d in %dms)', 'techsolution-form-studio' ), $status_code, $duration ),
+                /* translators: 1: HTTP status code, 2: response time in milliseconds */
+                'message'     => sprintf( __( 'Webhook delivered (HTTP %1$d in %2$d ms).', 'techsolution-form-studio' ), $status_code, $duration ),
                 'status_code' => $status_code,
                 'latency_ms'  => $duration,
                 'response'    => wp_trim_words( $body, 15 ),
             ) );
         } else {
             wp_send_json_error( array(
-                /* translators: placeholders are values inserted into the message: value inserted into the message. */
-                'message'     => sprintf( __( 'Webhook Endpoint responded with error HTTP %d (Latency: %dms)', 'techsolution-form-studio' ), $status_code, $duration ),
+                /* translators: 1: HTTP status code, 2: response time in milliseconds */
+                'message'     => sprintf( __( 'The webhook address responded with HTTP %1$d (%2$d ms).', 'techsolution-form-studio' ), $status_code, $duration ),
                 'status_code' => $status_code,
             ) );
         }
@@ -1476,7 +1478,7 @@ class TSFS_AJAX {
         if ( ! current_user_can( 'manage_options' ) ) {
             wp_die( esc_html__( 'Permission denied.', 'techsolution-form-studio' ), 403 );
         }
-        $name = isset( $_GET['file'] ) ? sanitize_file_name( basename( rawurldecode( wp_unslash( $_GET['file'] ) ) ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only download for administrators.
+        $name = isset( $_GET['file'] ) ? basename( sanitize_file_name( wp_unslash( $_GET['file'] ) ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only download for administrators; links are stored in entries, so a nonce would expire.
         $path = trailingslashit( TSFS_Security::upload_dir() ) . $name;
         if ( '' === $name || '.' === $name[0] || 'index.php' === $name || ! is_file( $path ) ) {
             wp_die( esc_html__( 'File not found.', 'techsolution-form-studio' ), 404 );

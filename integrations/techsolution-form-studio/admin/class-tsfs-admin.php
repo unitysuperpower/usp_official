@@ -139,6 +139,7 @@ class TSFS_Admin {
                 'preview_title'       => __( 'Form preview', 'techsolution-form-studio' ),
                 'preview_description' => __( 'Test your form before publishing. Preview submissions are not saved.', 'techsolution-form-studio' ),
                 'preview_fields'      => __( 'fields', 'techsolution-form-studio' ),
+                /* translators: %shown% and %total% are replaced in the browser with the number of matching and total fields. Keep both tokens. */
                 'outline_count'       => __( '%shown% of %total% fields', 'techsolution-form-studio' ),
                 'outline_empty'       => __( 'Your form has no fields. Choose Add fields to get started.', 'techsolution-form-studio' ),
                 'outline_no_matches'  => __( 'No fields match. Try a different label or field type.', 'techsolution-form-studio' ),
@@ -189,6 +190,7 @@ class TSFS_Admin {
     /**
      * Render the Visual Form Builder page.
      */
+    // phpcs:disable WordPress.Security.NonceVerification.Recommended -- the screens below only read GET values to choose what to display; every change goes through nonce-checked AJAX actions.
     public function render_form_builder_page() {
         $form_id = isset( $_GET['id'] ) ? absint( $_GET['id'] ) : 0;
         $form    = $form_id ? TSFS_DB::get_form( $form_id ) : null;
@@ -237,6 +239,7 @@ class TSFS_Admin {
 
         include TSFS_DIR . 'admin/views/entries-list.php';
     }
+    // phpcs:enable WordPress.Security.NonceVerification.Recommended
 
     /**
      * Render the settings page.

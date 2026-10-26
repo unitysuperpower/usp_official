@@ -10,6 +10,9 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+// Included from a TSFS_Admin method, so these variables are local to that method, not globals.
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
+
 $total_forms        = ! empty( $forms ) ? count( $forms ) : 0;
 $total_submissions  = TSFS_DB::get_entry_count();
 $total_views        = TSFS_DB::get_total_views();

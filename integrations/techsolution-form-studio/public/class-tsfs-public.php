@@ -86,6 +86,9 @@ class TSFS_Public {
      * Enqueue the configured CAPTCHA provider's script (Google reCAPTCHA or Cloudflare Turnstile).
      * See the "External services" section of readme.txt.
      */
+    // The CAPTCHA services only work with their own hosted scripts. They load only when the site owner
+    // turns a provider on in Settings, and are disclosed under "External services" in readme.txt.
+    // phpcs:disable PluginCheck.CodeAnalysis.EnqueuedResourceOffloading.OffloadedContent, WordPress.WP.EnqueuedResourceParameters.MissingVersion
     public static function enqueue_captcha_script( $settings ) {
         $provider = isset( $settings['anti_spam_provider'] ) ? $settings['anti_spam_provider'] : 'none';
         if ( 'recaptcha_v2' === $provider && ! empty( $settings['recaptcha_site_key'] ) ) {
@@ -96,6 +99,7 @@ class TSFS_Public {
             wp_enqueue_script( 'tsfs-turnstile', 'https://challenges.cloudflare.com/turnstile/v0/api.js', array(), null, array( 'in_footer' => true, 'strategy' => 'async' ) );
         }
     }
+    // phpcs:enable PluginCheck.CodeAnalysis.EnqueuedResourceOffloading.OffloadedContent, WordPress.WP.EnqueuedResourceParameters.MissingVersion
 
     /**
      * Register the "Form Studio Form" block. It renders on the server with the same output as the shortcode.

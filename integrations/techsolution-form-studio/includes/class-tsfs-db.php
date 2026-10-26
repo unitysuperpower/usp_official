@@ -10,6 +10,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+// This class reads and writes the plugin's own custom tables, so direct queries are required.
+// Every query is prepared with %i for table names; results that change on every submission are not cached.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
 class TSFS_DB {
 
     /**
@@ -54,13 +58,13 @@ class TSFS_DB {
         if ( $legacy_forms !== $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $legacy_forms ) ) ) ) {
             return;
         }
-        if ( (int) $wpdb->get_var( "SELECT COUNT(*) FROM $forms_table" ) > 0 ) {
+        if ( (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i', $forms_table ) ) > 0 ) {
             return;
         }
 
-        $wpdb->query( "INSERT INTO $forms_table (id, title, fields_data, settings, views, status, created_at, updated_at) SELECT id, title, fields_data, settings, views, status, created_at, updated_at FROM $legacy_forms" );
+        $wpdb->query( $wpdb->prepare( 'INSERT INTO %i (id, title, fields_data, settings, views, status, created_at, updated_at) SELECT id, title, fields_data, settings, views, status, created_at, updated_at FROM %i', $forms_table, $legacy_forms ) );
         if ( $legacy_entries === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $legacy_entries ) ) ) ) {
-            $wpdb->query( "INSERT INTO $entries_table (id, form_id, fields_data, user_ip, user_agent, status, notes, created_at) SELECT id, form_id, fields_data, user_ip, user_agent, status, notes, created_at FROM $legacy_entries" );
+            $wpdb->query( $wpdb->prepare( 'INSERT INTO %i (id, form_id, fields_data, user_ip, user_agent, status, notes, created_at) SELECT id, form_id, fields_data, user_ip, user_agent, status, notes, created_at FROM %i', $entries_table, $legacy_entries ) );
         }
 
         $legacy_settings = get_option( 'usp_security_settings' );
@@ -80,7 +84,7 @@ class TSFS_DB {
             return;
         }
         self::maybe_upgrade_schema();
-        $wpdb->query( $wpdb->prepare( "UPDATE $forms_table SET views = views + 1 WHERE id = %d", $form_id ) );
+        $wpdb->query( $wpdb->prepare( 'UPDATE %i SET views = views + 1 WHERE id = %d', $forms_table, $form_id ) );
     }
 
     /**
@@ -90,7 +94,7 @@ class TSFS_DB {
         global $wpdb;
         self::maybe_upgrade_schema();
         $forms_table = self::forms_table();
-        return (int) $wpdb->get_var( "SELECT SUM(views) FROM $forms_table" );
+        return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT SUM(views) FROM %i', $forms_table ) );
     }
 
     /**
@@ -104,13 +108,10 @@ class TSFS_DB {
         $forms_table   = self::forms_table();
         $entries_table = self::entries_table();
 
-        $sql = "SELECT f.*, COUNT(e.id) as entry_count 
-                FROM $forms_table f 
-                LEFT JOIN $entries_table e ON f.id = e.form_id 
-                GROUP BY f.id 
-                ORDER BY f.id DESC";
-
-        return $wpdb->get_results( $sql, ARRAY_A );
+        return $wpdb->get_results(
+            $wpdb->prepare( 'SELECT f.*, COUNT(e.id) AS entry_count FROM %i f LEFT JOIN %i e ON f.id = e.form_id GROUP BY f.id ORDER BY f.id DESC', $forms_table, $entries_table ),
+            ARRAY_A
+        );
     }
 
     /**
@@ -123,7 +124,7 @@ class TSFS_DB {
         $id = absint( $id );
 
         $form = $wpdb->get_row(
-            $wpdb->prepare( "SELECT * FROM $forms_table WHERE id = %d", $id ),
+            $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $forms_table, $id ),
             ARRAY_A
         );
 
@@ -189,7 +190,7 @@ class TSFS_DB {
 
         // Delete associated entries (and their uploaded files) first
         $entries_table = self::entries_table();
-        foreach ( (array) $wpdb->get_col( $wpdb->prepare( "SELECT fields_data FROM $entries_table WHERE form_id = %d", $id ) ) as $json ) {
+        foreach ( (array) $wpdb->get_col( $wpdb->prepare( 'SELECT fields_data FROM %i WHERE form_id = %d', $entries_table, $id ) ) as $json ) {
             TSFS_Security::delete_entry_files( json_decode( $json, true ) );
         }
         $wpdb->delete( $entries_table, array( 'form_id' => $id ), array( '%d' ) );
@@ -262,59 +263,23 @@ class TSFS_DB {
 
         $params = wp_parse_args( $args, $defaults );
 
-        $entries_table = self::entries_table();
-        $forms_table   = self::forms_table();
+        $f      = self::filter_values( $params );
+        $limit  = $params['limit'] > 0 ? absint( $params['limit'] ) : PHP_INT_MAX;
+        $offset = absint( $params['offset'] );
+        $by_date = 'created_at' === $params['orderby'];
+        $asc     = 'ASC' === strtoupper( (string) $params['order'] );
+        $values  = array( self::entries_table(), self::forms_table(), $f['form_id'], $f['form_id'], $f['status'], $f['status'], $f['from'], $f['to'], $f['like'], $f['like'], $f['like'], $limit, $offset );
 
-        $where = array( '1=1' );
-        $query_params = array();
-
-        if ( ! empty( $params['form_id'] ) ) {
-            $where[] = 'e.form_id = %d';
-            $query_params[] = absint( $params['form_id'] );
+        // Each sort order is its own literal query so no SQL is assembled from variables.
+        if ( $by_date && $asc ) {
+            $rows = $wpdb->get_results( $wpdb->prepare( "SELECT e.*, f.title AS form_title FROM %i e LEFT JOIN %i f ON e.form_id = f.id WHERE (%d = 0 OR e.form_id = %d) AND (%s = '' OR e.status = %s) AND e.created_at >= %s AND e.created_at <= %s AND (%s = '' OR e.fields_data LIKE %s OR e.user_ip LIKE %s) ORDER BY e.created_at ASC LIMIT %d OFFSET %d", $values ), ARRAY_A );
+        } elseif ( $by_date ) {
+            $rows = $wpdb->get_results( $wpdb->prepare( "SELECT e.*, f.title AS form_title FROM %i e LEFT JOIN %i f ON e.form_id = f.id WHERE (%d = 0 OR e.form_id = %d) AND (%s = '' OR e.status = %s) AND e.created_at >= %s AND e.created_at <= %s AND (%s = '' OR e.fields_data LIKE %s OR e.user_ip LIKE %s) ORDER BY e.created_at DESC LIMIT %d OFFSET %d", $values ), ARRAY_A );
+        } elseif ( $asc ) {
+            $rows = $wpdb->get_results( $wpdb->prepare( "SELECT e.*, f.title AS form_title FROM %i e LEFT JOIN %i f ON e.form_id = f.id WHERE (%d = 0 OR e.form_id = %d) AND (%s = '' OR e.status = %s) AND e.created_at >= %s AND e.created_at <= %s AND (%s = '' OR e.fields_data LIKE %s OR e.user_ip LIKE %s) ORDER BY e.id ASC LIMIT %d OFFSET %d", $values ), ARRAY_A );
+        } else {
+            $rows = $wpdb->get_results( $wpdb->prepare( "SELECT e.*, f.title AS form_title FROM %i e LEFT JOIN %i f ON e.form_id = f.id WHERE (%d = 0 OR e.form_id = %d) AND (%s = '' OR e.status = %s) AND e.created_at >= %s AND e.created_at <= %s AND (%s = '' OR e.fields_data LIKE %s OR e.user_ip LIKE %s) ORDER BY e.id DESC LIMIT %d OFFSET %d", $values ), ARRAY_A );
         }
-
-        if ( ! empty( $params['status'] ) && in_array( $params['status'], array( 'unread', 'read', 'starred' ), true ) ) {
-            $where[] = 'e.status = %s';
-            $query_params[] = $params['status'];
-        }
-
-        if ( ! empty( $params['date_from'] ) ) {
-            $where[] = 'e.created_at >= %s';
-            $query_params[] = sanitize_text_field( $params['date_from'] ) . ' 00:00:00';
-        }
-
-        if ( ! empty( $params['date_to'] ) ) {
-            $where[] = 'e.created_at <= %s';
-            $query_params[] = sanitize_text_field( $params['date_to'] ) . ' 23:59:59';
-        }
-
-        if ( ! empty( $params['search'] ) ) {
-            $where[] = '(e.fields_data LIKE %s OR e.user_ip LIKE %s)';
-            $like = '%' . $wpdb->esc_like( sanitize_text_field( $params['search'] ) ) . '%';
-            $query_params[] = $like;
-            $query_params[] = $like;
-        }
-
-        $where_sql = implode( ' AND ', $where );
-        $order = ( 'ASC' === strtoupper( $params['order'] ) ) ? 'ASC' : 'DESC';
-        $orderby = ( 'created_at' === $params['orderby'] ) ? 'e.created_at' : 'e.id';
-
-        $limit_clause = '';
-        if ( $params['limit'] > 0 ) {
-            $limit_clause = $wpdb->prepare( ' LIMIT %d OFFSET %d', absint( $params['limit'] ), absint( $params['offset'] ) );
-        }
-
-        $sql = "SELECT e.*, f.title as form_title 
-                FROM $entries_table e 
-                LEFT JOIN $forms_table f ON e.form_id = f.id 
-                WHERE $where_sql 
-                ORDER BY $orderby $order $limit_clause";
-
-        if ( ! empty( $query_params ) ) {
-            $sql = $wpdb->prepare( $sql, $query_params );
-        }
-
-        $rows = $wpdb->get_results( $sql, ARRAY_A );
 
         foreach ( $rows as &$row ) {
             $row['fields_data'] = ! empty( $row['fields_data'] ) ? json_decode( $row['fields_data'], true ) : array();
@@ -339,45 +304,31 @@ class TSFS_DB {
 
         $params = wp_parse_args( $args, $defaults );
 
-        $entries_table = self::entries_table();
-        $where = array( '1=1' );
-        $query_params = array();
+        $f = self::filter_values( $params );
 
-        if ( ! empty( $params['form_id'] ) ) {
-            $where[] = 'form_id = %d';
-            $query_params[] = absint( $params['form_id'] );
-        }
+        return (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM %i WHERE (%d = 0 OR form_id = %d) AND (%s = '' OR status = %s) AND created_at >= %s AND created_at <= %s AND (%s = '' OR fields_data LIKE %s OR user_ip LIKE %s)",
+                self::entries_table(), $f['form_id'], $f['form_id'], $f['status'], $f['status'], $f['from'], $f['to'], $f['like'], $f['like'], $f['like']
+            )
+        );
+    }
 
-        if ( ! empty( $params['status'] ) && in_array( $params['status'], array( 'unread', 'read', 'starred' ), true ) ) {
-            $where[] = 'status = %s';
-            $query_params[] = $params['status'];
-        }
+    /**
+     * Normalised filter values for the entry queries. Empty values disable that filter.
+     */
+    private static function filter_values( $params ) {
+        global $wpdb;
+        $search = ! empty( $params['search'] ) ? sanitize_text_field( $params['search'] ) : '';
 
-        if ( ! empty( $params['date_from'] ) ) {
-            $where[] = 'created_at >= %s';
-            $query_params[] = sanitize_text_field( $params['date_from'] ) . ' 00:00:00';
-        }
-
-        if ( ! empty( $params['date_to'] ) ) {
-            $where[] = 'created_at <= %s';
-            $query_params[] = sanitize_text_field( $params['date_to'] ) . ' 23:59:59';
-        }
-
-        if ( ! empty( $params['search'] ) ) {
-            $where[] = '(fields_data LIKE %s OR user_ip LIKE %s)';
-            $like = '%' . $wpdb->esc_like( sanitize_text_field( $params['search'] ) ) . '%';
-            $query_params[] = $like;
-            $query_params[] = $like;
-        }
-
-        $where_sql = implode( ' AND ', $where );
-        $sql = "SELECT COUNT(*) FROM $entries_table WHERE $where_sql";
-
-        if ( ! empty( $query_params ) ) {
-            $sql = $wpdb->prepare( $sql, $query_params );
-        }
-
-        return (int) $wpdb->get_var( $sql );
+        return array(
+            'form_id' => absint( $params['form_id'] ),
+            'status'  => in_array( $params['status'], array( 'unread', 'read', 'starred' ), true ) ? $params['status'] : '',
+            // Without a date filter the range covers every possible DATETIME.
+            'from'    => ! empty( $params['date_from'] ) ? sanitize_text_field( $params['date_from'] ) . ' 00:00:00' : '1000-01-01 00:00:00',
+            'to'      => ! empty( $params['date_to'] ) ? sanitize_text_field( $params['date_to'] ) . ' 23:59:59' : '9999-12-31 23:59:59',
+            'like'    => '' !== $search ? '%' . $wpdb->esc_like( $search ) . '%' : '',
+        );
     }
 
     /**
@@ -388,40 +339,24 @@ class TSFS_DB {
 
         self::maybe_upgrade_schema();
 
-        $entries_table = self::entries_table();
-        $form_id       = absint( $form_id );
-
-        $where = '';
-        $params = array();
-        if ( $form_id > 0 ) {
-            $where = 'WHERE form_id = %d';
-            $params[] = $form_id;
-        }
-
-        $today_start = current_time( 'Y-m-d' ) . ' 00:00:00';
-
-        $sql_all     = "SELECT COUNT(*) FROM $entries_table $where";
-        $sql_unread  = "SELECT COUNT(*) FROM $entries_table " . ( $where ? "$where AND status = 'unread'" : "WHERE status = 'unread'" );
-        $sql_read    = "SELECT COUNT(*) FROM $entries_table " . ( $where ? "$where AND status = 'read'" : "WHERE status = 'read'" );
-        $sql_starred = "SELECT COUNT(*) FROM $entries_table " . ( $where ? "$where AND status = 'starred'" : "WHERE status = 'starred'" );
-        $sql_today   = "SELECT COUNT(*) FROM $entries_table " . ( $where ? "$where AND created_at >= %s" : "WHERE created_at >= %s" );
-
-        if ( $form_id > 0 ) {
-            $sql_all     = $wpdb->prepare( $sql_all, $params );
-            $sql_unread  = $wpdb->prepare( $sql_unread, $params );
-            $sql_read    = $wpdb->prepare( $sql_read, $params );
-            $sql_starred = $wpdb->prepare( $sql_starred, $params );
-            $sql_today   = $wpdb->prepare( $sql_today, array( $form_id, $today_start ) );
-        } else {
-            $sql_today   = $wpdb->prepare( $sql_today, array( $today_start ) );
-        }
+        $form_id = absint( $form_id );
+        $row     = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT COUNT(*) AS all_count, SUM(status = 'unread') AS unread_count, SUM(status = 'read') AS read_count, SUM(status = 'starred') AS starred_count, SUM(created_at >= %s) AS today_count FROM %i WHERE (%d = 0 OR form_id = %d)",
+                current_time( 'Y-m-d' ) . ' 00:00:00',
+                self::entries_table(),
+                $form_id,
+                $form_id
+            ),
+            ARRAY_A
+        );
 
         return array(
-            'all'     => (int) $wpdb->get_var( $sql_all ),
-            'unread'  => (int) $wpdb->get_var( $sql_unread ),
-            'read'    => (int) $wpdb->get_var( $sql_read ),
-            'starred' => (int) $wpdb->get_var( $sql_starred ),
-            'today'   => (int) $wpdb->get_var( $sql_today ),
+            'all'     => (int) ( $row['all_count'] ?? 0 ),
+            'unread'  => (int) ( $row['unread_count'] ?? 0 ),
+            'read'    => (int) ( $row['read_count'] ?? 0 ),
+            'starred' => (int) ( $row['starred_count'] ?? 0 ),
+            'today'   => (int) ( $row['today_count'] ?? 0 ),
         );
     }
 
@@ -473,16 +408,13 @@ class TSFS_DB {
             return false;
         }
 
-        $status = in_array( $status, array( 'unread', 'read', 'starred' ), true ) ? $status : 'read';
-        $entries_table = self::entries_table();
-        $placeholders  = implode( ',', array_fill( 0, count( $sanitized_ids ), '%d' ) );
+        $status  = in_array( $status, array( 'unread', 'read', 'starred' ), true ) ? $status : 'read';
+        $updated = 0;
+        foreach ( $sanitized_ids as $id ) {
+            $updated += (int) $wpdb->update( self::entries_table(), array( 'status' => $status ), array( 'id' => $id ), array( '%s' ), array( '%d' ) );
+        }
 
-        $sql = $wpdb->prepare(
-            "UPDATE $entries_table SET status = %s WHERE id IN ($placeholders)",
-            array_merge( array( $status ), $sanitized_ids )
-        );
-
-        return $wpdb->query( $sql );
+        return $updated;
     }
 
     /**
@@ -497,19 +429,12 @@ class TSFS_DB {
             return false;
         }
 
-        $entries_table = self::entries_table();
-        $placeholders  = implode( ',', array_fill( 0, count( $sanitized_ids ), '%d' ) );
-
-        foreach ( (array) $wpdb->get_col( $wpdb->prepare( "SELECT fields_data FROM $entries_table WHERE id IN ($placeholders)", $sanitized_ids ) ) as $json ) {
-            TSFS_Security::delete_entry_files( json_decode( $json, true ) );
+        $deleted = 0;
+        foreach ( $sanitized_ids as $id ) {
+            $deleted += (int) self::delete_entry( $id );
         }
 
-        $sql = $wpdb->prepare(
-            "DELETE FROM $entries_table WHERE id IN ($placeholders)",
-            $sanitized_ids
-        );
-
-        return $wpdb->query( $sql );
+        return $deleted;
     }
 
     /**
@@ -523,13 +448,7 @@ class TSFS_DB {
         $id            = absint( $id );
 
         $row = $wpdb->get_row(
-            $wpdb->prepare(
-                "SELECT e.*, f.title as form_title 
-                 FROM $entries_table e 
-                 LEFT JOIN $forms_table f ON e.form_id = f.id 
-                 WHERE e.id = %d",
-                $id
-            ),
+            $wpdb->prepare( 'SELECT e.*, f.title AS form_title FROM %i e LEFT JOIN %i f ON e.form_id = f.id WHERE e.id = %d', $entries_table, $forms_table, $id ),
             ARRAY_A
         );
 
@@ -590,7 +509,8 @@ class TSFS_DB {
         $entries_table = self::entries_table();
         $rows = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT * FROM $entries_table WHERE fields_data LIKE %s ORDER BY id ASC LIMIT %d OFFSET %d",
+                'SELECT * FROM %i WHERE fields_data LIKE %s ORDER BY id ASC LIMIT %d OFFSET %d',
+                $entries_table,
                 '%' . $wpdb->esc_like( $email ) . '%',
                 absint( $limit ),
                 absint( $offset )
@@ -621,10 +541,10 @@ class TSFS_DB {
         }
         $cutoff = gmdate( 'Y-m-d H:i:s', current_time( 'timestamp' ) - $days * DAY_IN_SECONDS );
         $entries_table = self::entries_table();
-        foreach ( (array) $wpdb->get_col( $wpdb->prepare( "SELECT fields_data FROM $entries_table WHERE created_at < %s", $cutoff ) ) as $json ) {
+        foreach ( (array) $wpdb->get_col( $wpdb->prepare( 'SELECT fields_data FROM %i WHERE created_at < %s', $entries_table, $cutoff ) ) as $json ) {
             TSFS_Security::delete_entry_files( json_decode( $json, true ) );
         }
-        return (int) $wpdb->query( $wpdb->prepare( "DELETE FROM $entries_table WHERE created_at < %s", $cutoff ) );
+        return (int) $wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE created_at < %s', $entries_table, $cutoff ) );
     }
 
     /**
@@ -637,9 +557,9 @@ class TSFS_DB {
         $form_id       = absint( $form_id );
 
         if ( $form_id > 0 ) {
-            return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $entries_table WHERE form_id = %d", $form_id ) );
+            return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE form_id = %d', $entries_table, $form_id ) );
         }
 
-        return (int) $wpdb->get_var( "SELECT COUNT(*) FROM $entries_table" );
+        return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i', $entries_table ) );
     }
 }

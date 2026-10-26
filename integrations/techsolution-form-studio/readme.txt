@@ -112,6 +112,7 @@ Yes. On activation, forms, entries and anti-spam settings from USP Form Builder 
 == Changelog ==
 
 = 2.1.0 =
+* Plugin Check: all database queries are fully prepared (table names use %i placeholders), translator comments and ordered placeholders added, no direct file writes in exports, and external CAPTCHA scripts are documented as optional services.
 * Fixed "Security verification failed" on sites with page caching (LiteSpeed Cache, WP Rocket, Cloudflare and others). Forms now fetch a fresh security token just before submitting.
 * Admin screens now use the full width of the dashboard (up to 1640px), so tables show every column, including actions.
 * Redesigned Settings: a section menu, clear setting rows with plain-language descriptions, a status summary and a sticky Save bar.

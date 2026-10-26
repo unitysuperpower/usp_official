@@ -10,6 +10,9 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+// Included from a TSFS_Admin method, so these variables are local to that method, not globals.
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
+
 $is_edit         = ! empty( $form && ! empty( $form['id'] ) );
 $current_form_id = $is_edit ? (int) $form['id'] : 0;
 $form_title      = $is_edit ? $form['title'] : __( 'New Custom Form', 'techsolution-form-studio' );

@@ -15,8 +15,11 @@ if ( empty( $tsfs_settings['delete_data_on_uninstall'] ) ) {
 }
 
 global $wpdb;
-$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}tsfs_entries" );
-$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}tsfs_forms" );
+// Removing the plugin's own tables is the purpose of uninstalling with "delete all data" turned on.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $wpdb->prefix . 'tsfs_entries' ) );
+$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $wpdb->prefix . 'tsfs_forms' ) );
+// phpcs:enable
 delete_option( 'tsfs_settings' );
 delete_option( 'tsfs_db_version' );
 wp_clear_scheduled_hook( 'tsfs_daily_cleanup' );
