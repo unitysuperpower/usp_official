@@ -379,6 +379,27 @@
         }
 
         // Fetch a fresh reCAPTCHA v3 token right before sending (tokens expire after two minutes).
+        // Cached pages can carry an expired security token, so fetch a fresh one just before
+        // submitting. If that request fails, submit with the token already in the form.
+        function withFreshNonce($form, callback) {
+            var formId = $form.find('[name="form_id"]').val();
+            if (!formId || !data().ajax_url) {
+                callback();
+                return;
+            }
+            $.ajax({
+                url: data().ajax_url,
+                type: 'POST',
+                data: { action: 'tsfs_refresh_nonce', form_id: formId },
+                timeout: 15000,
+                cache: false
+            }).done(function(response) {
+                if (response && response.success && response.data && response.data.nonce) {
+                    $form.find('[name="tsfs_nonce"]').val(response.data.nonce);
+                }
+            }).always(callback);
+        }
+
         function withRecaptchaV3($form, callback) {
             var siteKey = data().recaptcha_v3_key;
             var $token = $form.find('.tsfs-recaptcha-v3-token');
@@ -444,6 +465,7 @@
             }
 
             withRecaptchaV3($form, function() {
+              withFreshNonce($form, function() {
                 $.ajax({
                     url: data().ajax_url,
                     type: 'POST',
@@ -504,6 +526,7 @@
                     finish();
                     showMessage($messages, 'error', t('network_error', 'A network error occurred. Please try again.'));
                 });
+              });
             });
         });
 

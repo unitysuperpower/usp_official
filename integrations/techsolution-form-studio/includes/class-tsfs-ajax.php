@@ -37,6 +37,8 @@ class TSFS_AJAX {
         add_action( 'wp_ajax_tsfs_submit_form', array( $this, 'ajax_submit_form' ) );
         add_action( 'wp_ajax_nopriv_tsfs_submit_form', array( $this, 'ajax_submit_form' ) );
         add_action( 'wp_ajax_tsfs_track_view', array( $this, 'ajax_track_view' ) );
+        add_action( 'wp_ajax_tsfs_refresh_nonce', array( $this, 'ajax_refresh_nonce' ) );
+        add_action( 'wp_ajax_nopriv_tsfs_refresh_nonce', array( $this, 'ajax_refresh_nonce' ) );
         add_action( 'wp_ajax_nopriv_tsfs_track_view', array( $this, 'ajax_track_view' ) );
     }
 
@@ -784,6 +786,23 @@ class TSFS_AJAX {
     /**
      * Track impression / view counter for a form.
      */
+    /**
+     * Fresh submission nonce, requested by the form right before it submits.
+     *
+     * Page caches (LiteSpeed, WP Rocket, Cloudflare…) can serve a form whose embedded nonce is
+     * days old, which WordPress then rejects. admin-ajax.php is never cached, so this always
+     * returns a nonce that is valid for the current visitor and session.
+     */
+    public function ajax_refresh_nonce() {
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- this endpoint issues the nonce.
+        $form_id = isset( $_POST['form_id'] ) ? absint( $_POST['form_id'] ) : 0;
+        nocache_headers();
+        if ( ! $form_id || ! TSFS_DB::get_form( $form_id ) ) {
+            wp_send_json_error( array( 'message' => __( 'Form not found.', 'techsolution-form-studio' ) ), 404 );
+        }
+        wp_send_json_success( array( 'nonce' => wp_create_nonce( 'tsfs_form_submit_' . $form_id ) ) );
+    }
+
     public function ajax_track_view() {
         // phpcs:ignore WordPress.Security.NonceVerification.Missing -- anonymous, idempotent view counter; pages may be cached, so a nonce would expire.
         $form_id = isset( $_POST['form_id'] ) ? absint( $_POST['form_id'] ) : 0;
