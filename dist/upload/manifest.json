@@ -1,0 +1,18 @@
+[
+  {
+    "file": "techsolution-form-studio-2.0.1.zip",
+    "slug": "techsolution-form-studio",
+    "version": "2.0.1",
+    "edition": "free",
+    "sha256": "4547bf5a5d3ac1f230fa2a86fbb3f40ace3d4bd66b0b0817a2d620a100c98e46",
+    "bytes": 175795
+  },
+  {
+    "file": "techsolution-form-studio-pro-2.2.0.zip",
+    "slug": "techsolution-form-studio-pro",
+    "version": "2.2.0",
+    "edition": "pro",
+    "sha256": "3c84f35d3efcc49416a8d3eba49fe678b935e780a4de7c96ad4ef0016064ae37",
+    "bytes": 935939
+  }
+]
