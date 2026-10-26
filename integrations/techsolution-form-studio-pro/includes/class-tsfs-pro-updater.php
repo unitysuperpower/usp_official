@@ -94,7 +94,7 @@ class TSFS_Pro_Updater {
             'download_link' => $release ? $release['package'] : '',
             'sections'      => array(
                 'description' => esc_html__( 'Pro add-on for TechSolution Form Studio: complete address, international phone, digital signature, calculation, payment details and admission application fields.', 'techsolution-form-studio-pro' ),
-                'changelog'   => $release && $release['changelog'] ? wpautop( $release['changelog'] ) : '',
+                'changelog'   => $release && $release['changelog'] ? wp_kses_post( wpautop( $release['changelog'] ) ) : '',
             ),
         );
     }

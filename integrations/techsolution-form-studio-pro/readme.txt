@@ -4,7 +4,7 @@ Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 7.4
 Requires Plugins: techsolution-form-studio
-Stable tag: 2.2.1
+Stable tag: 2.2.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -25,6 +25,14 @@ Adds these field types to the TechSolution Form Studio builder:
 
 The Pro add-on also keeps the old `[usp_form id="…"]` shortcode from USP Form Builder working.
 
+== External services ==
+
+This add-on connects to one service, the USP Tech Solution store at usp.com.pk, and only for licensing and updates. Form submissions are never sent to it.
+
+* When you activate, check or deactivate a license, and once a day while a license is active, the license key, the site address and the plugin version are sent to https://usp.com.pk/api/licenses/v1.
+* When WordPress checks for or installs an update, the same details are sent to receive the update information and a time-limited download link.
+* No data is sent if you never enter a license key.
+
 == Licensing and updates ==
 
 All features work without a license. Activate your license under Form Studio → Pro License to receive automatic updates and support. Activation, daily checks and updates send the license key, the site address and the plugin version to usp.com.pk (https://usp.com.pk).
@@ -34,6 +42,10 @@ All features work without a license. Activate your license under Form Studio →
 Address lists are from the Countries States Cities Database (https://github.com/dr5hn/countries-states-cities-database), available under the Open Database License (ODbL 1.0). See licenses/location-data-ODbL-1.0.txt.
 
 == Changelog ==
+
+= 2.2.2 =
+* Code quality: Plugin Check clean-up (documented input handling for submitted Pro fields, bundled data reads and update changelog output passed through wp_kses_post()).
+* Readme lists the license and update service under External services.
 
 = 2.2.1 =
 * Redesigned License screen with status, expiry, days left and website usage at a glance, matching the Form Studio admin design.

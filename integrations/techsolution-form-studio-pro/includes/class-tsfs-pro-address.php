@@ -31,12 +31,12 @@ class TSFS_Pro_Address {
     }
 
     public static function countries() {
-        return json_decode( file_get_contents( __DIR__ . '/../assets/locations/countries.json' ), true );
+        return json_decode( file_get_contents( __DIR__ . '/../assets/locations/countries.json' ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- reads a data file bundled with the plugin.
     }
     public static function country_data( $code ) {
         if ( ! is_string( $code ) || ! preg_match( '/^[A-Z]{2}$/', $code ) ) { return null; }
         $file = __DIR__ . '/../assets/locations/' . $code . '.json';
-        return is_file( $file ) ? json_decode( file_get_contents( $file ), true ) : null;
+        return is_file( $file ) ? json_decode( file_get_contents( $file ), true ) : null; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- reads a data file bundled with the plugin.
     }
     public static function render( $name, $id, $required, $field = array() ) {
         $show_street = ! isset( $field['address_show_street'] ) || ! empty( $field['address_show_street'] );

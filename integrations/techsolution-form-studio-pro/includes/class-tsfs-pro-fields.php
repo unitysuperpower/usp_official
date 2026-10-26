@@ -474,9 +474,15 @@ class TSFS_Pro_Fields {
     /* Submission processing (nonce already verified by the core plugin)   */
     /* ------------------------------------------------------------------ */
 
+    // Everything below runs from the core plugin's tsfs_process_field_{type} hook, which fires only
+    // inside TSFS_AJAX::ajax_submit_form() after its nonce check.
+    // phpcs:disable WordPress.Security.NonceVerification.Missing
+
     private static function posted( $key ) {
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified in TSFS_AJAX::ajax_submit_form().
-        return isset( $_POST[ $key ] ) && is_scalar( $_POST[ $key ] ) ? sanitize_text_field( wp_unslash( $_POST[ $key ] ) ) : '';
+        if ( ! isset( $_POST[ $key ] ) || ! is_scalar( $_POST[ $key ] ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- type check only.
+            return '';
+        }
+        return sanitize_text_field( wp_unslash( $_POST[ $key ] ) );
     }
 
     private static function required_error( $label ) {
@@ -485,15 +491,13 @@ class TSFS_Pro_Fields {
     }
 
     public static function process_address( $result, $field, $ctx ) {
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- every part is sanitized in TSFS_Pro_Address::validate().
-        $raw     = isset( $_POST[ $ctx['name'] ] ) ? wp_unslash( $_POST[ $ctx['name'] ] ) : null;
+        $raw     = isset( $_POST[ $ctx['name'] ] ) ? wp_unslash( $_POST[ $ctx['name'] ] ) : null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- every part is sanitized in TSFS_Pro_Address::validate().
         $address = TSFS_Pro_Address::validate( $raw, $ctx['required'], $field );
         return is_wp_error( $address ) ? $address : array( 'value' => $address );
     }
 
     public static function process_admission( $result, $field, $ctx ) {
         $clean = array();
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing
         $raw = isset( $_POST[ $ctx['name'] ] ) && is_array( $_POST[ $ctx['name'] ] ) ? wp_unslash( $_POST[ $ctx['name'] ] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized per key below.
         foreach ( array( 'student_name', 'father_name', 'cnic', 'program', 'prev_degree', 'marks' ) as $key ) {
             $clean[ $key ] = isset( $raw[ $key ] ) && is_scalar( $raw[ $key ] ) ? sanitize_text_field( $raw[ $key ] ) : '';
@@ -574,7 +578,6 @@ class TSFS_Pro_Fields {
     }
 
     public static function process_signature( $result, $field, $ctx ) {
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing
         $data = isset( $_POST[ $ctx['name'] ] ) && is_string( $_POST[ $ctx['name'] ] ) ? trim( wp_unslash( $_POST[ $ctx['name'] ] ) ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- validated as a base64 PNG data URL below.
         if ( '' === $data ) {
             return $ctx['required'] ? new WP_Error( 'required', __( 'Please sign before submitting.', 'techsolution-form-studio-pro' ) ) : array( 'value' => '' );
@@ -596,7 +599,6 @@ class TSFS_Pro_Fields {
         $values = array();
         foreach ( TSFS_Pro_Calculator::references( isset( $field['formula'] ) ? $field['formula'] : '' ) as $key ) {
             $key = sanitize_key( $key );
-            // phpcs:ignore WordPress.Security.NonceVerification.Missing
             $raw = isset( $_POST[ $key ] ) ? wp_unslash( $_POST[ $key ] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- reduced to numbers below.
             if ( is_array( $raw ) ) {
                 $sum = 0.0;
@@ -629,4 +631,5 @@ class TSFS_Pro_Fields {
         }
         return $rules;
     }
+    // phpcs:enable WordPress.Security.NonceVerification.Missing
 }
