@@ -1,0 +1,26 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Plus Jakarta Sans',sans-serif}
+.lockup{display:inline-flex;align-items:center;gap:28px;padding:20px 28px}
+.lockup img{width:132px;height:132px}
+.name{font-size:68px;font-weight:800;letter-spacing:-2px;line-height:1;color:#0f172a;display:flex;align-items:center;gap:16px}
+.by{margin-top:10px;font-size:22px;font-weight:500;color:#64748b;letter-spacing:.2px}
+.pro{font-size:26px;font-weight:800;letter-spacing:1px;color:#fff;background:#f59e0b;border-radius:999px;padding:6px 16px 5px}
+.dark .name{color:#fff}.dark .by{color:#a5b4fc}
+.banner{width:1544px;height:500px;position:relative;overflow:hidden;display:flex;align-items:center;gap:64px;padding:0 120px;box-sizing:border-box;background:linear-gradient(120deg,#4f46e5,#7c3aed)}
+.banner.dark-bg{background:linear-gradient(120deg,#1e1b4b,#4338ca)}
+.banner img{width:250px;height:250px;filter:drop-shadow(0 24px 40px rgba(15,23,42,.35));position:relative}
+.banner h1{margin:0;font-size:96px;font-weight:800;letter-spacing:-3px;color:#fff;line-height:1;display:flex;align-items:center;gap:22px}
+.banner h1 .pro{font-size:34px;padding:8px 20px 7px}
+.banner p{margin:22px 0 0;font-size:34px;font-weight:500;color:#e0e7ff;max-width:1000px;line-height:1.35}
+.dots{position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.13) 2px,transparent 2.5px);background-size:34px 34px;-webkit-mask:linear-gradient(90deg,transparent 35%,#000 100%);mask:linear-gradient(90deg,transparent 35%,#000 100%)}
+.ghost{position:absolute;right:-40px;top:60px;width:330px;height:420px;border-radius:40px;background:rgba(255,255,255,.07);transform:rotate(12deg)}
+.text{position:relative}
+</style></head><body>
+<div id="logo" class="lockup"><img src="icon.svg"><div><div class="name">Form Studio</div><div class="by">by TechSolution</div></div></div><br>
+<div id="logo-pro" class="lockup"><img src="icon-pro.svg"><div><div class="name">Form Studio <span class="pro">PRO</span></div><div class="by">by TechSolution</div></div></div><br>
+<div id="logo-dark" class="lockup dark" style="background:#0f172a"><img src="icon.svg"><div><div class="name">Form Studio</div><div class="by">by TechSolution</div></div></div><br>
+<div id="banner" class="banner"><div class="dots"></div><div class="ghost"></div><img src="icon.svg"><div class="text"><h1>Form Studio</h1><p>Beautiful, responsive forms that fit any WordPress theme.</p></div></div>
+<div id="banner-pro" class="banner dark-bg"><div class="dots"></div><div class="ghost"></div><img src="icon-pro.svg"><div class="text"><h1>Form Studio <span class="pro">PRO</span></h1><p>Rich content, smart phone fields, signatures, payments and calculations.</p></div></div>
+</body></html>
