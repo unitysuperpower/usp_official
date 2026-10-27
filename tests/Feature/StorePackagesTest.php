@@ -60,3 +60,22 @@ test('ZIP rejection explains the exact layout, version or edition problem', func
     ['version','Version header'],['edition','different edition'],['unlabelled','unlabelled'],
     ['pro-code','contains a Pro implementation'],['traversal','unsafe path'],['metadata','Unexpected entry'],['symlink','Symbolic links'],
 ]);
+
+test('a Pro add-on product offers its separate base plugin as the Free release, never the Pro code', function ($folder, $edition, $message) {
+    $product = DigitalProduct::create(['slug' => 'techsolution-form-studio-pro', 'name' => 'Form Studio Pro', 'summary' => 'Add-on']);
+    $file = storeTestZip(["{$folder}/{$folder}.php" => "<?php\n/**\n * Plugin Name: Plugin\n * Version: 2.3.0\n */\n"]);
+    try {
+        if ($message === null) {
+            expect(app(Packages::class)->publish($product, $file, ['version' => '2.3.0', 'edition' => $edition])->edition)->toBe($edition);
+            return;
+        }
+        try { app(Packages::class)->publish($product, $file, ['version' => '2.3.0', 'edition' => $edition]); test()->fail('Mismatched ZIP accepted'); }
+        catch (ValidationException $error) { expect($error->errors()['package'][0])->toContain($message); }
+    } finally { unlink($file->getRealPath()); }
+})->with([
+    ['techsolution-form-studio', 'free', null],
+    ['techsolution-form-studio-pro', 'pro', null],
+    ['techsolution-form-studio-pro', 'free', 'cannot be the free release'],
+    ['techsolution-form-studio', 'pro', 'Choose the Free edition'],
+    ['other-plugin', 'free', 'cannot be the free release'],
+]);

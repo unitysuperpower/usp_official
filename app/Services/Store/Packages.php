@@ -30,18 +30,24 @@ class Packages
         $this->ensure($zip->open($file->getRealPath()) === true, 'The file could not be opened as a ZIP archive.');
         try {
             $this->ensure($zip->numFiles > 0 && $zip->numFiles <= 5000, 'The ZIP must contain between 1 and 5,000 entries.');
-            $main = $product->slug.'/'.$product->slug.'.php';
-            // A correctly built ZIP for a different plugin (e.g. the Free plugin uploaded to the Pro product).
-            $folder = strstr((string) $zip->getNameIndex(0), '/', true);
-            $this->ensure($zip->locateName($main) !== false || ! $folder || $folder === $product->slug || $zip->locateName($folder.'/'.$folder.'.php') === false,
-                "This ZIP contains the {$folder} plugin, but this product is {$product->slug}. Upload {$product->slug}-<version>.zip here, or create a product with the identifier {$folder} for this plugin.");
-            $this->ensure($zip->locateName($main) !== false, "Expected {$main} inside the ZIP. The top-level plugin folder and main PHP filename must match this product identifier ({$product->slug}). Do not ZIP its contents without the folder.");
+            // A Pro add-on product ("name-pro") may offer its separate base plugin ("name") as the Free download.
+            $base = preg_replace('/-pro$/', '', $product->slug);
+            // Its Free release must be that base plugin, never the Pro code.
+            $allowed = ($data['edition'] ?? '') === 'free' && $base !== $product->slug ? [$base] : [$product->slug];
+            $folder = strstr((string) $zip->getNameIndex(0), '/', true) ?: '';
+            $slug = in_array($folder, $allowed, true) ? $folder : $product->slug;
+            $main = $slug.'/'.$slug.'.php';
+            $expected = implode(' or ', array_map(fn ($s) => "{$s}/{$s}.php", $allowed));
+            if ($folder && ! in_array($folder, $allowed, true) && $zip->locateName($folder.'/'.$folder.'.php') !== false) {
+                $this->ensure(false, "This ZIP contains the {$folder} plugin, which cannot be the ".($data['edition'] ?? '')." release of {$product->slug}. Expected {$expected}.".($folder === $base ? ' Choose the Free edition for the base plugin.' : ''));
+            }
+            $this->ensure($zip->locateName($main) !== false, "Expected {$expected} inside the ZIP. The top-level plugin folder and main PHP filename must match. Do not ZIP its contents without the folder.");
             $total = 0;
             $seen = [];
             for ($i = 0; $i < $zip->numFiles; $i++) {
                 $info = $zip->statIndex($i);
                 $name = $info['name'];
-                $this->ensure(str_starts_with($name, $product->slug.'/'), 'Unexpected entry: '.mb_substr($name, 0, 150).'. Only the '.$product->slug.' folder may appear at the ZIP root.');
+                $this->ensure(str_starts_with($name, $slug.'/'), 'Unexpected entry: '.mb_substr($name, 0, 150).'. Only the '.$slug.' folder may appear at the ZIP root.');
                 $this->ensure(! preg_match('#(?:^|/)\.{1,2}(?:/|$)|[\\\\\x00-\x1f]#', $name), 'The ZIP contains an unsafe path.');
                 $this->ensure(! isset($seen[strtolower($name)]), 'The ZIP contains duplicate or case-conflicting paths.');
                 $seen[strtolower($name)] = true;

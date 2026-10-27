@@ -158,7 +158,9 @@ class StoreController extends Controller
                 ->where('expires_at', '>', now())->exists(), 403);
         } else { abort_unless($release->product->published, 404); }
         abort_unless(Storage::disk('local')->exists($release->package_path), 404);
-        return Storage::disk('local')->download($release->package_path, $release->product->slug.'-'.$release->version.'.zip', ['X-Content-Type-Options' => 'nosniff']);
+        // The Free release of a "name-pro" product is the separate base plugin "name" (see Packages::inspect).
+        $slug = $release->edition === 'free' ? preg_replace('/-pro$/', '', $release->product->slug) : $release->product->slug;
+        return Storage::disk('local')->download($release->package_path, $slug.'-'.$release->version.'.zip', ['X-Content-Type-Options' => 'nosniff']);
     }
 
     private function owner(Request $request, ProductOrder|ProductLicense $item): void
