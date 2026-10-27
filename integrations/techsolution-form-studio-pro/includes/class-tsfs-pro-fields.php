@@ -89,6 +89,7 @@ class TSFS_Pro_Fields {
                 'radius'     => '0',
                 'ul_style'   => 'disc',
                 'ol_style'   => 'decimal',
+                'marker_color' => '',
             ),
         );
         return $types;
@@ -101,7 +102,7 @@ class TSFS_Pro_Fields {
 
     public static function list_styles() {
         return array(
-            'ul' => array( 'disc', 'circle', 'square', 'none' ),
+            'ul' => array( 'disc', 'circle', 'square', 'check', 'check-circle', 'cross', 'arrow', 'star', 'none' ),
             'ol' => array( 'decimal', 'decimal-leading-zero', 'lower-alpha', 'upper-alpha', 'lower-roman', 'upper-roman', 'lower-greek', 'none' ),
         );
     }
@@ -120,6 +121,11 @@ class TSFS_Pro_Fields {
         $allowed['a']  = $common + array( 'href' => true, 'target' => true, 'rel' => true, 'title' => true );
         $allowed['br'] = array();
         $allowed['hr'] = $common;
+        foreach ( array( 'table', 'thead', 'tbody', 'tfoot', 'tr', 'caption' ) as $tag ) {
+            $allowed[ $tag ] = $common;
+        }
+        $allowed['th'] = $common + array( 'colspan' => true, 'rowspan' => true, 'scope' => true );
+        $allowed['td'] = $common + array( 'colspan' => true, 'rowspan' => true );
         return $allowed;
     }
 
@@ -175,6 +181,7 @@ class TSFS_Pro_Fields {
                 $item['text_color']   = $color( 'text_color' );
                 $item['bg_color']     = $color( 'bg_color' );
                 $item['border_color'] = $color( 'border_color' );
+                $item['marker_color'] = $color( 'marker_color' );
                 $item['ul_style']     = isset( $raw['ul_style'] ) && in_array( $raw['ul_style'], $styles['ul'], true ) ? $raw['ul_style'] : 'disc';
                 $item['ol_style']     = isset( $raw['ol_style'] ) && in_array( $raw['ol_style'], $styles['ol'], true ) ? $raw['ol_style'] : 'decimal';
                 $item['required']     = false;
@@ -225,6 +232,7 @@ class TSFS_Pro_Fields {
             'phone_countries'  => $countries,
             'list_styles'      => self::list_styles(),
             'rich_widths'      => self::rich_widths(),
+            'rich_css'         => TSFS_PRO_PLUGIN_URL . 'assets/css/tsfs-pro-public.css?ver=' . TSFS_PRO_VERSION,
         ) );
     }
 
@@ -426,14 +434,15 @@ class TSFS_Pro_Fields {
             '--tsfs-rich-ul:' . ( ! empty( $field['ul_style'] ) ? $field['ul_style'] : 'disc' ),
             '--tsfs-rich-ol:' . ( ! empty( $field['ol_style'] ) ? $field['ol_style'] : 'decimal' ),
         );
-        foreach ( array( 'text_color' => '--tsfs-rich-color', 'bg_color' => '--tsfs-rich-bg', 'border_color' => '--tsfs-rich-border' ) as $key => $var ) {
+        foreach ( array( 'text_color' => '--tsfs-rich-color', 'bg_color' => '--tsfs-rich-bg', 'border_color' => '--tsfs-rich-border', 'marker_color' => '--tsfs-rich-marker' ) as $key => $var ) {
             $color = ! empty( $field[ $key ] ) ? sanitize_hex_color( $field[ $key ] ) : '';
             if ( $color ) {
                 $style[] = $var . ':' . $color;
             }
         }
-        $html = self::replace_smart_codes( self::sanitize_rich_html( isset( $field['content'] ) ? $field['content'] : '' ) );
-        echo '<div class="tsfs-rich-content" style="' . esc_attr( implode( ';', $style ) ) . '">' . $html . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- filtered by wp_kses; SmartCode values are escaped in replace_smart_codes().
+        $html  = self::replace_smart_codes( self::sanitize_rich_html( isset( $field['content'] ) ? $field['content'] : '' ) );
+        $class = 'tsfs-rich-content tsfs-rich-ul-' . ( ! empty( $field['ul_style'] ) && in_array( $field['ul_style'], self::list_styles()['ul'], true ) ? $field['ul_style'] : 'disc' );
+        echo '<div class="' . esc_attr( $class ) . '" style="' . esc_attr( implode( ';', $style ) ) . '">' . $html . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- filtered by wp_kses; SmartCode values are escaped in replace_smart_codes().
     }
 
     /**

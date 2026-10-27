@@ -23,11 +23,75 @@
         return Number.isFinite(value) ? Math.max(min, Math.min(max, Math.round(value))) : fallback;
     }
 
+    var FORM_WIDTHS = { compact: 560, standard: 760, wide: 960, xwide: 1200 };
+    function formWidthCss(sizes) {
+        if (FORM_WIDTHS[sizes.form_width]) return FORM_WIDTHS[sizes.form_width] + 'px';
+        if (sizes.form_width === 'full') return '100%';
+        return sizes.form_width_unit === 'percent' ? sizes.form_width_percent + '%' : sizes.form_max_width + 'px';
+    }
+    function formAlignMargins(align) {
+        return { 'margin-left': align === 'left' ? '0' : 'auto', 'margin-right': align === 'right' ? '0' : 'auto' };
+    }
+
     function safeTermsUrl(value) {
         try { var url = new URL(value, window.location.href); return ['http:', 'https:'].indexOf(url.protocol) !== -1 ? url.href : ''; }
         catch (error) { return ''; }
     }
     function escapeMarkup(value) { return String(value || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+    // Section notes may hold formatted HTML. Previews keep formatting only; the server filters saved content with wp_kses_post.
+    function cleanNoteHtml(html) {
+        var tpl = document.createElement('template');
+        tpl.innerHTML = String(html || '');
+        tpl.content.querySelectorAll('script,style,iframe,object,embed,form,input,textarea,select,button,link,meta,base,svg,math').forEach(function(n) { n.remove(); });
+        tpl.content.querySelectorAll('*').forEach(function(n) {
+            Array.prototype.slice.call(n.attributes).forEach(function(a) {
+                var name = a.name.toLowerCase();
+                if (name.indexOf('on') === 0 || ((name === 'href' || name === 'src') && /^\s*(javascript|data|vbscript):/i.test(a.value))) n.removeAttribute(a.name);
+            });
+        });
+        return tpl.innerHTML;
+    }
+    // Notes saved before the visual editor are plain text: blank lines separate paragraphs.
+    function noteToHtml(content) {
+        content = String(content || '');
+        if (/<(p|ul|ol|h[2-6]|div|blockquote|br|table)\b/i.test(content)) return content;
+        return content.split(/\r?\n\s*\r?\n/).filter(function(p) { return p.trim(); }).map(function(p) {
+            return '<p>' + escapeMarkup(p.trim()).replace(/\r?\n/g, '<br>') + '</p>';
+        }).join('');
+    }
+    var NOTE_EDITOR_ID = 'insp-content';
+    function noteEditor() {
+        var ed = window.tinymce && window.tinymce.get(NOTE_EDITOR_ID);
+        return ed && !ed.isHidden() ? ed : null;
+    }
+    function removeNoteEditor() {
+        if (window.wp && wp.editor && window.tinymce && window.tinymce.get(NOTE_EDITOR_ID)) wp.editor.remove(NOTE_EDITOR_ID);
+    }
+    function initNoteEditor() {
+        if (!$('#' + NOTE_EDITOR_ID).is('[data-rich-note]') || !window.wp || !wp.editor || !wp.editor.initialize) return;
+        wp.editor.initialize(NOTE_EDITOR_ID, {
+            tinymce: {
+                wpautop: false,
+                height: 240,
+                plugins: 'lists link paste tabfocus wordpress wplink wptextpattern',
+                toolbar1: 'formatselect bold italic underline bullist numlist link blockquote',
+                toolbar2: 'alignleft aligncenter alignright outdent indent removeformat undo redo',
+                toolbar3: '',
+                toolbar4: '',
+                block_formats: 'Paragraph=p;Heading 3=h3;Heading 4=h4;Heading 5=h5',
+                content_style: 'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:#1f2937;margin:10px}',
+                setup: function(ed) {
+                    ed.on('change keyup input undo redo ExecCommand', function() {
+                        ed.save();
+                        $('#' + NOTE_EDITOR_ID).trigger('input');
+                    });
+                }
+            },
+            quicktags: { buttons: 'strong,em,ul,ol,li,link,close' },
+            mediaButtons: false
+        });
+    }
 
     function contentPreview(field) {
         var escape = function(value) { return escapeMarkup(value || ''); };
@@ -39,7 +103,8 @@
             var list = mode === 'numbered' ? 'ol' : 'ul';
             return '<' + list + ' style="padding-left:1.5em;list-style-type:' + (list === 'ol' ? 'decimal' : 'disc') + '">' + String(field.content || '').split(/\r?\n/).filter(function(item) { return item.trim(); }).map(function(item) { return '<li>' + escape(item.trim()) + '</li>'; }).join('') + '</' + list + '>';
         }
-        return (mode === 'section' ? heading : '') + '<div style="white-space:pre-line">' + escape(field.content) + '</div>';
+        if (mode === 'section' || mode === 'rich') return (mode === 'section' ? heading : '') + '<div class="tsfs-html-desc">' + cleanNoteHtml(noteToHtml(field.content)) + '</div>';
+        return '<div style="white-space:pre-line">' + escape(field.content) + '</div>';
     }
 
     var TSFSBuilder = {
@@ -331,12 +396,15 @@
             [
                 ['.tsfs-theme-card', 'preset', '#tsfs-theme-preset-val'],
                 ['.tsfs-radius-opt', 'radius', '#tsfs-theme-radius-val'],
-                ['.tsfs-btn-align-opt', 'align', '#tsfs-theme-button-align-val']
+                ['.tsfs-btn-align-opt', 'align', '#tsfs-theme-button-align-val'],
+                ['.tsfs-form-width-opt', 'form-width', '#tsfs-layout-form_width'],
+                ['.tsfs-form-align-opt', 'form-align', '#tsfs-layout-form_align']
             ].forEach(function(group) {
                 $(group[0]).each(function() {
                     $(this).toggleClass('active', String($(this).data(group[1])) === $(group[2]).val());
                 });
             });
+            this.syncFormWidthControls();
             this.applyThemeLive();
         },
 
@@ -480,7 +548,7 @@
                 $viewport.addClass('device-' + device);
 
                 if (device === 'desktop') {
-                    $viewport.css('max-width', '760px');
+                    $viewport.css('max-width', '100%');
                 } else if (device === 'tablet') {
                     $viewport.css('max-width', '580px');
                 } else if (device === 'mobile') {
@@ -935,12 +1003,30 @@
                 self.applyThemeLive();
             });
 
+            // Form width presets and page alignment
+            $('.tsfs-form-width-opt').on('click', function() {
+                $('.tsfs-form-width-opt').removeClass('active');
+                $(this).addClass('active');
+                $('#tsfs-layout-form_width').val($(this).data('form-width'));
+                self.syncFormWidthControls();
+                self.applyThemeLive();
+            });
+            $('.tsfs-form-align-opt').on('click', function() {
+                $('.tsfs-form-align-opt').removeClass('active');
+                $(this).addClass('active');
+                $('#tsfs-layout-form_align').val($(this).data('form-align'));
+                self.applyThemeLive();
+            });
+            $('#tsfs-layout-form_width_unit').on('change', function() {
+                self.syncFormWidthControls();
+            });
+
             // Container Shadow select
             $('#tsfs-theme-shadow-val').on('change', function() {
                 self.applyThemeLive();
             });
 
-            $(document).on('click', '.tsfs-theme-card, .tsfs-radius-opt, .tsfs-btn-align-opt', function() {
+            $(document).on('click', '.tsfs-theme-card, .tsfs-radius-opt, .tsfs-btn-align-opt, .tsfs-form-width-opt, .tsfs-form-align-opt', function() {
                 self.scheduleHistorySnapshot('Change form style');
                 self.updateSaveStatus();
             });
@@ -1445,6 +1531,7 @@
         },
 
         renderInspector: function() {
+            removeNoteEditor();
             var $container = $('#tsfs-field-settings-content');
             var field = this.fields.find(function(f) { return f.id === TSFSBuilder.selectedFieldId; });
 
@@ -1580,10 +1667,12 @@
 
             if (field.type === 'html') {
                 html += '<div class="tsfs-settings-form-group"><label>Content Type</label><select id="insp-content-mode">';
-                [['section','Heading + note (existing)'],['heading','Heading'],['paragraph','Paragraph'],['bullets','Bulleted list'],['numbered','Numbered list']].forEach(function(option) {
-                    html += '<option value="' + option[0] + '" ' + ((field.content_mode || 'section') === option[0] ? 'selected' : '') + '>' + option[1] + '</option>';
+                var noteMode = field.content_mode || 'section';
+                var richNote = noteMode === 'section' || noteMode === 'rich';
+                [['section','Heading + rich text'],['rich','Rich text only'],['heading','Heading'],['paragraph','Paragraph (plain)'],['bullets','Bulleted list (plain)'],['numbered','Numbered list (plain)']].forEach(function(option) {
+                    html += '<option value="' + option[0] + '" ' + (noteMode === option[0] ? 'selected' : '') + '>' + option[1] + '</option>';
                 });
-                html += '</select><p>Use the label for headings. Enter one item per line for lists, or blank lines between paragraphs.</p></div>';
+                html += '</select><p>' + (richNote ? 'The label is the heading. Format the text with the editor below: headings, bold, lists, links and quotes.' : 'Use the label for headings. Enter one item per line for lists, or blank lines between paragraphs.') + '</p></div>';
                 html += '<div class="tsfs-settings-form-group">';
                 html += '  <label>Heading Tag</label>';
                 html += '  <select id="insp-tag">';
@@ -1595,8 +1684,13 @@
                 html += '</div>';
 
                 html += '<div class="tsfs-settings-form-group">';
-                html += '  <label>Paragraph text / list items</label>';
-                html += '  <textarea id="insp-content" rows="4">' + escapeMarkup(field.content || '') + '</textarea>';
+                if (richNote) {
+                    html += '  <label for="insp-content">Text</label>';
+                    html += '  <textarea id="insp-content" class="wp-editor-area" rows="8" data-rich-note="1">' + escapeMarkup(noteToHtml(field.content)) + '</textarea>';
+                } else {
+                    html += '  <label for="insp-content">Paragraph text / list items</label>';
+                    html += '  <textarea id="insp-content" rows="4">' + escapeMarkup(field.content || '') + '</textarea>';
+                }
                 html += '</div>';
             }
 
@@ -1704,6 +1798,8 @@
 
             html += '</div>';
             $container.html(html);
+            initNoteEditor();
+            $(document).trigger('tsfs:inspector-rendered', [field, $container]);
         },
 
         buildConditionRowHtml: function(otherFields, cond) {
@@ -1807,9 +1903,16 @@
             }
 
             if (field.type === 'html') {
+                var previousMode = field.content_mode || 'section';
+                if (noteEditor()) noteEditor().save();
                 field.content_mode = $('#insp-content-mode').val();
                 field.tag = $('#insp-tag').val();
                 field.content = $('#insp-content').val();
+                // Switching between plain and rich text swaps the editor.
+                if ((previousMode === 'section' || previousMode === 'rich') !== (field.content_mode === 'section' || field.content_mode === 'rich')) {
+                    var self = this;
+                    setTimeout(function() { self.renderInspector(); }, 0);
+                }
             }
 
             if (field.type === 'page_break') {
@@ -1876,6 +1979,13 @@
             this.scheduleHistorySnapshot('Edit ' + (field.label || 'Field'));
         },
 
+        syncFormWidthControls: function() {
+            var percent = $('#tsfs-layout-form_width_unit').val() === 'percent';
+            $('#tsfs-custom-width-wrap').prop('hidden', $('#tsfs-layout-form_width').val() !== 'custom');
+            $('#tsfs-layout-form_max_width').prop('hidden', percent);
+            $('#tsfs-layout-form_width_percent').prop('hidden', !percent);
+        },
+
         applyThemeLive: function() {
             var preset = $('#tsfs-theme-preset-val').val() || 'default';
             var primaryColor = $('#tsfs-theme-primary-color').val() || '#4f46e5';
@@ -1890,8 +2000,9 @@
 
             var sizes = this.collectSettings();
             // The canvas shows the form at its real width, narrowed further by the tablet/mobile preview.
-            var deviceWidth = { tablet: 640, mobile: 390 }[$canvas.data('device')] || Infinity;
-            $canvas.css({ 'max-width': Math.min(sizes.form_max_width, deviceWidth) + 'px', width:'100%', 'min-height':sizes.form_min_height + 'px', padding:sizes.form_padding + 'px' });
+            var deviceWidth = { tablet: 640, mobile: 390 }[$canvas.data('device')];
+            var widthCss = formWidthCss(sizes);
+            $canvas.css($.extend({ 'max-width': deviceWidth ? 'min(' + widthCss + ', ' + deviceWidth + 'px)' : widthCss, width:'100%', 'min-height':sizes.form_min_height + 'px', padding:sizes.form_padding + 'px' }, formAlignMargins(sizes.form_align)));
             $('#tsfs-canvas-submit-preview').css({width:align === 'full' ? '100%' : (sizes.button_width ? sizes.button_width + 'px' : 'auto'), 'max-width':'100%', 'min-height':sizes.button_height + 'px', 'padding-left':sizes.button_padding + 'px', 'padding-right':sizes.button_padding + 'px'});
 
             // 1. Remove theme preset classes and add the current one
@@ -1965,6 +2076,10 @@
                 auto_reply_subject: $('#tsfs-setting-autoreply-subj').val() || '',
                 auto_reply_message: $('#tsfs-setting-autoreply-msg').val() || '',
 
+                form_width: $('#tsfs-layout-form_width').val() || 'custom',
+                form_width_unit: $('#tsfs-layout-form_width_unit').val() === 'percent' ? 'percent' : 'px',
+                form_width_percent: layoutNumber('form_width_percent',100,20,100),
+                form_align: $('#tsfs-layout-form_align').val() || 'center',
                 form_max_width: layoutNumber('form_max_width',680,280,1600),
                 form_min_height: layoutNumber('form_min_height',0,0,1600),
                 form_padding: layoutNumber('form_padding',32,0,80),
@@ -2285,7 +2400,7 @@
 
             $('#tsfs-live-preview-viewport').html(html);
             var $preview = $('#tsfs-live-preview-viewport');
-            $preview.find('.tsfs-preview-form-box').css({width:'100%', 'max-width':sizes.form_max_width + 'px', 'min-height':sizes.form_min_height + 'px', padding:sizes.form_padding + 'px', margin:'0 auto', 'box-sizing':'border-box'});
+            $preview.find('.tsfs-preview-form-box').css($.extend({width:'100%', 'max-width':formWidthCss(sizes), 'min-height':sizes.form_min_height + 'px', padding:sizes.form_padding + 'px', 'margin-top':0, 'margin-bottom':0, 'box-sizing':'border-box'}, formAlignMargins(sizes.form_align)));
             $preview.find('input:not([type=checkbox]):not([type=radio]):not([type=hidden]), select').css('min-height',sizes.input_height + 'px');
             $preview.find('button[type=submit]').css({width:align === 'full' ? '100%' : (sizes.button_width ? sizes.button_width + 'px' : 'auto'), 'max-width':'100%', 'min-height':sizes.button_height + 'px', 'padding-left':sizes.button_padding + 'px', 'padding-right':sizes.button_padding + 'px', 'white-space':'normal'});
             $preview.find('button[type=submit]').css({background:sizes.button_bg,'font-size':sizes.button_font_size+'px','border-radius':sizes.button_radius+'px','padding-top':sizes.button_vertical_padding+'px','padding-bottom':sizes.button_vertical_padding+'px','text-decoration':'none'});

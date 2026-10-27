@@ -57,3 +57,7 @@
 .tsfs-rich-panel .wp-editor-tabs { float: none; display: flex; gap: 4px; padding: 0 0 6px; }
 .tsfs-rich-panel .wp-switch-editor { float: none; margin: 0; border-radius: 6px 6px 0 0; padding: 6px 14px; font-size: 13px; }
 .tsfs-canvas-field-card .tsfs-rich-content a.tsfs-rich-button { display: inline-block; padding: 6px 14px; border-radius: 8px; background: #4f46e5; color: #fff; text-decoration: none; }
+.tsfs-rich-convert { margin-top: 14px; padding: 12px; border: 1px dashed #c7d2fe; border-radius: 8px; background: #f5f7ff; }
+.tsfs-rich-convert p { margin: 0 0 8px; font-size: 12px; line-height: 1.5; color: #334155; }
+.tsfs-rich-convert .button .dashicons { font-size: 16px; width: 16px; height: 16px; vertical-align: text-top; }
+.tsfs-rich-inspector .mce-menubtn .mce-txt { font-size: 12px; }

@@ -1378,6 +1378,18 @@ textarea.tsfs-card-mock-input {
 .tsfs-mock-section-block {
     padding: 2px 0;
 }
+/* Formatted section notes on the canvas (WordPress admin removes list markers by default). */
+.tsfs-mock-section-block .tsfs-html-desc { font-size: 13px; line-height: 1.6; color: #475569; }
+.tsfs-mock-section-block .tsfs-html-desc > :first-child { margin-top: 0; }
+.tsfs-mock-section-block .tsfs-html-desc > :last-child { margin-bottom: 0; }
+.tsfs-mock-section-block .tsfs-html-desc p { margin: 0 0 .6em; }
+.tsfs-mock-section-block .tsfs-html-desc ul { list-style: disc; padding-left: 1.4em; margin: 0 0 .6em; }
+.tsfs-mock-section-block .tsfs-html-desc ol { list-style: decimal; padding-left: 1.6em; margin: 0 0 .6em; }
+.tsfs-mock-section-block .tsfs-html-desc li { margin: .15em 0; }
+.tsfs-mock-section-block .tsfs-html-desc blockquote { margin: 0 0 .6em; padding: .3em .9em; border-left: 3px solid #cbd5e1; }
+.tsfs-mock-section-block .tsfs-html-desc h3,
+.tsfs-mock-section-block .tsfs-html-desc h4,
+.tsfs-mock-section-block .tsfs-html-desc h5 { margin: .8em 0 .4em; color: #0f172a; }
 
 .tsfs-mock-section-title {
     margin: 0 0 3px 0;
@@ -1683,6 +1695,27 @@ textarea.tsfs-card-mock-input {
     color: var(--tsfs-adm-primary);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
     font-weight: 700;
+}
+
+/* Style panel option grids: form width, alignment, corner radius, button alignment */
+.tsfs-width-options > button {
+    border: 1.5px solid var(--tsfs-adm-slate-200);
+    background: #ffffff;
+    color: var(--tsfs-adm-slate-700);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.tsfs-width-options > button:hover {
+    border-color: var(--tsfs-adm-primary);
+}
+.tsfs-width-options > button.active {
+    border-color: var(--tsfs-adm-primary);
+    background: var(--tsfs-adm-primary-light);
+    color: var(--tsfs-adm-primary);
+}
+.tsfs-width-options > button:focus-visible {
+    outline: 2px solid var(--tsfs-adm-primary);
+    outline-offset: 1px;
 }
 
 /* Custom Sleek Scrollbars */

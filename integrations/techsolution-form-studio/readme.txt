@@ -4,7 +4,7 @@ Tags: form builder, contact form, multi-step form, file upload, conditional logi
 Requires at least: 6.3
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.1.0
+Stable tag: 2.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -111,6 +111,20 @@ Yes. On activation, forms, entries and anti-spam settings from USP Form Builder 
 
 == Changelog ==
 
+= 2.3.0 =
+* Section blocks now have a visual editor: headings, bold, italic, underline, bulleted and numbered lists, links, quotes and alignment.
+* New "Rich text only" section type for formatted text without a heading.
+* Notes written before this version keep their paragraphs and line breaks.
+* Lists, headings, links and quotes in section notes keep their formatting on themes that reset list and heading styles.
+
+= 2.2.0 =
+* New Form width setting: Compact (560px), Standard (760px), Wide (960px), Extra wide (1200px), Full width, or a custom width in pixels or percent.
+* New Form alignment setting: left, centre or right on the page.
+* Field columns now follow the form's own width instead of the screen's, so a full-width form keeps its columns on desktop and a form in a narrow column stacks cleanly.
+* Inputs, dropdowns and the country picker keep the form's own look on themes and page builders (Elementor and others) that restyle every field on the page.
+* Fixed the consent text starting one line below its checkbox.
+* The builder canvas and live preview show the chosen width and alignment.
+
 = 2.1.0 =
 * Plugin Check: all database queries are fully prepared (table names use %i placeholders), translator comments and ordered placeholders added, no direct file writes in exports, and external CAPTCHA scripts are documented as optional services.
 * Fixed "Security verification failed" on sites with page caching (LiteSpeed Cache, WP Rocket, Cloudflare and others). Forms now fetch a fresh security token just before submitting.
@@ -137,6 +151,12 @@ Yes. On activation, forms, entries and anti-spam settings from USP Form Builder 
 * All scripts and styles are loaded with the WordPress enqueue functions and only on pages that show a form.
 
 == Upgrade Notice ==
+
+= 2.3.0 =
+Adds a visual editor to Section blocks, so notes can have headings, lists, links and quotes. Existing notes keep their text and paragraphs.
+
+= 2.2.0 =
+Adds form width presets (up to full width) and alignment, and keeps fields consistent on any theme. Existing forms keep their current width until you choose a new one.
 
 = 2.1.0 =
 Fixes "Security verification failed" on cached sites, plus wider admin screens and a redesigned Settings page. No changes to your forms or entries.

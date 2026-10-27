@@ -4,7 +4,7 @@ Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 7.4
 Requires Plugins: techsolution-form-studio
-Stable tag: 2.2.2
+Stable tag: 2.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -42,6 +42,20 @@ All features work without a license. Activate your license under Form Studio →
 Address lists are from the Countries States Cities Database (https://github.com/dr5hn/countries-states-cities-database), available under the Open Database License (ODbL 1.0). See licenses/location-data-ODbL-1.0.txt.
 
 == Changelog ==
+
+= 2.4.0 =
+* Rich Content editor upgrade: List style menu for checklists (checkmarks, check circles, crosses, arrows, stars) and numbered steps, set per list.
+* Highlighted boxes: wrap paragraphs in Information, Success, Warning, Important or Note boxes.
+* Tables: insert a table with an optional heading row, then add or delete rows and columns.
+* Full-screen editing, justify, unlink, and an editor that shows lists, boxes and tables as they appear on the form.
+* New block settings: default bullet style can be an icon list, plus a bullet and icon colour.
+* "Convert to Rich Content" on Section blocks keeps the heading, text, field name and conditions (needs Form Studio 2.3.0).
+* Lists, tables and boxes keep their look on themes that reset list styles. Tables scroll sideways on phones.
+
+= 2.3.0 =
+* International phone: the dial code and number stay on one row on phones, and the number field fills the remaining width.
+* Dial code dropdown keeps its look on themes that restyle every dropdown.
+* Quarter-width fields become half width in medium-width forms, and the admission panel stacks in narrow forms (works with Form Studio 2.2.0 form widths).
 
 = 2.2.2 =
 * Code quality: Plugin Check clean-up (documented input handling for submitted Pro fields, bundled data reads and update changelog output passed through wp_kses_post()).

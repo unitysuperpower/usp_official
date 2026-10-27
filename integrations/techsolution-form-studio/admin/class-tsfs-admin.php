@@ -118,6 +118,7 @@ class TSFS_Admin {
         }
 
         TSFS_Public::register_assets();
+        wp_enqueue_editor(); // Visual editor for section notes.
         wp_enqueue_style( 'tsfs-country-css' );
         wp_enqueue_script( 'tsfs-country-js' );
 

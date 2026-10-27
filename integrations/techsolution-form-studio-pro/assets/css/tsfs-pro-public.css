@@ -440,16 +440,6 @@
         gap: 10px !important;
     }
 
-    .tsfs-intl-tel-control {
-        flex-direction: column;
-        gap: 8px;
-    }
-
-    .tsfs-dial-select-wrap,
-    .tsfs-dial-select {
-        max-width: 100% !important;
-        width: 100% !important;
-    }
 }
 
 /* Admission application grid */
@@ -537,3 +527,154 @@
 .tsfs-rich-content a.tsfs-rich-button:visited { display: inline-block; padding: 0.6em 1.3em; border-radius: 8px; background: var(--tsfs-primary, #4f46e5); color: #fff; text-decoration: none; font-weight: 600; }
 .tsfs-rich-content a.tsfs-rich-button:hover { filter: brightness(0.92); }
 .tsfs-smart-field:empty::before { content: "…"; opacity: 0.45; }
+
+/* ==========================================================================
+   Responsive columns and theme-proof phone field
+   ========================================================================== */
+/* The core plugin marks forms under 800px wide as medium and under 540px as narrow. */
+.tsfs-form-container.tsfs-is-medium .tsfs-form-fields-grid > .tsfs-width-25 { flex: 0 0 calc(50% - var(--tsfs-field-gap, 18px) / 2); width: calc(50% - var(--tsfs-field-gap, 18px) / 2); }
+.tsfs-form-container.tsfs-is-narrow .tsfs-pro-admission-panel .tsfs-adm-row { grid-template-columns: 1fr; }
+
+/* Dial code and number stay on one row at every width; the number takes the remaining space. */
+.tsfs-form-container .tsfs-intl-tel-control { display: flex; flex-direction: row; align-items: flex-start; gap: 8px; width: 100%; }
+.tsfs-form-container .tsfs-dial-select-wrap { flex: 0 0 112px; width: 112px; min-width: 0; max-width: 112px; }
+.tsfs-form-container .tsfs-tel-input-col { flex: 1 1 0%; min-width: 0; }
+.tsfs-form-container .tsfs-form .tsfs-field-wrap select.tsfs-dial-select {
+    padding-left: 12px;
+    padding-right: 30px !important;
+    background-position: right 8px center !important;
+    font-weight: 600;
+}
+.tsfs-form-container .tsfs-form .tsfs-field-wrap input.tsfs-tel-masked-input { padding-right: 36px; font-variant-numeric: tabular-nums; letter-spacing: 0.5px; }
+.tsfs-form-container .tsfs-phone-helper-row { font-size: 12px; }
+@media (max-width: 380px) {
+    .tsfs-form-container .tsfs-dial-select-wrap { flex-basis: 100px; width: 100px; max-width: 100px; }
+}
+
+/* ==========================================================================
+   Rich Content: theme-proof lists, icon checklists, step lists, callout boxes and tables.
+   Selectors start at .tsfs-rich-content so the same rules style the live form, the builder
+   canvas and the editor (whose body carries the class).
+   ========================================================================== */
+.tsfs-rich-content ul, .tsfs-rich-content ol { margin: 0 0 0.9em; padding-left: 1.5em; }
+.tsfs-rich-content ul { list-style: var(--tsfs-rich-ul, disc) outside; }
+.tsfs-rich-content ol { list-style: var(--tsfs-rich-ol, decimal) outside; }
+.tsfs-rich-content li { display: list-item; margin: 0.35em 0; padding: 0; }
+.tsfs-rich-content li::marker { color: var(--tsfs-rich-marker, var(--tsfs-primary, #4f46e5)); font-weight: 700; }
+.tsfs-rich-content li > ul, .tsfs-rich-content li > ol { margin: 0.35em 0 0; }
+.tsfs-rich-content strong, .tsfs-rich-content b { font-weight: 700; }
+
+/* Icon lists: per list from the editor (ul.tsfs-list-*) or for the whole block (Default bullet style). */
+.tsfs-rich-content ul.tsfs-list-check, .tsfs-rich-content ul.tsfs-list-check-circle, .tsfs-rich-content ul.tsfs-list-cross,
+.tsfs-rich-content ul.tsfs-list-arrow, .tsfs-rich-content ul.tsfs-list-star,
+.tsfs-rich-content.tsfs-rich-ul-check ul:not([class*="tsfs-list-"]), .tsfs-rich-content.tsfs-rich-ul-check-circle ul:not([class*="tsfs-list-"]),
+.tsfs-rich-content.tsfs-rich-ul-cross ul:not([class*="tsfs-list-"]), .tsfs-rich-content.tsfs-rich-ul-arrow ul:not([class*="tsfs-list-"]),
+.tsfs-rich-content.tsfs-rich-ul-star ul:not([class*="tsfs-list-"]) { list-style: none; padding-left: 0; }
+.tsfs-rich-content ul.tsfs-list-check > li, .tsfs-rich-content ul.tsfs-list-check-circle > li, .tsfs-rich-content ul.tsfs-list-cross > li,
+.tsfs-rich-content ul.tsfs-list-arrow > li, .tsfs-rich-content ul.tsfs-list-star > li,
+.tsfs-rich-content.tsfs-rich-ul-check ul:not([class*="tsfs-list-"]) > li, .tsfs-rich-content.tsfs-rich-ul-check-circle ul:not([class*="tsfs-list-"]) > li,
+.tsfs-rich-content.tsfs-rich-ul-cross ul:not([class*="tsfs-list-"]) > li, .tsfs-rich-content.tsfs-rich-ul-arrow ul:not([class*="tsfs-list-"]) > li,
+.tsfs-rich-content.tsfs-rich-ul-star ul:not([class*="tsfs-list-"]) > li { position: relative; padding-left: 1.85em; }
+.tsfs-rich-content ul.tsfs-list-check > li::before, .tsfs-rich-content ul.tsfs-list-check-circle > li::before, .tsfs-rich-content ul.tsfs-list-cross > li::before,
+.tsfs-rich-content ul.tsfs-list-arrow > li::before, .tsfs-rich-content ul.tsfs-list-star > li::before,
+.tsfs-rich-content.tsfs-rich-ul-check ul:not([class*="tsfs-list-"]) > li::before, .tsfs-rich-content.tsfs-rich-ul-check-circle ul:not([class*="tsfs-list-"]) > li::before,
+.tsfs-rich-content.tsfs-rich-ul-cross ul:not([class*="tsfs-list-"]) > li::before, .tsfs-rich-content.tsfs-rich-ul-arrow ul:not([class*="tsfs-list-"]) > li::before,
+.tsfs-rich-content.tsfs-rich-ul-star ul:not([class*="tsfs-list-"]) > li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: calc((var(--tsfs-rich-line-height, 1.6) * 1em - 1.15em) / 2);
+    width: 1.15em;
+    height: 1.15em;
+    background-color: var(--tsfs-rich-marker, var(--tsfs-primary, #4f46e5));
+    -webkit-mask: var(--tsfs-list-icon) center / contain no-repeat;
+    mask: var(--tsfs-list-icon) center / contain no-repeat;
+}
+.tsfs-rich-content ul.tsfs-list-check, .tsfs-rich-content.tsfs-rich-ul-check ul {
+    --tsfs-list-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 12.5l5 5L20 6.5'/%3E%3C/svg%3E");
+}
+.tsfs-rich-content ul.tsfs-list-check-circle, .tsfs-rich-content.tsfs-rich-ul-check-circle ul {
+    --tsfs-list-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' fill-rule='evenodd' d='M12 1a11 11 0 1 1 0 22 11 11 0 0 1 0-22zm5.2 7.3a1.2 1.2 0 0 0-1.7 0l-4.8 4.8-2.2-2.2a1.2 1.2 0 1 0-1.7 1.7l3 3a1.2 1.2 0 0 0 1.7 0l5.7-5.6a1.2 1.2 0 0 0 0-1.7z'/%3E%3C/svg%3E");
+}
+.tsfs-rich-content ul.tsfs-list-cross, .tsfs-rich-content.tsfs-rich-ul-cross ul {
+    --tsfs-list-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E");
+}
+.tsfs-rich-content ul.tsfs-list-cross > li::before, .tsfs-rich-content.tsfs-rich-ul-cross ul:not([class*="tsfs-list-"]) > li::before { background-color: var(--tsfs-rich-marker, #dc2626); }
+.tsfs-rich-content ul.tsfs-list-arrow, .tsfs-rich-content.tsfs-rich-ul-arrow ul {
+    --tsfs-list-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 12h15M13 6l6 6-6 6'/%3E%3C/svg%3E");
+}
+.tsfs-rich-content ul.tsfs-list-star, .tsfs-rich-content.tsfs-rich-ul-star ul {
+    --tsfs-list-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M12 2.5l2.9 6 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.2 1.3-6.6-4.9-4.6 6.6-.8z'/%3E%3C/svg%3E");
+}
+.tsfs-rich-content ul.tsfs-list-star > li::before, .tsfs-rich-content.tsfs-rich-ul-star ul:not([class*="tsfs-list-"]) > li::before { background-color: var(--tsfs-rich-marker, #f59e0b); }
+
+/* Numbered steps: numbers in filled circles. */
+.tsfs-rich-content ol.tsfs-list-steps { list-style: none; padding-left: 0; counter-reset: tsfs-step; }
+.tsfs-rich-content ol.tsfs-list-steps > li { position: relative; padding-left: 2.4em; margin: 0.6em 0; counter-increment: tsfs-step; min-height: 1.7em; }
+.tsfs-rich-content ol.tsfs-list-steps > li::before {
+    content: counter(tsfs-step);
+    position: absolute;
+    left: 0;
+    top: calc((var(--tsfs-rich-line-height, 1.6) * 1em - 1.7em) / 2);
+    width: 1.7em;
+    height: 1.7em;
+    border-radius: 50%;
+    background: var(--tsfs-rich-marker, var(--tsfs-primary, #4f46e5));
+    color: #fff;
+    font-size: 0.85em;
+    font-weight: 700;
+    line-height: 1.7em;
+    text-align: center;
+}
+
+/* Callout boxes */
+.tsfs-rich-content .tsfs-callout {
+    --tsfs-callout-accent: #2563eb;
+    position: relative;
+    margin: 0 0 1em;
+    padding: 0.9em 1.1em 0.9em 3em;
+    border: 1px solid #bfdbfe;
+    border-left: 4px solid var(--tsfs-callout-accent);
+    border-radius: 10px;
+    background: #eff6ff;
+    color: #1e3a8a;
+}
+.tsfs-rich-content .tsfs-callout > :last-child { margin-bottom: 0; }
+.tsfs-rich-content .tsfs-callout > :first-child { margin-top: 0; }
+.tsfs-rich-content .tsfs-callout::before {
+    content: "";
+    position: absolute;
+    left: 1em;
+    top: 1.05em;
+    width: 1.25em;
+    height: 1.25em;
+    background-color: var(--tsfs-callout-accent);
+    -webkit-mask: var(--tsfs-callout-icon) center / contain no-repeat;
+    mask: var(--tsfs-callout-icon) center / contain no-repeat;
+    --tsfs-callout-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' fill-rule='evenodd' d='M12 1a11 11 0 1 1 0 22 11 11 0 0 1 0-22zm0 9a1.2 1.2 0 0 0-1.2 1.2v5.6a1.2 1.2 0 0 0 2.4 0v-5.6A1.2 1.2 0 0 0 12 10zm0-4.2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z'/%3E%3C/svg%3E");
+}
+.tsfs-rich-content .tsfs-callout-success { --tsfs-callout-accent: #059669; border-color: #a7f3d0; background: #ecfdf5; color: #064e3b; }
+.tsfs-rich-content .tsfs-callout-success::before {
+    --tsfs-callout-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' fill-rule='evenodd' d='M12 1a11 11 0 1 1 0 22 11 11 0 0 1 0-22zm5.2 7.3a1.2 1.2 0 0 0-1.7 0l-4.8 4.8-2.2-2.2a1.2 1.2 0 1 0-1.7 1.7l3 3a1.2 1.2 0 0 0 1.7 0l5.7-5.6a1.2 1.2 0 0 0 0-1.7z'/%3E%3C/svg%3E");
+}
+.tsfs-rich-content .tsfs-callout-warning { --tsfs-callout-accent: #d97706; border-color: #fde68a; background: #fffbeb; color: #78350f; }
+.tsfs-rich-content .tsfs-callout-warning::before {
+    --tsfs-callout-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' fill-rule='evenodd' d='M10.3 2.9a2 2 0 0 1 3.4 0l9 15.6a2 2 0 0 1-1.7 3H3a2 2 0 0 1-1.7-3zM12 8.5a1.2 1.2 0 0 0-1.2 1.2v4.2a1.2 1.2 0 0 0 2.4 0V9.7A1.2 1.2 0 0 0 12 8.5zm0 7.6a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8z'/%3E%3C/svg%3E");
+}
+.tsfs-rich-content .tsfs-callout-danger { --tsfs-callout-accent: #dc2626; border-color: #fecaca; background: #fef2f2; color: #7f1d1d; }
+.tsfs-rich-content .tsfs-callout-danger::before {
+    --tsfs-callout-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' fill-rule='evenodd' d='M12 1a11 11 0 1 1 0 22 11 11 0 0 1 0-22zm0 5a1.2 1.2 0 0 0-1.2 1.2v5.6a1.2 1.2 0 0 0 2.4 0V7.2A1.2 1.2 0 0 0 12 6zm0 9.4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z'/%3E%3C/svg%3E");
+}
+.tsfs-rich-content .tsfs-callout-note { --tsfs-callout-accent: #64748b; border-color: #e2e8f0; background: #f8fafc; color: #334155; }
+.tsfs-rich-content .tsfs-callout-note::before {
+    --tsfs-callout-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z'/%3E%3Cpath d='M14 3v6h6M8 13h8M8 17h5'/%3E%3C/svg%3E");
+}
+
+/* Tables */
+.tsfs-rich-content table { width: 100%; margin: 0 0 1em; border-collapse: collapse; border-spacing: 0; font-size: 0.95em; line-height: 1.5; }
+.tsfs-rich-content th, .tsfs-rich-content td { padding: 0.65em 0.85em; border: 1px solid #e2e8f0; text-align: left; vertical-align: top; overflow-wrap: normal; word-break: normal; min-width: 6em; }
+.tsfs-rich-content th { background: #f1f5f9; color: #0f172a; font-weight: 700; }
+.tsfs-rich-content tbody tr:nth-child(even) td { background: #f8fafc; }
+@media (max-width: 600px) {
+    .tsfs-rich-content table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}

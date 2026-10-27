@@ -604,11 +604,52 @@ $shortcode       = $is_edit ? '[tsfs_form id="' . $current_form_id . '"]' : '';
                 <hr style="margin: 20px 0; border: 0; border-top: 1px solid var(--tsfs-adm-slate-200);">
 
                 <h4>Form size &amp; spacing</h4>
-                <p class="description">Sizes are in pixels. The form stays within the screen width and grows to fit its content.</p>
-                <?php $layout_values = TSFS_Form::layout_settings( $form['settings'] ?? array() ); ?>
+                <p class="description">Sizes are in pixels. The form never gets wider than the page column it sits in, and its columns stack automatically when it is narrow.</p>
+                <?php
+                $layout_values = TSFS_Form::layout_settings( $form['settings'] ?? array() );
+                $width_values  = TSFS_Form::width_settings( $form['settings'] ?? array() );
+                $width_presets = array(
+                    'compact'  => array( __( 'Compact', 'techsolution-form-studio' ), '560px' ),
+                    'standard' => array( __( 'Standard', 'techsolution-form-studio' ), '760px' ),
+                    'wide'     => array( __( 'Wide', 'techsolution-form-studio' ), '960px' ),
+                    'xwide'    => array( __( 'Extra wide', 'techsolution-form-studio' ), '1200px' ),
+                    'full'     => array( __( 'Full width', 'techsolution-form-studio' ), '100%' ),
+                    'custom'   => array( __( 'Custom', 'techsolution-form-studio' ), __( 'px or %', 'techsolution-form-studio' ) ),
+                );
+                ?>
                 <div class="tsfs-settings-form-group">
-                    <label for="tsfs-layout-form_max_width">Form maximum width</label>
-                    <input type="number" id="tsfs-layout-form_max_width" data-layout-setting="form_max_width" min="280" max="1600" step="1" value="<?php echo esc_attr( $layout_values['form_max_width'] ); ?>">
+                    <label><?php esc_html_e( 'Form width', 'techsolution-form-studio' ); ?></label>
+                    <div class="tsfs-width-options tsfs-form-width-options" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:6px;">
+                        <?php foreach ( $width_presets as $width_key => $width_preset ) : ?>
+                            <button type="button" class="tsfs-form-width-opt <?php echo $width_key === $width_values['form_width'] ? 'active' : ''; ?>" data-form-width="<?php echo esc_attr( $width_key ); ?>" style="padding:7px 4px; font-size:11.5px; line-height:1.3;">
+                                <strong style="display:block;"><?php echo esc_html( $width_preset[0] ); ?></strong>
+                                <span style="display:block; opacity:.7; font-size:10.5px;"><?php echo esc_html( $width_preset[1] ); ?></span>
+                            </button>
+                        <?php endforeach; ?>
+                    </div>
+                    <input type="hidden" id="tsfs-layout-form_width" data-layout-setting="form_width" value="<?php echo esc_attr( $width_values['form_width'] ); ?>">
+                </div>
+                <div class="tsfs-settings-form-group" id="tsfs-custom-width-wrap" <?php echo 'custom' === $width_values['form_width'] ? '' : 'hidden'; ?>>
+                    <label for="tsfs-layout-form_width_unit"><?php esc_html_e( 'Custom width', 'techsolution-form-studio' ); ?></label>
+                    <div style="display:flex; gap:6px;">
+                        <input type="number" id="tsfs-layout-form_max_width" data-layout-setting="form_max_width" min="280" max="1600" step="1" value="<?php echo esc_attr( $layout_values['form_max_width'] ); ?>" aria-label="<?php esc_attr_e( 'Custom width in pixels', 'techsolution-form-studio' ); ?>" <?php echo 'percent' === $width_values['form_width_unit'] ? 'hidden' : ''; ?>>
+                        <input type="number" id="tsfs-layout-form_width_percent" data-layout-setting="form_width_percent" min="20" max="100" step="1" value="<?php echo esc_attr( $layout_values['form_width_percent'] ); ?>" aria-label="<?php esc_attr_e( 'Custom width in percent', 'techsolution-form-studio' ); ?>" <?php echo 'percent' === $width_values['form_width_unit'] ? '' : 'hidden'; ?>>
+                        <select id="tsfs-layout-form_width_unit" data-layout-setting="form_width_unit" style="flex:0 0 70px;">
+                            <option value="px" <?php selected( 'px', $width_values['form_width_unit'] ); ?>>px</option>
+                            <option value="percent" <?php selected( 'percent', $width_values['form_width_unit'] ); ?>>%</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="tsfs-settings-form-group">
+                    <label><?php esc_html_e( 'Form alignment on the page', 'techsolution-form-studio' ); ?></label>
+                    <div class="tsfs-width-options" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:6px;">
+                        <?php foreach ( array( 'left' => __( 'Align form left', 'techsolution-form-studio' ), 'center' => __( 'Center form', 'techsolution-form-studio' ), 'right' => __( 'Align form right', 'techsolution-form-studio' ) ) as $align_key => $align_label ) : ?>
+                            <button type="button" class="tsfs-form-align-opt <?php echo $align_key === $width_values['form_align'] ? 'active' : ''; ?>" data-form-align="<?php echo esc_attr( $align_key ); ?>" style="padding:7px 4px; font-size:11.5px;" aria-label="<?php echo esc_attr( $align_label ); ?>" title="<?php echo esc_attr( $align_label ); ?>">
+                                <span class="dashicons dashicons-editor-align<?php echo esc_attr( $align_key ); ?>" style="font-size:15px; width:15px; height:15px; vertical-align:middle;"></span>
+                            </button>
+                        <?php endforeach; ?>
+                    </div>
+                    <input type="hidden" id="tsfs-layout-form_align" data-layout-setting="form_align" value="<?php echo esc_attr( $width_values['form_align'] ); ?>">
                 </div>
                 <div class="tsfs-settings-form-group">
                     <label for="tsfs-layout-form_min_height">Form minimum height (0 = automatic)</label>
@@ -824,7 +865,7 @@ $shortcode       = $is_edit ? '[tsfs_form id="' . $current_form_id . '"]' : '';
             <button type="button" class="tsfs-modal-close" id="tsfs-live-preview-close-btn">&times;</button>
         </div>
         <div class="tsfs-modal-body tsfs-live-preview-stage" style="flex:1; background:#f8fafc; padding:32px 20px; overflow-y:auto; display:flex; justify-content:center; align-items:flex-start;">
-            <div id="tsfs-live-preview-viewport" class="tsfs-preview-viewport device-desktop" style="width:100%; max-width:760px; background:#ffffff; border-radius:12px; box-shadow:0 10px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.05); padding:32px; transition:max-width 0.22s cubic-bezier(0.4, 0, 0.2, 1); box-sizing:border-box;">
+            <div id="tsfs-live-preview-viewport" class="tsfs-preview-viewport device-desktop" style="width:100%; max-width:100%; background:#ffffff; border-radius:12px; box-shadow:0 10px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.05); padding:32px; transition:max-width 0.22s cubic-bezier(0.4, 0, 0.2, 1); box-sizing:border-box;">
                 <!-- Dynamically rendered interactive form elements will appear here -->
             </div>
         </div>

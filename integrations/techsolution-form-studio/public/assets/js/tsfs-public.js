@@ -29,6 +29,24 @@
     $(document).ready(function() {
 
         /**
+         * 0. Columns follow the form's own width rather than the screen's
+         */
+        function sizeForm(container) {
+            var width = container.getBoundingClientRect().width;
+            container.classList.toggle('tsfs-is-narrow', width < 540);
+            container.classList.toggle('tsfs-is-medium', width < 800);
+        }
+        if (window.ResizeObserver) {
+            var formSizer = new ResizeObserver(function(entries) {
+                entries.forEach(function(entry) { sizeForm(entry.target); });
+            });
+            $('.tsfs-form-container').each(function() {
+                sizeForm(this);
+                formSizer.observe(this);
+            });
+        }
+
+        /**
          * 1. Conditional Logic Engine
          */
         function evaluateConditionalLogic($form) {

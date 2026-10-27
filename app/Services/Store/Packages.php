@@ -31,6 +31,10 @@ class Packages
         try {
             $this->ensure($zip->numFiles > 0 && $zip->numFiles <= 5000, 'The ZIP must contain between 1 and 5,000 entries.');
             $main = $product->slug.'/'.$product->slug.'.php';
+            // A correctly built ZIP for a different plugin (e.g. the Free plugin uploaded to the Pro product).
+            $folder = strstr((string) $zip->getNameIndex(0), '/', true);
+            $this->ensure($zip->locateName($main) !== false || ! $folder || $folder === $product->slug || $zip->locateName($folder.'/'.$folder.'.php') === false,
+                "This ZIP contains the {$folder} plugin, but this product is {$product->slug}. Upload {$product->slug}-<version>.zip here, or create a product with the identifier {$folder} for this plugin.");
             $this->ensure($zip->locateName($main) !== false, "Expected {$main} inside the ZIP. The top-level plugin folder and main PHP filename must match this product identifier ({$product->slug}). Do not ZIP its contents without the folder.");
             $total = 0;
             $seen = [];

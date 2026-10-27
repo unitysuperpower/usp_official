@@ -11,14 +11,47 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class TSFS_Form {
+    /** Form width presets in pixels. 'full' fills the page column; 'custom' uses form_max_width or form_width_percent. */
+    const FORM_WIDTHS = array( 'compact' => 560, 'standard' => 760, 'wide' => 960, 'xwide' => 1200 );
+
     /** Bounded pixel values, including imported forms. Height is a minimum to avoid clipping. */
     public static function layout_settings( $settings ) {
         $result = array();
-        foreach ( array('form_max_width'=>array(680,280,1600),'form_min_height'=>array(0,0,1600),'form_padding'=>array(32,0,80),'field_gap'=>array(18,0,64),'input_height'=>array(44,32,100),'button_width'=>array(0,0,1000),'button_height'=>array(46,32,120),'button_padding'=>array(30,0,80),'text_size'=>array(16,12,24),'label_size'=>array(15,12,26),'button_font_size'=>array(16,12,30),'button_radius'=>array(8,0,60),'button_vertical_padding'=>array(12,4,40),'consent_size'=>array(14,12,24),'consent_padding'=>array(14,0,40),'checkbox_size'=>array(20,16,32)) as $key => $rule ) {
+        foreach ( array('form_max_width'=>array(680,280,1600),'form_width_percent'=>array(100,20,100),'form_min_height'=>array(0,0,1600),'form_padding'=>array(32,0,80),'field_gap'=>array(18,0,64),'input_height'=>array(44,32,100),'button_width'=>array(0,0,1000),'button_height'=>array(46,32,120),'button_padding'=>array(30,0,80),'text_size'=>array(16,12,24),'label_size'=>array(15,12,26),'button_font_size'=>array(16,12,30),'button_radius'=>array(8,0,60),'button_vertical_padding'=>array(12,4,40),'consent_size'=>array(14,12,24),'consent_padding'=>array(14,0,40),'checkbox_size'=>array(20,16,32)) as $key => $rule ) {
             $value = $settings[$key] ?? $rule[0];
             $result[$key] = is_numeric( $value ) ? max( $rule[1], min( $rule[2], (int) $value ) ) : $rule[0];
         }
         return $result;
+    }
+
+    /**
+     * Width mode, unit and alignment. Forms saved before 2.2.0 have no mode and keep their pixel maximum.
+     *
+     * @param array $settings Form settings.
+     * @return array
+     */
+    public static function width_settings( $settings ) {
+        $pick = function ( $key, $allowed, $default ) use ( $settings ) {
+            return isset( $settings[ $key ] ) && in_array( $settings[ $key ], $allowed, true ) ? $settings[ $key ] : $default;
+        };
+        return array(
+            'form_width'      => $pick( 'form_width', array_merge( array_keys( self::FORM_WIDTHS ), array( 'full', 'custom' ) ), 'custom' ),
+            'form_width_unit' => $pick( 'form_width_unit', array( 'px', 'percent' ), 'px' ),
+            'form_align'      => $pick( 'form_align', array( 'left', 'center', 'right' ), 'center' ),
+        );
+    }
+
+    /** CSS value for the form's maximum width, e.g. "960px" or "100%". */
+    public static function form_width_css( $settings ) {
+        $width  = self::width_settings( $settings );
+        $layout = self::layout_settings( $settings );
+        if ( isset( self::FORM_WIDTHS[ $width['form_width'] ] ) ) {
+            return self::FORM_WIDTHS[ $width['form_width'] ] . 'px';
+        }
+        if ( 'full' === $width['form_width'] ) {
+            return '100%';
+        }
+        return 'percent' === $width['form_width_unit'] ? $layout['form_width_percent'] . '%' : $layout['form_max_width'] . 'px';
     }
 
     public static function color_settings( $settings ) {
@@ -142,7 +175,7 @@ class TSFS_Form {
                 case 'html':
                     $mode                 = isset( $f['content_mode'] ) ? (string) $f['content_mode'] : 'section';
                     $tag                  = isset( $f['tag'] ) ? sanitize_key( $f['tag'] ) : 'h3';
-                    $item['content_mode'] = in_array( $mode, array( 'section', 'heading', 'paragraph', 'bullets', 'numbered' ), true ) ? $mode : 'section';
+                    $item['content_mode'] = in_array( $mode, array( 'section', 'rich', 'heading', 'paragraph', 'bullets', 'numbered' ), true ) ? $mode : 'section';
                     $item['content']      = isset( $f['content'] ) ? wp_kses_post( $f['content'] ) : '';
                     $item['tag']          = in_array( $tag, array( 'h2', 'h3', 'h4', 'h5', 'h6' ), true ) ? $tag : 'h3';
                     break;
@@ -232,7 +265,7 @@ class TSFS_Form {
         $container_bg = $text( 'container_bg', '#ffffff' );
         $close_date   = $text( 'close_date' );
 
-        return self::layout_settings( $settings ) + self::color_settings( $settings ) + array(
+        return self::layout_settings( $settings ) + self::width_settings( $settings ) + self::color_settings( $settings ) + array(
             'submit_button_text'   => $text( 'submit_button_text', __( 'Submit', 'techsolution-form-studio' ) ),
             'success_message'      => $textarea( 'success_message', __( 'Thank you! Your submission has been received.', 'techsolution-form-studio' ) ),
             'redirect_url'         => isset( $settings['redirect_url'] ) && is_string( $settings['redirect_url'] ) ? esc_url_raw( $settings['redirect_url'], array( 'http', 'https' ) ) : '',
@@ -661,8 +694,13 @@ class TSFS_Form {
             $css_vars[] = '--tsfs-bg-card: transparent;';
         }
         foreach ( self::layout_settings( $settings ) as $key => $value ) {
+            if ( 'form_max_width' === $key || 'form_width_percent' === $key ) {
+                continue;
+            }
             $css_vars[] = '--tsfs-' . str_replace( '_', '-', $key ) . ': ' . ( 'button_width' === $key && 0 === $value ? 'auto' : $value . 'px' ) . ';';
         }
+        $css_vars[] = '--tsfs-form-max-width: ' . self::form_width_css( $settings ) . ';';
+        $width_settings = self::width_settings( $settings );
         foreach ( self::color_settings( $settings ) as $key => $value ) {
             $css_vars[] = '--tsfs-' . str_replace( '_', '-', $key ) . ': ' . $value . ';';
         }
@@ -710,6 +748,8 @@ class TSFS_Form {
             'tsfs-theme-' . $theme_preset,
             'tsfs-radius-' . $border_radius,
             'tsfs-shadow-' . $shadow_style,
+            'tsfs-form-width-' . $width_settings['form_width'],
+            'tsfs-form-align-' . $width_settings['form_align'],
         );
         if ( $has_steps ) {
             $container_classes[] = 'tsfs-has-multistep';
@@ -911,10 +951,13 @@ class TSFS_Form {
                 echo '</div>';
                 return;
             }
-            $content = ! empty( $field['content'] ) ? wp_kses_post( $field['content'] ) : '';
+            // Rich text from the visual editor; wpautop() keeps paragraphs in notes saved as plain text.
+            $content = ! empty( $field['content'] ) ? wpautop( wp_kses_post( $field['content'] ) ) : '';
             ?>
             <div class="tsfs-field-wrap tsfs-field-html tsfs-width-100" data-field-name="<?php echo esc_attr( $name ); ?>"<?php if ( $cond_json ) : ?> data-conditions="<?php echo esc_attr( $cond_json ); ?>"<?php endif; ?>>
-                <<?php echo esc_html( $tag ); ?> class="tsfs-html-title"><?php echo esc_html( $label ); ?></<?php echo esc_html( $tag ); ?>>
+                <?php if ( 'rich' !== $mode ) : ?>
+                    <<?php echo esc_html( $tag ); ?> class="tsfs-html-title"><?php echo esc_html( $label ); ?></<?php echo esc_html( $tag ); ?>>
+                <?php endif; ?>
                 <?php if ( $content ) : ?>
                     <div class="tsfs-html-desc"><?php echo wp_kses_post( $content ); ?></div>
                 <?php endif; ?>
@@ -1152,12 +1195,8 @@ class TSFS_Form {
                                     style="margin-top:2px; flex-shrink:0;"
                                     <?php echo $required ? 'required' : ''; ?>
                                 >
-                                <span class="tsfs-consent-text">
-                                    <?php echo esc_html( $terms_text ); ?>
-                                    <?php if ( ! empty( $terms_url ) && '#' !== $terms_url ) : ?>
-                                        <a href="<?php echo esc_url( $terms_url ); ?>" target="_blank" rel="noopener noreferrer" style="color:var(--tsfs-adm-primary, #4f46e5); font-weight:600; text-decoration:underline; margin-left:4px;"><?php echo esc_html( $terms_label ); ?> &rarr;</a>
-                                    <?php endif; ?>
-                                </span>
+                                <?php // No whitespace inside the span: the text keeps its own line breaks (white-space: pre-line). ?>
+                                <span class="tsfs-consent-text"><?php echo esc_html( trim( $terms_text ) ); ?><?php if ( ! empty( $terms_url ) && '#' !== $terms_url ) : ?><a href="<?php echo esc_url( $terms_url ); ?>" target="_blank" rel="noopener noreferrer" style="color:var(--tsfs-primary, #4f46e5); font-weight:600; text-decoration:underline; margin-left:6px;"><?php echo esc_html( $terms_label ); ?> &rarr;</a><?php endif; ?></span>
                             </label>
                         </div>
                         <?php

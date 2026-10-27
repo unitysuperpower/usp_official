@@ -831,3 +831,178 @@
 }
 
 .tsfs-form-container .tsfs-input, .tsfs-form-container .tsfs-html-desc { font-size: var(--tsfs-text-size, 16px); }
+
+/* ==========================================================================
+   Form width, alignment and responsive columns
+   ========================================================================== */
+.tsfs-form-container.tsfs-form-align-left { margin-left: 0; margin-right: auto; }
+.tsfs-form-container.tsfs-form-align-right { margin-left: auto; margin-right: 0; }
+
+/* tsfs-public.js sets these from the form's own width, so a form in a narrow column stacks
+   while a full-width form keeps its columns. The screen-width rules above remain the no-JS fallback. */
+.tsfs-form-container.tsfs-is-narrow { padding: min(var(--tsfs-form-padding, 32px), 20px); }
+.tsfs-form-container.tsfs-is-narrow .tsfs-form-fields-grid > .tsfs-field-wrap[class*="tsfs-width-"] { flex: 0 0 100%; width: 100%; }
+
+/* ==========================================================================
+   Theme-proof controls
+   Themes and page builders style every input, select and button on a page, often with
+   selectors such as ".elementor-kit-1 input:not([type=button])". These rules are specific
+   enough to keep the form consistent; colours and sizes still come from the variables.
+   ========================================================================== */
+.tsfs-form-container.tsfs-theme-dark { --tsfs-input-color: #f8fafc; }
+.tsfs-form-container.tsfs-radius-sharp { --tsfs-input-radius: 0px; }
+.tsfs-form-container.tsfs-radius-slight { --tsfs-input-radius: 4px; }
+.tsfs-form-container.tsfs-radius-rounded { --tsfs-input-radius: 8px; }
+.tsfs-form-container.tsfs-radius-pill { --tsfs-input-radius: 12px; }
+
+.tsfs-form-container .tsfs-form .tsfs-field-wrap .tsfs-input:not([type="checkbox"]):not([type="radio"]) {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    margin: 0 !important;
+    padding: 10px 14px;
+    border: 1.5px solid var(--tsfs-border-default);
+    background-color: var(--tsfs-bg-input);
+    color: var(--tsfs-input-color, var(--tsfs-text-body));
+    font-family: inherit;
+    font-size: var(--tsfs-text-size, 16px);
+    font-weight: 400;
+    line-height: 1.4;
+    letter-spacing: normal;
+    text-transform: none;
+    text-decoration: none;
+    box-shadow: var(--tsfs-shadow-input);
+    caret-color: var(--tsfs-primary);
+}
+.tsfs-form-container .tsfs-form .tsfs-field-wrap input.tsfs-input:not([type="checkbox"]):not([type="radio"]),
+.tsfs-form-container .tsfs-form .tsfs-field-wrap select.tsfs-input { min-height: var(--tsfs-input-height, 44px); }
+.tsfs-form-container .tsfs-form .tsfs-field-wrap textarea.tsfs-input { min-height: 110px; line-height: 1.6; }
+.tsfs-form-container .tsfs-form .tsfs-field-wrap .tsfs-input:not([type="checkbox"]):not([type="radio"]):hover { border-color: var(--tsfs-border-hover); }
+.tsfs-form-container .tsfs-form .tsfs-field-wrap .tsfs-input:not([type="checkbox"]):not([type="radio"]):focus {
+    outline: none;
+    border-color: var(--tsfs-border-focus);
+    background-color: var(--tsfs-bg-input-focus);
+    box-shadow: 0 0 0 3px var(--tsfs-primary-ring);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--tsfs-border-focus) 18%, transparent);
+}
+.tsfs-form-container .tsfs-form .tsfs-field-wrap .tsfs-input::placeholder { color: #94a3b8; opacity: 1; }
+.tsfs-form-container.tsfs-theme-dark .tsfs-form .tsfs-field-wrap .tsfs-input::placeholder { color: #64748b; }
+/* Some themes set "background: ... !important" on every select, so the arrow needs !important too. */
+.tsfs-form-container .tsfs-form .tsfs-field-wrap select.tsfs-input {
+    padding-right: 40px !important;
+    background-color: var(--tsfs-bg-input) !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E") !important;
+    background-position: right 12px center !important;
+    background-repeat: no-repeat !important;
+    background-size: 18px 18px !important;
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+}
+.tsfs-form-container .tsfs-form .tsfs-field-wrap.has-error .tsfs-input:not([type="checkbox"]):not([type="radio"]) {
+    border-color: #ef4444;
+    background-color: #fffbfa;
+}
+.tsfs-form-container.tsfs-theme-dark .tsfs-form .tsfs-field-wrap.has-error .tsfs-input:not([type="checkbox"]):not([type="radio"]) { background-color: var(--tsfs-bg-input); }
+.tsfs-form-container .tsfs-form .tsfs-field-wrap.has-error select.tsfs-input { background-color: #fffbfa !important; }
+.tsfs-form-container.tsfs-theme-dark .tsfs-form .tsfs-field-wrap.has-error select.tsfs-input { background-color: var(--tsfs-bg-input) !important; }
+
+/* Searchable country picker: the trigger is a button, so reset theme button styling. */
+.tsfs-form-container .tsfs-form .tsfs-country-control .tsfs-country-trigger {
+    min-height: var(--tsfs-input-height, 44px);
+    margin: 0;
+    padding: 10px 14px;
+    border: 1.5px solid var(--tsfs-border-default);
+    border-radius: var(--tsfs-input-radius, 8px);
+    background: var(--tsfs-bg-input);
+    color: var(--tsfs-input-color, var(--tsfs-text-body));
+    font-family: inherit;
+    font-size: var(--tsfs-text-size, 16px);
+    font-weight: 400;
+    line-height: 1.4;
+    letter-spacing: normal;
+    text-transform: none;
+    text-decoration: none;
+    text-shadow: none;
+    box-shadow: var(--tsfs-shadow-input);
+}
+.tsfs-form-container .tsfs-form .tsfs-country-control .tsfs-country-trigger:hover { border-color: var(--tsfs-border-hover); }
+.tsfs-form-container .tsfs-form .tsfs-country-control .tsfs-country-trigger:focus-visible,
+.tsfs-form-container .tsfs-form .tsfs-country-control.is-open .tsfs-country-trigger {
+    outline: none;
+    border-color: var(--tsfs-border-focus);
+    box-shadow: 0 0 0 3px var(--tsfs-primary-ring);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--tsfs-border-focus) 18%, transparent);
+}
+.tsfs-form-container .tsfs-form .tsfs-country-control .tsfs-country-trigger[aria-invalid="true"],
+.tsfs-form-container .tsfs-form .tsfs-field-wrap.has-error .tsfs-country-trigger { border-color: #ef4444; }
+.tsfs-form-container .tsfs-form .tsfs-country-dropdown .tsfs-country-option {
+    display: block;
+    width: 100%;
+    min-height: 38px;
+    margin: 0;
+    padding: 9px 12px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #334155;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.4;
+    letter-spacing: normal;
+    text-align: left;
+    text-transform: none;
+    text-decoration: none;
+    box-shadow: none;
+}
+.tsfs-form-container .tsfs-form .tsfs-country-dropdown .tsfs-country-option:hover,
+.tsfs-form-container .tsfs-form .tsfs-country-dropdown .tsfs-country-option.is-active { background: #f1f5f9; }
+.tsfs-form-container .tsfs-form .tsfs-country-dropdown .tsfs-country-option[aria-selected="true"] { background: #eef2ff; color: #4338ca; font-weight: 600; }
+.tsfs-form-container .tsfs-form .tsfs-country-dropdown input.tsfs-country-search {
+    width: 100%;
+    min-height: 40px;
+    margin: 0;
+    padding: 9px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #fff;
+    color: #0f172a;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+/* ==========================================================================
+   Formatted section notes (visual editor). Themes often reset lists and headings,
+   so spacing and markers are set here.
+   ========================================================================== */
+.tsfs-form-container .tsfs-html-desc { line-height: 1.7; overflow-wrap: anywhere; }
+.tsfs-form-container .tsfs-html-desc > :first-child { margin-top: 0; }
+.tsfs-form-container .tsfs-html-desc > :last-child { margin-bottom: 0; }
+.tsfs-form-container .tsfs-html-desc p { margin: 0 0 0.85em; }
+.tsfs-form-container .tsfs-html-desc ul,
+.tsfs-form-container .tsfs-html-desc ol { margin: 0 0 0.85em; padding-left: 1.5em; }
+.tsfs-form-container .tsfs-html-desc ul { list-style: disc outside; }
+.tsfs-form-container .tsfs-html-desc ol { list-style: decimal outside; }
+.tsfs-form-container .tsfs-html-desc ul ul { list-style-type: circle; }
+.tsfs-form-container .tsfs-html-desc li { display: list-item; margin: 0.3em 0; padding: 0; }
+.tsfs-form-container .tsfs-html-desc li::marker { color: var(--tsfs-primary); }
+.tsfs-form-container .tsfs-html-desc h3,
+.tsfs-form-container .tsfs-html-desc h4,
+.tsfs-form-container .tsfs-html-desc h5 { margin: 1.2em 0 0.45em; color: var(--tsfs-text-heading); font-weight: 700; line-height: 1.35; }
+.tsfs-form-container .tsfs-html-desc h3 { font-size: 1.2em; }
+.tsfs-form-container .tsfs-html-desc h4 { font-size: 1.08em; }
+.tsfs-form-container .tsfs-html-desc h5 { font-size: 1em; }
+.tsfs-form-container .tsfs-html-desc strong,
+.tsfs-form-container .tsfs-html-desc b { color: var(--tsfs-text-heading); font-weight: 700; }
+.tsfs-form-container .tsfs-html-desc a { color: var(--tsfs-primary); text-decoration: underline; text-underline-offset: 2px; }
+.tsfs-form-container .tsfs-html-desc blockquote {
+    margin: 0 0 0.85em;
+    padding: 0.6em 1em;
+    border-left: 4px solid var(--tsfs-primary);
+    background: rgba(127, 127, 127, 0.07);
+    border-radius: 0 8px 8px 0;
+    font-style: normal;
+}
